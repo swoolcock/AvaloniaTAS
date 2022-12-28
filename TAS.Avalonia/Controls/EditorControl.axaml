@@ -1,0 +1,20 @@
+<UserControl x:Class="TAS.Avalonia.Controls.EditorControl"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ae="clr-namespace:AvaloniaEdit;assembly=AvaloniaEdit"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450">
+    <DockPanel>
+        <ae:TextEditor x:Name="editor"
+                       Margin="0"
+                       Background="Transparent"
+                       SyntaxHighlighting="C#"
+                       HorizontalScrollBarVisibility="Auto"
+                       VerticalScrollBarVisibility="Auto"
+                       FontFamily="{StaticResource CodeFontFamily}" 
+                       FontWeight="Normal" 
+                       FontSize="14"
+                       WordWrap="False" />
+    </DockPanel>
+</UserControl>

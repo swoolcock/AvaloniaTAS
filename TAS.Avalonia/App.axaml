@@ -1,0 +1,18 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:TAS.Avalonia"
+             Name="TAS Studio"
+             x:Class="TAS.Avalonia.App">
+    <Application.DataTemplates>
+        <local:ViewLocator/>
+    </Application.DataTemplates>
+
+    <Application.Styles>
+        <FluentTheme Mode="Dark"/>
+        <StyleInclude Source="avares://AvaloniaEdit/AvaloniaEdit.xaml" />
+    </Application.Styles>
+    
+    <Application.Resources>
+        <FontFamily x:Key="CodeFontFamily">Cascadia Code,Consolas,Menlo,Monospace</FontFamily>
+    </Application.Resources>
+</Application>

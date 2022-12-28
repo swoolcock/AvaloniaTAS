@@ -1,0 +1,22 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Celeste TAS File",
+  "patterns": [
+    {
+      "include": "#commands"
+    },
+    {
+      "include": "#comment"
+    }
+  ],
+  "repository": {
+    "comment": {
+      "name": "comment.line.number-sign.celeste-tas",
+      "match": "^\\s*#.*"
+    },
+    "commands": {
+      "patterns": []
+    }
+  },
+  "scopeName": "source.celeste-tas"
+}
