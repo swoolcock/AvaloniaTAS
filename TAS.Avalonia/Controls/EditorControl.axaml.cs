@@ -5,6 +5,7 @@ using Avalonia.Input;
 using AvaloniaEdit;
 using AvaloniaEdit.Document;
 using AvaloniaEdit.Editing;
+using AvaloniaEdit.Indentation;
 using AvaloniaEdit.Indentation.CSharp;
 using AvaloniaEdit.Rendering;
 using AvaloniaEdit.TextMate;
@@ -51,7 +52,8 @@ public partial class EditorControl : UserControl
     {
         InitializeComponent();
         editor.ShowLineNumbers = true;
-        editor.TextArea.IndentationStrategy = new CSharpIndentationStrategy(editor.Options);
+        editor.TextArea.IndentationStrategy = null;
+        // editor.TextArea.IndentationStrategy = new CSharpIndentationStrategy(editor.Options);
         DocumentProperty.Changed.Subscribe(args => editor.Document = args.NewValue.Value);
 
         _registryOptions = new RegistryOptions(_currentTheme);

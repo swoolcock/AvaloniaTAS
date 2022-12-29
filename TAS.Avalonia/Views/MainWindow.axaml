@@ -95,6 +95,69 @@
     </NativeMenu.Menu>
     
     <DockPanel>
+        <Menu DockPanel.Dock="Top" IsVisible="{Binding MenuVisible}">
+            <MenuItem Header="File">
+                <MenuItem Header="New File" Command="{Binding NewFileCommand}" />
+                <Separator />
+                <MenuItem Header="Open File..." />
+                <MenuItem Header="Open Previous File" />
+                <MenuItem Header="Open Recent">
+                    <MenuItem Header="Celeste.tas" />
+                </MenuItem>
+                <MenuItem Header="Open Backup">
+                    <MenuItem Header="Celeste.tas" />
+                </MenuItem>
+                <Separator />
+                <MenuItem Header="Save As..." />
+                <MenuItem Header="Convert to LibTAS Inputs..." />
+            </MenuItem>
+            <MenuItem Header="Settings">
+                <MenuItem Header="Send Inputs to Celeste" />
+                <MenuItem Header="Auto Remove Mutually Exclusive Actions" />
+                <MenuItem Header="Show Game Info" />
+                <MenuItem Header="Automatic Backup">
+                    <MenuItem Header="Enabled" />
+                    <MenuItem Header="Backup Rate (minutes): 1" />
+                    <MenuItem Header="Backup File Count: 100" />
+                </MenuItem>
+                <MenuItem Header="Font..." />
+                <MenuItem Header="Themes">
+                    <MenuItem Header="Light" />
+                    <MenuItem Header="Dark" />
+                    <MenuItem Header="Custom" />
+                </MenuItem>
+            </MenuItem>
+            <MenuItem Header="Toggles">
+                <MenuItem Header="Hitboxes" Command="{Binding ToggleHitboxesCommand}" />
+                <MenuItem Header="Trigger Hitboxes" Command="{Binding ToggleHitboxesCommand}" />
+                <MenuItem Header="Unloaded Rooms Hitboxes" Command="{Binding ToggleHitboxesCommand}" />
+                <MenuItem Header="Camera Hitboxes" Command="{Binding ToggleHitboxesCommand}" />
+                <MenuItem Header="Simplified Hitboxes" Command="{Binding ToggleHitboxesCommand}" />
+                <MenuItem Header="Actual Collide Hitboxes" Command="{Binding ToggleHitboxesCommand}" />
+                <Separator />
+                <MenuItem Header="Simplified Graphics" Command="{Binding ToggleHitboxesCommand}" />
+                <MenuItem Header="Gameplay" Command="{Binding ToggleHitboxesCommand}" />
+                <Separator />
+                <MenuItem Header="Center Camera" Command="{Binding ToggleHitboxesCommand}" />
+                <Separator />
+                <MenuItem Header="Info HUD" Command="{Binding ToggleHitboxesCommand}" />
+                <MenuItem Header="TAS Input Info" Command="{Binding ToggleHitboxesCommand}" />
+                <MenuItem Header="Game Info" Command="{Binding ToggleHitboxesCommand}" />
+                <MenuItem Header="Watch Entity Info" Command="{Binding ToggleHitboxesCommand}" />
+                <MenuItem Header="Custom Info" Command="{Binding ToggleHitboxesCommand}" />
+                <MenuItem Header="Subpixel Indicator" Command="{Binding ToggleHitboxesCommand}" />
+                <Separator />
+                <MenuItem Header="Position Decimals" Command="{Binding ToggleHitboxesCommand}" />
+                <MenuItem Header="Speed Decimals" Command="{Binding ToggleHitboxesCommand}" />
+                <MenuItem Header="Velocity Decimals" Command="{Binding ToggleHitboxesCommand}" />
+                <MenuItem Header="Custom Info Decimals" Command="{Binding ToggleHitboxesCommand}" />
+                <MenuItem Header="Subpixel Indicator Decimals" Command="{Binding ToggleHitboxesCommand}" />
+                <MenuItem Header="Unit of Speed" Command="{Binding ToggleHitboxesCommand}" />
+                <Separator />
+                <MenuItem Header="Fast Forward Speed" Command="{Binding ToggleHitboxesCommand}" />
+                <MenuItem Header="Slow Forward Speed" Command="{Binding ToggleHitboxesCommand}" />
+            </MenuItem>
+        </Menu>
         <controls:EditorControl Document="{Binding Document}"
                                 KeyUpAction="{Binding KeyUpAction}"
                                 KeyDownAction="{Binding KeyDownAction}"
