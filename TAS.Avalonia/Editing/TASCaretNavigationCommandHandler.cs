@@ -10,6 +10,7 @@ using AvaloniaEdit.Editing;
 using AvaloniaEdit.Rendering;
 using AvaloniaEdit.Text;
 using AvaloniaEdit.Utils;
+using TAS.Core.Models;
 
 namespace TAS.Avalonia.Editing;
 
@@ -163,7 +164,21 @@ internal static class TASCaretNavigationCommandHandler
     internal static void MoveCaret(TextArea textArea, CaretMovementType direction)
     {
         var desiredXpos = textArea.Caret.DesiredXPos;
-        textArea.Caret.Position = GetNewCaretPosition(textArea.TextView, textArea.Caret.Position, direction, textArea.Selection.EnableVirtualSpace, ref desiredXpos);
+        var newPosition = GetNewCaretPosition(textArea.TextView, textArea.Caret.Position, direction, textArea.Selection.EnableVirtualSpace, ref desiredXpos);
+
+        // ensure we're within the frame count
+        if (textArea.Document.GetLineByNumber(newPosition.Line) is { } line &&
+            textArea.Document.GetText(line) is { } lineText &&
+            TASActionLine.TryParse(lineText, out var actionLine))
+        {
+            newPosition.Column = Math.Clamp(
+                newPosition.Column,
+                TASActionLine.MaxFramesDigits - actionLine.Frames.Digits() + 1,
+                TASActionLine.MaxFramesDigits + 1);
+            newPosition.VisualColumn = newPosition.Column - 1;
+        }
+
+        textArea.Caret.Position = newPosition;
         textArea.Caret.DesiredXPos = desiredXpos;
     }
 
