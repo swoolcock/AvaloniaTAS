@@ -159,8 +159,6 @@
             </MenuItem>
         </Menu>
         <controls:EditorControl Document="{Binding Document}"
-                                KeyUpAction="{Binding KeyUpAction}"
-                                KeyDownAction="{Binding KeyDownAction}"
                                 CaretPosition="{Binding CaretPosition, Mode=TwoWay}" />
     </DockPanel>
 </Window>
