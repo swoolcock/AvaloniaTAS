@@ -43,6 +43,7 @@ public partial class EditorControl : UserControl
         var csharpLanguage = _registryOptions.GetLanguageByExtension(".cs");
         _textMateInstallation.SetGrammar(_registryOptions.GetScopeByLanguageId(csharpLanguage.Id));
         editor.TextArea.ActiveInputHandler = new TASInputHandler(editor.TextArea);
+        editor.TextArea.PushStackedInputHandler(new TASStackedInputHandler(editor.TextArea));
         editor.TextArea.Caret.PositionChanged += (_, _) => CaretPosition = editor.TextArea.Caret.Position;
 
         PropertyChanged += (_, e) =>

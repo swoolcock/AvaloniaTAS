@@ -29,6 +29,10 @@ public static class Extensions
             _ => TASAction.None,
         };
 
+    public static bool ValidForAction(this KeyGesture self) =>
+        self.KeyModifiers == KeyModifiers.None && self.Key.NumberForKey() >= 0 ||
+        self.KeyModifiers is KeyModifiers.None or KeyModifiers.Shift && self.Key.ActionForKey() != TASAction.None;
+
     public static int NumberForKey(this Key self) =>
         self switch
         {

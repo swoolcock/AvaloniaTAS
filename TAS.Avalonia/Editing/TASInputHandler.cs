@@ -1,10 +1,11 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Windows.Input;
 using Avalonia.Input;
 using AvaloniaEdit;
 using AvaloniaEdit.Document;
 using AvaloniaEdit.Editing;
-using TAS.Core.Models;
 
 namespace TAS.Avalonia.Editing;
 
@@ -19,6 +20,9 @@ public class TASInputHandler : TextAreaInputHandler
     public ITextAreaInputHandler MouseSelection { get; }
 
     private TASInputHandler InputHandler => TextArea.ActiveInputHandler as TASInputHandler;
+
+    public IEnumerable<KeyBinding> AllKeyBindings =>
+        KeyBindings.Concat(CaretNavigation.KeyBindings).Concat(Editing.KeyBindings);
 
     public TASInputHandler(TextArea textArea) : base(textArea)
     {
@@ -95,101 +99,5 @@ public class TASInputHandler : TextAreaInputHandler
             return;
         e.Handled = true;
         e.CanExecute = undoStack.CanRedo;
-    }
-
-    // public override void OnPreviewKeyDown(KeyEventArgs e)
-    // {
-    //     var caretPosition = TextArea.Caret.Position;
-    //     var desiredXpos = TextArea.Caret.DesiredXPos;
-    //     if (!TryGetLine(TextArea.Document, caretPosition, out var line, out var lineText)) return;
-    //
-    //     var caretKeyBinding = InputHandler.CaretNavigation.KeyBindings.FirstOrDefault(b => b.Gesture.Matches(e));
-    //     if (caretKeyBinding != null)
-    //     {
-    //         var visualLine = TextArea.TextView.GetOrConstructVisualLine((DocumentLine)line);
-    //         var visualTextLine = visualLine.GetTextLine(caretPosition.VisualColumn, caretPosition.IsAtEndOfLine);
-    //         var isActionLine = TASActionLine.TryParse(lineText, out var actionLine);
-    //         var lastColumn = isActionLine ? TASActionLine.MaxFramesDigits + 1 : line.TotalLength + 1;
-    //         var firstColumn = isActionLine ? lastColumn - actionLine.Frames.Digits() : 1;
-    //         var startOfLine = caretPosition.Column <= firstColumn;
-    //         var endOfLine = caretPosition.Column >= lastColumn;
-    //
-    //         var movementType = CaretMovementTypeExtensions.ForKeyBinding(caretKeyBinding);
-    //         // handle moving left
-    //         if (caretKeyBinding.Command == EditingCommands.MoveLeftByCharacter || caretKeyBinding.Command == EditingCommands.MoveLeftByWord)
-    //         {
-    //             if (startOfLine && caretPosition.Line > 1)
-    //             {
-    //                 caretPosition.Line--;
-    //                 caretPosition.VisualColumn = caretPosition.Column = LastColumn(caretPosition);
-    //             }
-    //             else if (!startOfLine && caretKeyBinding.Command == EditingCommands.MoveLeftByWord)
-    //                 caretPosition.VisualColumn = caretPosition.Column = FirstColumn(caretPosition);
-    //             else if (!startOfLine) caretPosition.VisualColumn = caretPosition.Column = (caretPosition.Column - 1);
-    //
-    //             TextArea.Caret.Position = caretPosition;
-    //             TextArea.Caret.BringCaretToView();
-    //             e.Handled = true;
-    //         }
-    //         // handle moving right
-    //         else if (caretKeyBinding.Command == EditingCommands.MoveRightByCharacter || caretKeyBinding.Command == EditingCommands.MoveRightByWord)
-    //         {
-    //             if (endOfLine && caretPosition.Line < TextArea.Document.LineCount)
-    //             {
-    //                 caretPosition.Line++;
-    //                 caretPosition.VisualColumn = caretPosition.Column = FirstColumn(caretPosition);
-    //             }
-    //             else if (!endOfLine && caretKeyBinding.Command == EditingCommands.MoveRightByWord)
-    //                 caretPosition.VisualColumn = caretPosition.Column = LastColumn(caretPosition);
-    //             else if (!endOfLine) caretPosition.VisualColumn = caretPosition.Column = (caretPosition.Column + 1);
-    //
-    //             TextArea.Caret.Position = caretPosition;
-    //             TextArea.Caret.BringCaretToView();
-    //             e.Handled = true;
-    //         }
-    //         // handle moving up
-    //         else if (caretKeyBinding.Command == EditingCommands.MoveUpByLine || caretKeyBinding.Command == EditingCommands.MoveUpByPage)
-    //         {
-    //             if (caretPosition.Line == 1)
-    //                 caretPosition.VisualColumn = caretPosition.Column = FirstColumn(caretPosition);
-    //             else if (caretKeyBinding.Command == EditingCommands.MoveUpByLine)
-    //             {
-    //                 var lineVisualYPosition = visualLine.GetTextLineVisualYPosition(visualTextLine, VisualYPosition.LineMiddle);
-    //                 var visualTop = lineVisualYPosition - TextArea.TextView.Bounds.Height;
-    //                 var docLineByVisualTop = TextArea.TextView.GetDocumentLineByVisualTop(visualTop);
-    //                 visualLine = TextArea.TextView.GetOrConstructVisualLine(docLineByVisualTop);
-    //                 visualTextLine = visualLine.GetTextLineByVisualYPosition(visualTop);
-    //             }
-    //
-    //             TextArea.Caret.Position = caretPosition;
-    //             TextArea.Caret.BringCaretToView();
-    //             e.Handled = true;
-    //         }
-    //     }
-    // }
-
-    private int FirstColumn(TextViewPosition caretPosition)
-    {
-        if (!TryGetLine(TextArea.Document, caretPosition, out _, out var lineText)) return 1;
-        return TASActionLine.TryParse(lineText, out var actionLine) ? TASActionLine.MaxFramesDigits - actionLine.Frames.Digits() + 1 : 1;
-    }
-
-    private int LastColumn(TextViewPosition caretPosition)
-    {
-        if (!TryGetLine(TextArea.Document, caretPosition, out var line, out var lineText)) return 1;
-        return TASActionLine.TryParse(lineText, out _) ? TASActionLine.MaxFramesDigits + 1 : line.TotalLength + 1;
-    }
-
-    private static bool TryGetLine(IDocument document, TextViewPosition caretPosition, out IDocumentLine line, out string lineText)
-    {
-        line = null;
-        lineText = null;
-        if (document == null) return false;
-
-        line = document.GetLineByNumber(caretPosition.Line);
-        if (line == null) return false;
-
-        lineText = document.GetText(line);
-        return lineText != null;
     }
 }
