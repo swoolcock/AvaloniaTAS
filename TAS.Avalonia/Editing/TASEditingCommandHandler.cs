@@ -8,6 +8,8 @@ using AvaloniaEdit;
 using AvaloniaEdit.Document;
 using AvaloniaEdit.Editing;
 using AvaloniaEdit.Utils;
+using DynamicData;
+using TAS.Core.Models;
 
 namespace TAS.Avalonia.Editing;
 
@@ -216,13 +218,68 @@ internal class TASEditingCommandHandler
             if (textArea.Selection.IsEmpty)
             {
                 TextViewPosition position = textArea.Caret.Position;
-                var enableVirtualSpace = textArea.Options.EnableVirtualSpace;
-                if (caretMovement == CaretMovementType.CharRight) enableVirtualSpace = false;
-                var desiredXpos = textArea.Caret.DesiredXPos;
-                TextViewPosition endPosition = TASCaretNavigationCommandHandler.GetNewCaretPosition(textArea.TextView, position, caretMovement, enableVirtualSpace, ref desiredXpos);
-                if (endPosition.Line < 1 || endPosition.Column < 1) endPosition = new TextViewPosition(Math.Max(endPosition.Line, 1), Math.Max(endPosition.Column, 1));
-                if (textArea.Selection is RectangleSelection && position.Line != endPosition.Line) return;
-                textArea.Selection.StartSelectionOrSetEndpoint(position, endPosition).ReplaceSelectionWithText(string.Empty);
+                if (textArea.Document.GetLineByNumber(position.Line) is { } line &&
+                    textArea.Document.GetText(line) is { } lineText &&
+                    TASActionLine.TryParse(lineText, out var actionLine))
+                {
+                    var leadingSpaces = lineText.Length - lineText.TrimStart().Length;
+                    var lineStartPosition = new TextViewPosition(position.Line, 1);
+                    var lineEndPosition = new TextViewPosition(position.Line, line.Length + 1);
+                    var cursorIndex = Math.Clamp(position.Column - leadingSpaces - 1, 0, actionLine.Frames.Digits());
+                    var newLineText = string.Empty;
+
+                    var framesString = actionLine.Frames.ToString();
+                    var leftOfCursor = framesString[..cursorIndex];
+                    var rightOfCursor = framesString[cursorIndex..];
+
+                    if (actionLine.Frames == 0)
+                        newLineText = string.Empty;
+                    else if (leftOfCursor.Length == 0 && caretMovement is CaretMovementType.WordLeft or CaretMovementType.Backspace ||
+                        rightOfCursor.Length == 0 && caretMovement is CaretMovementType.WordRight or CaretMovementType.CharRight)
+                        newLineText = string.Empty;
+                    else
+                    {
+                        var newFramesString = string.Empty;
+                        if (caretMovement == CaretMovementType.WordLeft)
+                        {
+                            newFramesString = rightOfCursor;
+                            cursorIndex = 0;
+                        }
+                        else if (caretMovement == CaretMovementType.WordRight)
+                            newFramesString = leftOfCursor;
+                        else if (caretMovement == CaretMovementType.Backspace)
+                        {
+                            newFramesString = $"{leftOfCursor[..^1]}{rightOfCursor}";
+                            cursorIndex--;
+                        }
+                        else if (caretMovement == CaretMovementType.CharRight)
+                            newFramesString = $"{leftOfCursor}{rightOfCursor[1..]}";
+
+                        actionLine.Frames = Math.Clamp(int.TryParse(newFramesString, out var value) ? value : 0, 0, TASActionLine.MaxFrames);
+                        newLineText = actionLine.ToString();
+                        position.Column = actionLine.Frames == 0
+                            ? TASActionLine.MaxFramesDigits + 1
+                            : TASActionLine.MaxFramesDigits - actionLine.Frames.Digits() + cursorIndex + 1;
+                    }
+
+                    textArea.Selection.StartSelectionOrSetEndpoint(lineStartPosition, lineEndPosition).ReplaceSelectionWithText(newLineText);
+                    if (string.IsNullOrEmpty(newLineText)) position = lineStartPosition;
+
+                    if (textArea.Caret.Position.Column != position.Column)
+                        position.VisualColumn = position.Column - 1;
+
+                    textArea.Caret.Position = position;
+                }
+                else
+                {
+                    var enableVirtualSpace = textArea.Options.EnableVirtualSpace;
+                    if (caretMovement == CaretMovementType.CharRight) enableVirtualSpace = false;
+                    var desiredXpos = textArea.Caret.DesiredXPos;
+                    TextViewPosition endPosition = TASCaretNavigationCommandHandler.GetNewCaretPosition(textArea.TextView, position, caretMovement, enableVirtualSpace, ref desiredXpos);
+                    if (endPosition.Line < 1 || endPosition.Column < 1) endPosition = new TextViewPosition(Math.Max(endPosition.Line, 1), Math.Max(endPosition.Column, 1));
+                    if (textArea.Selection is RectangleSelection && position.Line != endPosition.Line) return;
+                    textArea.Selection.StartSelectionOrSetEndpoint(position, endPosition).ReplaceSelectionWithText(string.Empty);
+                }
             }
             else
                 textArea.RemoveSelectedText();

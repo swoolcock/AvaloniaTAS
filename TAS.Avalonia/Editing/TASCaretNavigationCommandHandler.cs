@@ -166,15 +166,14 @@ internal static class TASCaretNavigationCommandHandler
         var desiredXpos = textArea.Caret.DesiredXPos;
         var newPosition = GetNewCaretPosition(textArea.TextView, textArea.Caret.Position, direction, textArea.Selection.EnableVirtualSpace, ref desiredXpos);
 
-        // ensure we're within the frame count
+        // ensure we're within the frame count, even if it's not formatted
         if (textArea.Document.GetLineByNumber(newPosition.Line) is { } line &&
             textArea.Document.GetText(line) is { } lineText &&
             TASActionLine.TryParse(lineText, out var actionLine))
         {
-            newPosition.Column = Math.Clamp(
-                newPosition.Column,
-                TASActionLine.MaxFramesDigits - actionLine.Frames.Digits() + 1,
-                TASActionLine.MaxFramesDigits + 1);
+            var leadingSpaces = lineText.Length - lineText.TrimStart().Length;
+            var digitCount = actionLine.Frames.Digits();
+            newPosition.Column = Math.Clamp(newPosition.Column, leadingSpaces + 1, leadingSpaces + digitCount + 1);
             newPosition.VisualColumn = newPosition.Column - 1;
         }
 
