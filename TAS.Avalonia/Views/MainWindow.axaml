@@ -158,7 +158,7 @@
                 <MenuItem Header="Slow Forward Speed" Command="{Binding ToggleHitboxesCommand}" />
             </MenuItem>
         </Menu>
-        <controls:EditorControl Document="{Binding Document}"
+        <controls:EditorControl x:Name="editor" Document="{Binding Document}"
                                 CaretPosition="{Binding CaretPosition, Mode=TwoWay}" />
     </DockPanel>
 </Window>
