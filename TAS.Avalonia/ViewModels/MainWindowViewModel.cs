@@ -6,6 +6,7 @@ using Avalonia;
 using AvaloniaEdit;
 using AvaloniaEdit.Document;
 using ReactiveUI;
+using TAS.Avalonia.Models;
 using TAS.Avalonia.Services;
 
 namespace TAS.Avalonia.ViewModels;
@@ -15,8 +16,8 @@ public class MainWindowViewModel : ViewModelBase
     public ReactiveCommand<Unit, Unit> NewFileCommand { get; }
     public ReactiveCommand<Unit, Unit> ToggleHitboxesCommand { get; }
 
-    private IDocument? _document;
-    public IDocument? Document
+    private TASDocument? _document;
+    public TASDocument? Document
     {
         get => _document;
         set => this.RaiseAndSetIfChanged(ref _document, value);
@@ -38,16 +39,7 @@ public class MainWindowViewModel : ViewModelBase
         _celesteService = AvaloniaLocator.Current.GetService<ICelesteService>()!;
         NewFileCommand = ReactiveCommand.Create(NewFile);
         ToggleHitboxesCommand = ReactiveCommand.Create(ToggleHitboxes);
-
-        try
-        {
-            var file = File.ReadAllText("/Users/shane/Celeste/Celeste.tas");
-            Document = new TextDocument(file);
-        }
-        catch
-        {
-            Document = new TextDocument();
-        }
+        Document = TASDocument.Load("/Users/shane/Celeste/Celeste.tas") ?? TASDocument.CreateBlank();
     }
 
     private void ToggleHitboxes()
@@ -57,6 +49,6 @@ public class MainWindowViewModel : ViewModelBase
 
     private void NewFile()
     {
-        Console.WriteLine("New File!");
+        Document = TASDocument.CreateBlank();
     }
 }

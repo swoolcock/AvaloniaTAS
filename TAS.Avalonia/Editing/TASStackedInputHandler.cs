@@ -68,6 +68,12 @@ public class TASStackedInputHandler : TextAreaStackedInputHandler
                 // entering a zero at the start should do nothing but format
                 if (cursorPosition == 0 && numberForKey == 0)
                     caretPosition.Column = TASActionLine.MaxFramesDigits - actionLine.Frames.Digits() + 1;
+                // if we have a 0, just force the new number
+                else if (actionLine.Frames == 0)
+                {
+                    actionLine.Frames = numberForKey;
+                    caretPosition.Column = TASActionLine.MaxFramesDigits + 1;
+                }
                 else
                 {
                     // jam the number into the current position
