@@ -14,6 +14,7 @@ public partial class App : Application
     public override void Initialize()
     {
         // TinyIoCContainer.Current.Register<ICelesteService, CelesteService>().AsSingleton();
+        AvaloniaLocator.CurrentMutable.Bind<IDialogService>().ToSingleton<DialogService>();
         AvaloniaLocator.CurrentMutable.Bind<ICelesteService>().ToSingleton<CelesteService>();
         AvaloniaXamlLoader.Load(this);
     }

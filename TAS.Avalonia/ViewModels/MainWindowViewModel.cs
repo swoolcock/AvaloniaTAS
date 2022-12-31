@@ -4,6 +4,7 @@ using System.Reactive;
 using System.Reactive.Linq;
 using System.Runtime.InteropServices;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Input;
 using AvaloniaEdit;
 using AvaloniaEdit.Document;
@@ -16,10 +17,12 @@ namespace TAS.Avalonia.ViewModels;
 public class MainWindowViewModel : ViewModelBase
 {
     public ReactiveCommand<Unit, Unit> NewFileCommand { get; }
+    public ReactiveCommand<Unit, Unit> OpenFileCommand { get; }
+    public ReactiveCommand<Unit, Unit> SaveFileAsCommand { get; }
     public ReactiveCommand<Unit, Unit> ToggleHitboxesCommand { get; }
 
-    private TASDocument? _document;
-    public TASDocument? Document
+    private TASDocument _document;
+    public TASDocument Document
     {
         get => _document;
         set => this.RaiseAndSetIfChanged(ref _document, value);
@@ -43,8 +46,13 @@ public class MainWindowViewModel : ViewModelBase
     {
         _celesteService = AvaloniaLocator.Current.GetService<ICelesteService>()!;
 
+        // File
         NewFileCommand = ReactiveCommand.Create(NewFile);
+        OpenFileCommand = ReactiveCommand.Create(OpenFile);
+        SaveFileAsCommand = ReactiveCommand.Create(SaveFileAs);
+        // Toggles
         ToggleHitboxesCommand = ReactiveCommand.Create(ToggleHitboxes);
+
         Document = TASDocument.Load("/Users/shane/Celeste/Celeste.tas") ?? TASDocument.CreateBlank();
         MainMenu = CreateMenu(MenuVisible);
         EditorContextMenu = CreateContextMenu();
@@ -56,7 +64,7 @@ public class MainWindowViewModel : ViewModelBase
         {
             new MenuModel("New File", NewFileCommand, gesture: new KeyGesture(Key.N, KeyModifiers.Meta)),
             MenuModel.Separator,
-            new MenuModel("Open File...", gesture: new KeyGesture(Key.O, KeyModifiers.Meta)),
+            new MenuModel("Open File...", OpenFileCommand, gesture: new KeyGesture(Key.O, KeyModifiers.Meta)),
             new MenuModel("Open Previous File"),
             new MenuModel("Open Recent")
             {
@@ -67,7 +75,7 @@ public class MainWindowViewModel : ViewModelBase
                 new MenuModel("Celeste.tas"),
             },
             MenuModel.Separator,
-            new MenuModel("Save As..."),
+            new MenuModel("Save As...", SaveFileAsCommand, gesture: new KeyGesture(Key.S, KeyModifiers.Meta)),
             new MenuModel("Convert to LibTAS Inputs..."),
             new MenuModel(string.Empty, isVisible: includeExit),
             new MenuModel("Exit", isVisible: includeExit),
@@ -187,8 +195,38 @@ public class MainWindowViewModel : ViewModelBase
         _celesteService.ToggleHitboxes();
     }
 
-    private void NewFile()
+    private async Task<bool> ConfirmDiscardChangesAsync()
     {
+        if (!Document.Dirty) return true;
+        var dialogService = AvaloniaLocator.Current.GetService<IDialogService>()!;
+        return await dialogService.ShowConfirmDialogAsync("You have unsaved changes. Are you sure?");
+    }
+
+    private async void NewFile()
+    {
+        // delay to allow the UI to recover
+        await Task.Delay(TimeSpan.FromSeconds(0.1f));
+
+        if (!await ConfirmDiscardChangesAsync()) return;
         Document = TASDocument.CreateBlank();
+    }
+
+    private async void OpenFile()
+    {
+        // delay to allow the UI to recover
+        await Task.Delay(TimeSpan.FromSeconds(0.1f));
+
+        if (!await ConfirmDiscardChangesAsync()) return;
+        var dialogService = AvaloniaLocator.Current.GetService<IDialogService>()!;
+        var results = await dialogService.ShowOpenFileDialogAsync("Celeste TAS", "tas");
+    }
+
+    private async void SaveFileAs()
+    {
+        // delay to allow the UI to recover
+        await Task.Delay(TimeSpan.FromSeconds(0.1f));
+
+        var dialogService = AvaloniaLocator.Current.GetService<IDialogService>()!;
+        var results = await dialogService.ShowSaveFileDialogAsync("Celeste TAS", "tas");
     }
 }
