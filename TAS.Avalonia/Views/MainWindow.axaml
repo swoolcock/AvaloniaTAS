@@ -2,163 +2,25 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:behaviors="clr-namespace:TAS.Avalonia.Behaviors"
         xmlns:controls="clr-namespace:TAS.Avalonia.Controls"
         xmlns:viewModels="clr-namespace:TAS.Avalonia.ViewModels"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="600"
         x:Class="TAS.Avalonia.Views.MainWindow"
         Icon="/Assets/avalonia-logo.ico"
+        NativeMenu.Menu="{Binding MainMenu, Converter={StaticResource NativeMenuConverter}}"
+        Width="400" Height="600"
         Title="TAS Studio">
 
     <Design.DataContext>
         <viewModels:MainWindowViewModel/>
     </Design.DataContext>
     
-    <NativeMenu.Menu>
-        <NativeMenu>
-            <NativeMenuItem Header="File">
-                <NativeMenu>
-                    <NativeMenuItem Header="New File" Gesture="Cmd+N" Command="{Binding NewFileCommand}" />
-                    <NativeMenuItemSeparator />
-                    <NativeMenuItem Header="Open File..." Gesture="Cmd+O" />
-                    <NativeMenuItem Header="Open Previous File" />
-                    <NativeMenuItem Header="Open Recent">
-                        <NativeMenu>
-                            <NativeMenuItem Header="Celeste.tas" />
-                        </NativeMenu>
-                    </NativeMenuItem>
-                    <NativeMenuItem Header="Open Backup">
-                        <NativeMenu>
-                            <NativeMenuItem Header="Celeste.tas" />
-                        </NativeMenu>
-                    </NativeMenuItem>
-                    <NativeMenuItemSeparator />
-                    <NativeMenuItem Header="Save As..." Gesture="Cmd+S" />
-                    <NativeMenuItem Header="Convert to LibTAS Inputs..." />
-                </NativeMenu>
-            </NativeMenuItem>
-            <NativeMenuItem Header="Settings">
-                <NativeMenu>
-                    <NativeMenuItem Header="Send Inputs to Celeste" Gesture="Cmd+D" ToggleType="CheckBox" IsChecked="True" />
-                    <NativeMenuItem Header="Auto Remove Mutually Exclusive Actions" ToggleType="CheckBox" IsChecked="True" />
-                    <NativeMenuItem Header="Show Game Info" ToggleType="CheckBox" IsChecked="True" />
-                    <NativeMenuItem Header="Automatic Backup">
-                        <NativeMenu>
-                            <NativeMenuItem Header="Enabled" ToggleType="CheckBox" IsChecked="True" />
-                            <NativeMenuItem Header="Backup Rate (minutes): 1" />
-                            <NativeMenuItem Header="Backup File Count: 100" />
-                        </NativeMenu>
-                    </NativeMenuItem>
-                    <NativeMenuItem Header="Font..." />
-                    <NativeMenuItem Header="Themes">
-                        <NativeMenu>
-                            <NativeMenuItem Header="Light" ToggleType="Radio" IsChecked="True" />
-                            <NativeMenuItem Header="Dark" />
-                            <NativeMenuItem Header="Custom" />
-                        </NativeMenu>
-                    </NativeMenuItem>
-                </NativeMenu>
-            </NativeMenuItem>
-            <NativeMenuItem Header="Toggles">
-                <NativeMenu>
-                    <NativeMenuItem Header="Hitboxes" Gesture="Cmd+H" Command="{Binding ToggleHitboxesCommand}" />
-                    <NativeMenuItem Header="Trigger Hitboxes" Command="{Binding ToggleHitboxesCommand}" />
-                    <NativeMenuItem Header="Unloaded Rooms Hitboxes" Command="{Binding ToggleHitboxesCommand}" />
-                    <NativeMenuItem Header="Camera Hitboxes" Command="{Binding ToggleHitboxesCommand}" />
-                    <NativeMenuItem Header="Simplified Hitboxes" Command="{Binding ToggleHitboxesCommand}" />
-                    <NativeMenuItem Header="Actual Collide Hitboxes" Command="{Binding ToggleHitboxesCommand}" />
-                    <NativeMenuItemSeparator />
-                    <NativeMenuItem Header="Simplified Graphics" Command="{Binding ToggleHitboxesCommand}" />
-                    <NativeMenuItem Header="Gameplay" Command="{Binding ToggleHitboxesCommand}" />
-                    <NativeMenuItemSeparator />
-                    <NativeMenuItem Header="Center Camera" Command="{Binding ToggleHitboxesCommand}" />
-                    <NativeMenuItemSeparator />
-                    <NativeMenuItem Header="Info HUD" Command="{Binding ToggleHitboxesCommand}" />
-                    <NativeMenuItem Header="TAS Input Info" Command="{Binding ToggleHitboxesCommand}" />
-                    <NativeMenuItem Header="Game Info" Command="{Binding ToggleHitboxesCommand}" />
-                    <NativeMenuItem Header="Watch Entity Info" Command="{Binding ToggleHitboxesCommand}" />
-                    <NativeMenuItem Header="Custom Info" Command="{Binding ToggleHitboxesCommand}" />
-                    <NativeMenuItem Header="Subpixel Indicator" Command="{Binding ToggleHitboxesCommand}" />
-                    <NativeMenuItemSeparator />
-                    <NativeMenuItem Header="Position Decimals" Command="{Binding ToggleHitboxesCommand}" />
-                    <NativeMenuItem Header="Speed Decimals" Command="{Binding ToggleHitboxesCommand}" />
-                    <NativeMenuItem Header="Velocity Decimals" Command="{Binding ToggleHitboxesCommand}" />
-                    <NativeMenuItem Header="Custom Info Decimals" Command="{Binding ToggleHitboxesCommand}" />
-                    <NativeMenuItem Header="Subpixel Indicator Decimals" Command="{Binding ToggleHitboxesCommand}" />
-                    <NativeMenuItem Header="Unit of Speed" Command="{Binding ToggleHitboxesCommand}" />
-                    <NativeMenuItemSeparator />
-                    <NativeMenuItem Header="Fast Forward Speed" Command="{Binding ToggleHitboxesCommand}" />
-                    <NativeMenuItem Header="Slow Forward Speed" Command="{Binding ToggleHitboxesCommand}" />
-                </NativeMenu>
-            </NativeMenuItem>
-        </NativeMenu>
-    </NativeMenu.Menu>
-    
     <DockPanel>
-        <Menu DockPanel.Dock="Top" IsVisible="{Binding MenuVisible}">
-            <MenuItem Header="File">
-                <MenuItem Header="New File" Command="{Binding NewFileCommand}" />
-                <Separator />
-                <MenuItem Header="Open File..." />
-                <MenuItem Header="Open Previous File" />
-                <MenuItem Header="Open Recent">
-                    <MenuItem Header="Celeste.tas" />
-                </MenuItem>
-                <MenuItem Header="Open Backup">
-                    <MenuItem Header="Celeste.tas" />
-                </MenuItem>
-                <Separator />
-                <MenuItem Header="Save As..." />
-                <MenuItem Header="Convert to LibTAS Inputs..." />
-            </MenuItem>
-            <MenuItem Header="Settings">
-                <MenuItem Header="Send Inputs to Celeste" />
-                <MenuItem Header="Auto Remove Mutually Exclusive Actions" />
-                <MenuItem Header="Show Game Info" />
-                <MenuItem Header="Automatic Backup">
-                    <MenuItem Header="Enabled" />
-                    <MenuItem Header="Backup Rate (minutes): 1" />
-                    <MenuItem Header="Backup File Count: 100" />
-                </MenuItem>
-                <MenuItem Header="Font..." />
-                <MenuItem Header="Themes">
-                    <MenuItem Header="Light" />
-                    <MenuItem Header="Dark" />
-                    <MenuItem Header="Custom" />
-                </MenuItem>
-            </MenuItem>
-            <MenuItem Header="Toggles">
-                <MenuItem Header="Hitboxes" Command="{Binding ToggleHitboxesCommand}" />
-                <MenuItem Header="Trigger Hitboxes" Command="{Binding ToggleHitboxesCommand}" />
-                <MenuItem Header="Unloaded Rooms Hitboxes" Command="{Binding ToggleHitboxesCommand}" />
-                <MenuItem Header="Camera Hitboxes" Command="{Binding ToggleHitboxesCommand}" />
-                <MenuItem Header="Simplified Hitboxes" Command="{Binding ToggleHitboxesCommand}" />
-                <MenuItem Header="Actual Collide Hitboxes" Command="{Binding ToggleHitboxesCommand}" />
-                <Separator />
-                <MenuItem Header="Simplified Graphics" Command="{Binding ToggleHitboxesCommand}" />
-                <MenuItem Header="Gameplay" Command="{Binding ToggleHitboxesCommand}" />
-                <Separator />
-                <MenuItem Header="Center Camera" Command="{Binding ToggleHitboxesCommand}" />
-                <Separator />
-                <MenuItem Header="Info HUD" Command="{Binding ToggleHitboxesCommand}" />
-                <MenuItem Header="TAS Input Info" Command="{Binding ToggleHitboxesCommand}" />
-                <MenuItem Header="Game Info" Command="{Binding ToggleHitboxesCommand}" />
-                <MenuItem Header="Watch Entity Info" Command="{Binding ToggleHitboxesCommand}" />
-                <MenuItem Header="Custom Info" Command="{Binding ToggleHitboxesCommand}" />
-                <MenuItem Header="Subpixel Indicator" Command="{Binding ToggleHitboxesCommand}" />
-                <Separator />
-                <MenuItem Header="Position Decimals" Command="{Binding ToggleHitboxesCommand}" />
-                <MenuItem Header="Speed Decimals" Command="{Binding ToggleHitboxesCommand}" />
-                <MenuItem Header="Velocity Decimals" Command="{Binding ToggleHitboxesCommand}" />
-                <MenuItem Header="Custom Info Decimals" Command="{Binding ToggleHitboxesCommand}" />
-                <MenuItem Header="Subpixel Indicator Decimals" Command="{Binding ToggleHitboxesCommand}" />
-                <MenuItem Header="Unit of Speed" Command="{Binding ToggleHitboxesCommand}" />
-                <Separator />
-                <MenuItem Header="Fast Forward Speed" Command="{Binding ToggleHitboxesCommand}" />
-                <MenuItem Header="Slow Forward Speed" Command="{Binding ToggleHitboxesCommand}" />
-            </MenuItem>
-        </Menu>
+        <Menu DockPanel.Dock="Top"
+              IsVisible="{Binding MenuVisible}"
+              Items="{Binding MainMenu, Converter={StaticResource MenuConverter}}" />
         <controls:EditorControl x:Name="editor" Document="{Binding Document}"
-                                CaretPosition="{Binding CaretPosition, Mode=TwoWay}" />
+                                CaretPosition="{Binding CaretPosition, Mode=TwoWay}"
+                                ContextMenu="{Binding EditorContextMenu, Converter={StaticResource ContextMenuConverter}}" />
     </DockPanel>
 </Window>

@@ -1,4 +1,5 @@
 using System;
+using System.Reactive.Linq;
 using Avalonia.Input;
 using TAS.Avalonia.Models;
 
@@ -42,4 +43,7 @@ public static class Extensions
         };
 
     public static int Digits(this int self) => Math.Abs(self).ToString().Length;
+
+    public static IObservable<T> AsObservable<T>(this T self) => Observable.Return(self);
+    public static IEnumerable<T> Yield<T>(this T self) => new[] { self };
 }
