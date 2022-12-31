@@ -1,4 +1,8 @@
-namespace TAS.Core.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace TAS.Avalonia.Models;
 
 // ReSharper disable InconsistentNaming
 

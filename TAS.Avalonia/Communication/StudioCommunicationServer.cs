@@ -1,9 +1,12 @@
+using System;
+using System.Collections.Generic;
 using System.Globalization;
-using System.Net.Mime;
+using System.Linq;
 using System.Text;
+using System.Threading;
 using StudioCommunication;
 
-namespace TAS.Core.Communication;
+namespace TAS.Avalonia.Communication;
 
 public class StudioCommunicationServer : StudioCommunicationBase
 {

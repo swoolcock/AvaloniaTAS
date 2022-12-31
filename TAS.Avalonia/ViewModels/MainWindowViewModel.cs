@@ -2,11 +2,11 @@
 using System.IO;
 using System.Reactive;
 using System.Runtime.InteropServices;
+using Avalonia;
 using AvaloniaEdit;
 using AvaloniaEdit.Document;
 using ReactiveUI;
-using TAS.Core;
-using TAS.Core.Services;
+using TAS.Avalonia.Services;
 
 namespace TAS.Avalonia.ViewModels;
 
@@ -35,7 +35,7 @@ public class MainWindowViewModel : ViewModelBase
 
     public MainWindowViewModel()
     {
-        _celesteService = TinyIoCContainer.Current.Resolve<ICelesteService>();
+        _celesteService = AvaloniaLocator.Current.GetService<ICelesteService>()!;
         NewFileCommand = ReactiveCommand.Create(NewFile);
         ToggleHitboxesCommand = ReactiveCommand.Create(ToggleHitboxes);
 

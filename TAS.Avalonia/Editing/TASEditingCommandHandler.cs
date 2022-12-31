@@ -9,7 +9,7 @@ using AvaloniaEdit.Document;
 using AvaloniaEdit.Editing;
 using AvaloniaEdit.Utils;
 using DynamicData;
-using TAS.Core.Models;
+using TAS.Avalonia.Models;
 
 namespace TAS.Avalonia.Editing;
 

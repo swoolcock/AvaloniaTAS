@@ -1,39 +1,41 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-    <PropertyGroup>
-        <OutputType>WinExe</OutputType>
-        <TargetFramework>net6.0</TargetFramework>
-        <Nullable>enable</Nullable>
-        <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
-        <ApplicationManifest>app.manifest</ApplicationManifest>
-    </PropertyGroup>
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>TAS.Avalonia</RootNamespace>
+  </PropertyGroup>
 
-    <ItemGroup>
-        <Compile Update="**\*.axaml.cs">
-          <DependentUpon>%(Filename)</DependentUpon>
-          <SubType>Code</SubType>
-        </Compile>
-        <AvaloniaResource Include="Assets\**" />
-        <None Remove=".gitignore" />
-    </ItemGroup>
+  <ItemGroup>
+    <Compile Update="**\*.axaml.cs">
+      <DependentUpon>%(Filename)</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <AvaloniaResource Include="Assets\**" />
+    <None Remove=".gitignore" />
+  </ItemGroup>
 
-    <ItemGroup>
-        <TrimmerRootDescriptor Include="Roots.xml" />
-    </ItemGroup>
+  <ItemGroup>
+    <TrimmerRootDescriptor Include="Roots.xml" />
+  </ItemGroup>
 
-    <ItemGroup>
-        <PackageReference Include="Avalonia" Version="0.10.18" />
-        <PackageReference Include="Avalonia.AvaloniaEdit" Version="0.10.12.2" />
-        <PackageReference Include="Avalonia.Desktop" Version="0.10.18" />
-        <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-        <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="0.10.18" />
-        <PackageReference Include="Avalonia.ReactiveUI" Version="0.10.18" />
-        <PackageReference Include="Avalonia.Xaml.Interactions" Version="0.10.18" />
-        <PackageReference Include="AvaloniaEdit.TextMate" Version="0.10.12.2" />
-        <PackageReference Include="AvaloniaEdit.TextMate.Grammars" Version="0.10.12" />
-        <PackageReference Include="XamlNameReferenceGenerator" Version="1.5.1" />
-    </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="0.10.18" />
+    <PackageReference Include="Avalonia.AvaloniaEdit" Version="0.10.12.2" />
+    <PackageReference Include="Avalonia.Desktop" Version="0.10.18" />
+    <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
+    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="0.10.18" />
+    <PackageReference Include="Avalonia.ReactiveUI" Version="0.10.18" />
+    <PackageReference Include="Avalonia.Xaml.Interactions" Version="0.10.18" />
+    <PackageReference Include="AvaloniaEdit.TextMate" Version="0.10.12.2" />
+    <PackageReference Include="AvaloniaEdit.TextMate.Grammars" Version="0.10.12" />
+    <PackageReference Include="XamlNameReferenceGenerator" Version="1.5.1" />
+    <PackageReference Include="JetBrains.Annotations" Version="2022.3.1" />
+    <PackageReference Include="ReactiveUI" Version="13.2.10" />
+  </ItemGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\TAS.Core\TAS.Core.csproj" />
-    </ItemGroup>
+  <Import Project="..\..\CelesteTAS-EverestInterop\StudioCommunication\StudioCommunication.projitems" Label="Shared" />
 </Project>

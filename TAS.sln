@@ -1,7 +1,5 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TAS.Core", "TAS.Core\TAS.Core.csproj", "{B9B9104A-0C07-4696-843A-DF153EF50AE9}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TAS.Avalonia", "TAS.Avalonia\TAS.Avalonia.csproj", "{1B77590F-1D93-4B7C-953A-8C718D15D855}"
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "StudioCommunication", "..\CelesteTAS-EverestInterop\StudioCommunication\StudioCommunication.shproj", "{6B20B22D-D4C8-4F9D-A84A-E340551AE591}"
@@ -12,10 +10,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{B9B9104A-0C07-4696-843A-DF153EF50AE9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B9B9104A-0C07-4696-843A-DF153EF50AE9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B9B9104A-0C07-4696-843A-DF153EF50AE9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B9B9104A-0C07-4696-843A-DF153EF50AE9}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1B77590F-1D93-4B7C-953A-8C718D15D855}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1B77590F-1D93-4B7C-953A-8C718D15D855}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1B77590F-1D93-4B7C-953A-8C718D15D855}.Release|Any CPU.ActiveCfg = Release|Any CPU

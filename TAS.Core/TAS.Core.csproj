@@ -12,6 +12,10 @@
       <PackageReference Include="ReactiveUI" Version="13.2.10" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Models" />
+    </ItemGroup>
+
     <Import Project="..\..\CelesteTAS-EverestInterop\StudioCommunication\StudioCommunication.projitems" Label="Shared" />
 
 </Project>

@@ -1,4 +1,4 @@
-namespace TAS.Core;
+namespace TAS.Avalonia;
 
 // from WinForms
 public enum Keys

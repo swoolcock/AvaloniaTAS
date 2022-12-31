@@ -1,7 +1,7 @@
 using System.Linq;
 using Avalonia.Input;
 using AvaloniaEdit.Editing;
-using TAS.Core.Models;
+using TAS.Avalonia.Models;
 
 namespace TAS.Avalonia.Editing;
 

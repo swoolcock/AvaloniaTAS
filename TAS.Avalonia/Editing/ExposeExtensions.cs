@@ -7,7 +7,7 @@ using AvaloniaEdit.Document;
 using AvaloniaEdit.Editing;
 using AvaloniaEdit.Rendering;
 using AvaloniaEdit.Text;
-using TAS.Core.Models;
+using TAS.Avalonia.Models;
 
 // ReSharper disable InconsistentNaming
 

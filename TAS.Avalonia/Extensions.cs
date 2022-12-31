@@ -1,6 +1,6 @@
 using System;
 using Avalonia.Input;
-using TAS.Core.Models;
+using TAS.Avalonia.Models;
 
 namespace TAS.Avalonia;
 

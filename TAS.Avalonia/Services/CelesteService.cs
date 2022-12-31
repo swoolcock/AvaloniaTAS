@@ -1,8 +1,9 @@
+using System.Collections.Generic;
 using JetBrains.Annotations;
 using StudioCommunication;
-using TAS.Core.Communication;
+using TAS.Avalonia.Communication;
 
-namespace TAS.Core.Services;
+namespace TAS.Avalonia.Services;
 
 [UsedImplicitly]
 public class CelesteService : BaseService, ICelesteService

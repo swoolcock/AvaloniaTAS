@@ -10,7 +10,7 @@ using AvaloniaEdit.Editing;
 using AvaloniaEdit.Rendering;
 using AvaloniaEdit.Text;
 using AvaloniaEdit.Utils;
-using TAS.Core.Models;
+using TAS.Avalonia.Models;
 
 namespace TAS.Avalonia.Editing;
 
