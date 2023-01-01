@@ -29,13 +29,13 @@ public class DialogService : BaseService, IDialogService
     {
         var dialog = new OpenFileDialog();
         dialog.Filters!.Add(new FileDialogFilter { Name = name, Extensions = extensions.ToList() });
-        return await dialog.ShowAsync(MainWindow!);
+        return await dialog.ShowAsync(MainWindow!).ConfigureAwait(true);
     }
 
     public async Task<string?> ShowSaveFileDialogAsync(string name, params string[] extensions)
     {
         var dialog = new SaveFileDialog();
         dialog.Filters!.Add(new FileDialogFilter { Name = name, Extensions = extensions.ToList() });
-        return await dialog.ShowAsync(MainWindow!);
+        return await dialog.ShowAsync(MainWindow!).ConfigureAwait(true);
     }
 }

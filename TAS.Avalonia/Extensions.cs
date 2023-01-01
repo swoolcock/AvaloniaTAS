@@ -1,9 +1,13 @@
 using System;
 using System.Reactive.Linq;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input;
 using TAS.Avalonia.Models;
 
 namespace TAS.Avalonia;
+
+#nullable disable
 
 public static class Extensions
 {
@@ -46,4 +50,6 @@ public static class Extensions
 
     public static IObservable<T> AsObservable<T>(this T self) => Observable.Return(self);
     public static IEnumerable<T> Yield<T>(this T self) => new[] { self };
+
+    public static IClassicDesktopStyleApplicationLifetime DesktopLifetime(this Application self) => (IClassicDesktopStyleApplicationLifetime) self.ApplicationLifetime;
 }

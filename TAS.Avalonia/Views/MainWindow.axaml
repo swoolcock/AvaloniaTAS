@@ -9,6 +9,8 @@
         Icon="/Assets/avalonia-logo.ico"
         NativeMenu.Menu="{Binding MainMenu, Converter={StaticResource NativeMenuConverter}}"
         Width="400" Height="600"
+        GotFocus="Window_GotFocus"
+        Closed="Window_Closed"
         Title="TAS Studio">
 
     <Design.DataContext>

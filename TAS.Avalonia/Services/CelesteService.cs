@@ -21,6 +21,9 @@ public class CelesteService : BaseService, ICelesteService
         Server.Run();
     }
 
+    public void WriteWait() => Server.WriteWait();
+    public void SendPath(string path) => Server.SendPath(path);
+
     public void Play()
     {
     }

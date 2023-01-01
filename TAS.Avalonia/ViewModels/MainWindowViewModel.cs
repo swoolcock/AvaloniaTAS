@@ -5,6 +5,7 @@ using System.Reactive.Linq;
 using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input;
 using AvaloniaEdit;
 using AvaloniaEdit.Document;
@@ -19,6 +20,8 @@ public class MainWindowViewModel : ViewModelBase
     public ReactiveCommand<Unit, Unit> NewFileCommand { get; }
     public ReactiveCommand<Unit, Unit> OpenFileCommand { get; }
     public ReactiveCommand<Unit, Unit> SaveFileAsCommand { get; }
+    public ReactiveCommand<Unit, Unit> ExitCommand { get; }
+    public ReactiveCommand<Unit, Unit> ToggleCommentsCommand { get; }
     public ReactiveCommand<Unit, Unit> ToggleHitboxesCommand { get; }
 
     private TASDocument _document;
@@ -50,8 +53,11 @@ public class MainWindowViewModel : ViewModelBase
         NewFileCommand = ReactiveCommand.Create(NewFile);
         OpenFileCommand = ReactiveCommand.Create(OpenFile);
         SaveFileAsCommand = ReactiveCommand.Create(SaveFileAs);
+        ExitCommand = ReactiveCommand.Create(Exit);
         // Toggles
         ToggleHitboxesCommand = ReactiveCommand.Create(ToggleHitboxes);
+        // Context
+        ToggleCommentsCommand = ReactiveCommand.Create(ToggleComments);
 
         Document = TASDocument.Load("/Users/shane/Celeste/Celeste.tas") ?? TASDocument.CreateBlank();
         MainMenu = CreateMenu(MenuVisible);
@@ -78,7 +84,7 @@ public class MainWindowViewModel : ViewModelBase
             new MenuModel("Save As...", SaveFileAsCommand, gesture: new KeyGesture(Key.S, KeyModifiers.Meta)),
             new MenuModel("Convert to LibTAS Inputs..."),
             new MenuModel(string.Empty, isVisible: includeExit),
-            new MenuModel("Exit", isVisible: includeExit),
+            new MenuModel("Exit", ExitCommand, isVisible: includeExit),
         },
         new MenuModel("Settings")
         {
@@ -134,13 +140,20 @@ public class MainWindowViewModel : ViewModelBase
 
     private MenuModel[] CreateContextMenu() => new[]
     {
+        new MenuModel("Cut"),
+        new MenuModel("Copy"),
+        new MenuModel("Paste"),
+        MenuModel.Separator,
+        new MenuModel("Undo"),
+        new MenuModel("Redo"),
+        MenuModel.Separator,
         new MenuModel("Insert/Remove Breakpoint"),
         new MenuModel("Insert/Remove Savestate Breakpoint"),
         new MenuModel("Remove All Uncommented Breakpoints"),
         new MenuModel("Remove All Breakpoints"),
         new MenuModel("Comment/Uncomment All Breakpoints"),
         MenuModel.Separator,
-        new MenuModel("Comment/Uncomment Text"),
+        new MenuModel("Comment/Uncomment Text", command: ToggleCommentsCommand),
         new MenuModel("Insert Room Name"),
         new MenuModel("Insert Current In-Game Time"),
         new MenuModel("Insert Mod Info"),
@@ -199,7 +212,9 @@ public class MainWindowViewModel : ViewModelBase
     {
         if (!Document.Dirty) return true;
         var dialogService = AvaloniaLocator.Current.GetService<IDialogService>()!;
-        return await dialogService.ShowConfirmDialogAsync("You have unsaved changes. Are you sure?");
+        var result = await dialogService.ShowConfirmDialogAsync("You have unsaved changes. Are you sure?");
+        if (result) await Task.Delay(TimeSpan.FromSeconds(0.1f));
+        return result;
     }
 
     private async void NewFile()
@@ -219,6 +234,16 @@ public class MainWindowViewModel : ViewModelBase
         if (!await ConfirmDiscardChangesAsync()) return;
         var dialogService = AvaloniaLocator.Current.GetService<IDialogService>()!;
         var results = await dialogService.ShowOpenFileDialogAsync("Celeste TAS", "tas");
+
+        if (results?.FirstOrDefault() is not { } filepath) return;
+
+        if (TASDocument.Load(filepath) is not { } doc)
+        {
+            await dialogService.ShowDialogAsync($"Error loading file: {filepath}");
+            return;
+        }
+
+        Document = doc;
     }
 
     private async void SaveFileAs()
@@ -226,7 +251,21 @@ public class MainWindowViewModel : ViewModelBase
         // delay to allow the UI to recover
         await Task.Delay(TimeSpan.FromSeconds(0.1f));
 
+        _celesteService.WriteWait();
+
         var dialogService = AvaloniaLocator.Current.GetService<IDialogService>()!;
         var results = await dialogService.ShowSaveFileDialogAsync("Celeste TAS", "tas");
+        if (results == null) return;
+
+        Document.Save(results);
+
+        _celesteService.SendPath(results);
+    }
+
+    private void Exit() => Application.Current?.DesktopLifetime().Shutdown();
+
+    private void ToggleComments()
+    {
+
     }
 }
