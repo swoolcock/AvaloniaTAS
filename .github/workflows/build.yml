@@ -26,7 +26,7 @@ jobs:
       - name: Publish Linux
         run: dotnet publish -r linux-x64 --self-contained=false /p:PublishSingleFile=true --output ./publish-linux-x64
       - name: Publish Windows
-        run: dotnet publish -r win-x64 --self-contained=false /p:PublishSingleFile=true --output ./publish/win-x64
+        run: dotnet publish -r win-x64 --self-contained=false /p:PublishSingleFile=true --output ./publish-win-x64
       - name: Upload macOS
         uses: actions/upload-artifact@v2
         with:
