@@ -19,6 +19,7 @@ public class MainWindowViewModel : ViewModelBase
 {
     public ReactiveCommand<Unit, Unit> NewFileCommand { get; }
     public ReactiveCommand<Unit, Unit> OpenFileCommand { get; }
+    public ReactiveCommand<Unit, Unit> SaveFileCommand { get; }
     public ReactiveCommand<Unit, Unit> SaveFileAsCommand { get; }
     public ReactiveCommand<Unit, Unit> ExitCommand { get; }
     public ReactiveCommand<Unit, Unit> ToggleCommentsCommand { get; }
@@ -52,6 +53,7 @@ public class MainWindowViewModel : ViewModelBase
         // File
         NewFileCommand = ReactiveCommand.Create(NewFile);
         OpenFileCommand = ReactiveCommand.Create(OpenFile);
+        SaveFileCommand = ReactiveCommand.Create(SaveFile);
         SaveFileAsCommand = ReactiveCommand.Create(SaveFileAs);
         ExitCommand = ReactiveCommand.Create(Exit);
         // Toggles
@@ -81,7 +83,8 @@ public class MainWindowViewModel : ViewModelBase
                 new MenuModel("Celeste.tas"),
             },
             MenuModel.Separator,
-            new MenuModel("Save As...", SaveFileAsCommand, gesture: new KeyGesture(Key.S, KeyModifiers.Meta)),
+            new MenuModel("Save", SaveFileCommand, gesture: new KeyGesture(Key.S, KeyModifiers.Meta)),
+            new MenuModel("Save As...", SaveFileAsCommand, gesture: new KeyGesture(Key.S, KeyModifiers.Meta | KeyModifiers.Shift)),
             new MenuModel("Convert to LibTAS Inputs..."),
             new MenuModel(string.Empty, isVisible: includeExit),
             new MenuModel("Exit", ExitCommand, isVisible: includeExit),
@@ -246,6 +249,19 @@ public class MainWindowViewModel : ViewModelBase
         Document = doc;
     }
 
+    private async void SaveFile()
+    {
+        // delay to allow the UI to recover
+        await Task.Delay(TimeSpan.FromSeconds(0.1f));
+
+        _celesteService.WriteWait();
+
+        var filename = await SaveFileAsAsync(false);
+
+        if (filename != null)
+            _celesteService.SendPath(filename);
+    }
+
     private async void SaveFileAs()
     {
         // delay to allow the UI to recover
@@ -253,13 +269,31 @@ public class MainWindowViewModel : ViewModelBase
 
         _celesteService.WriteWait();
 
-        var dialogService = AvaloniaLocator.Current.GetService<IDialogService>()!;
-        var results = await dialogService.ShowSaveFileDialogAsync("Celeste TAS", "tas");
-        if (results == null) return;
+        var filename = await SaveFileAsAsync(true);
 
-        Document.Save(results);
+        if (filename != null)
+            _celesteService.SendPath(filename);
+    }
 
-        _celesteService.SendPath(results);
+    private async Task<string?> SaveFileAsAsync(bool force)
+    {
+        var filename = Document.Filename;
+        if (force || filename == null)
+        {
+            var dialogService = AvaloniaLocator.Current.GetService<IDialogService>()!;
+            filename = await dialogService.ShowSaveFileDialogAsync("Celeste TAS", "tas");
+            if (filename != null && File.Exists(filename))
+            {
+                var confirm = await dialogService.ShowConfirmDialogAsync("This file already exists. Are you sure you want to overwrite it?", "Celeste TAS");
+                if (!confirm) return null;
+            }
+        }
+
+        if (filename == null) return null;
+
+        Document.Save(filename);
+
+        return filename;
     }
 
     private void Exit() => Application.Current?.DesktopLifetime().Shutdown();
