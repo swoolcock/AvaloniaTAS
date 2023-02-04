@@ -3,9 +3,9 @@ name: Build
 on:
   workflow_dispatch:
   push:
-    branches: [ develop ]
+    branches: [ main ]
   pull_request:
-    branches: [ develop ]
+    branches: [ main ]
 
 jobs:
   build:
@@ -13,6 +13,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+        with:
+          submodules: 'true'
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v1
       - name: Install dependencies
@@ -24,19 +26,19 @@ jobs:
       - name: Publish Linux
         run: dotnet publish -r linux-x64 --self-contained=false /p:PublishSingleFile=true --output ./publish-linux-x64
       - name: Publish Windows
-        run: dotnet publish -r win-x64 --self-contained=false /p:PublishSingleFile=true --output ./publish/win-x64
+        run: dotnet publish -r win-x64 --self-contained=false /p:PublishSingleFile=true --output ./publish-win-x64
       - name: Upload macOS
         uses: actions/upload-artifact@v2
         with:
           name: AvaloniaTAS-osx-x64
-          path: publish/osx-x64/**/*
+          path: publish-osx-x64/**/*
       - name: Upload Linux
         uses: actions/upload-artifact@v2
         with:
           name: AvaloniaTAS-linux-x64
-          path: publish/linux-x64/**/*
+          path: publish-linux-x64/**/*
       - name: Upload Windows
         uses: actions/upload-artifact@v2
         with:
           name: AvaloniaTAS-win-x64
-          path: publish/win-x64/**/*
+          path: publish-win-x64/**/*

@@ -1,0 +1,3 @@
+[submodule "CelesteTAS-EverestInterop"]
+	path = CelesteTAS-EverestInterop
+	url = https://github.com/swoolcock/CelesteTAS-EverestInterop.git

@@ -38,5 +38,5 @@
     <PackageReference Include="ReactiveUI" Version="13.2.10" />
   </ItemGroup>
 
-  <Import Project="..\..\CelesteTAS-EverestInterop\StudioCommunication\StudioCommunication.projitems" Label="Shared" />
+  <Import Project="..\CelesteTAS-EverestInterop\StudioCommunication\StudioCommunication.projitems" Label="Shared" />
 </Project>
