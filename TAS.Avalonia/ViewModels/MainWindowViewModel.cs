@@ -282,8 +282,9 @@ public class MainWindowViewModel : ViewModelBase
         {
             var dialogService = AvaloniaLocator.Current.GetService<IDialogService>()!;
             filename = await dialogService.ShowSaveFileDialogAsync("Celeste TAS", "tas");
-            if (filename != null && File.Exists(filename))
+            if (filename != null && File.Exists(filename) && !RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
+                // we don't need to confirm on macOS since the finder file dialog does it for us
                 var confirm = await dialogService.ShowConfirmDialogAsync("This file already exists. Are you sure you want to overwrite it?", "Celeste TAS");
                 if (!confirm) return null;
             }
