@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Reactive;
 using System.Reactive.Linq;
@@ -22,7 +22,25 @@ public class MainWindowViewModel : ViewModelBase
     public ReactiveCommand<Unit, Unit> SaveFileAsCommand { get; }
     public ReactiveCommand<Unit, Unit> ExitCommand { get; }
     public ReactiveCommand<Unit, Unit> ToggleCommentsCommand { get; }
+
     public ReactiveCommand<Unit, Unit> ToggleHitboxesCommand { get; }
+    public ReactiveCommand<Unit, Unit> ShowTriggerHitboxesCommand { get; }
+    public ReactiveCommand<Unit, Unit> ShowUnloadedRoomsHitboxesCommand { get; }
+    public ReactiveCommand<Unit, Unit> ShowCameraHitboxesCommand { get; }
+    public ReactiveCommand<Unit, Unit> SimplifiedHitboxesCommand { get; }
+    public ReactiveCommand<Unit, Unit> ShowActualCollideHitboxesCommand { get; }
+
+    public ReactiveCommand<Unit, Unit> SimplifiedGraphicsCommand { get; }
+    public ReactiveCommand<Unit, Unit> ShowGameplayCommand { get; }
+
+    public ReactiveCommand<Unit, Unit> CenterCameraCommand { get; }
+
+    public ReactiveCommand<Unit, Unit> InfoHudCommand { get; }
+    public ReactiveCommand<Unit, Unit> InfoTasInputCommand { get; }
+    public ReactiveCommand<Unit, Unit> InfoGameCommand { get; }
+    public ReactiveCommand<Unit, Unit> InfoWatchEntityCommand { get; }
+    public ReactiveCommand<Unit, Unit> InfoCustomCommand { get; }
+    public ReactiveCommand<Unit, Unit> InfoSubpixelIndicatorCommand { get; }
 
     private TASDocument _document;
     public TASDocument Document
@@ -54,8 +72,27 @@ public class MainWindowViewModel : ViewModelBase
         OpenFileCommand = ReactiveCommand.Create(OpenFile);
         SaveFileAsCommand = ReactiveCommand.Create(SaveFileAs);
         ExitCommand = ReactiveCommand.Create(Exit);
+
         // Toggles
         ToggleHitboxesCommand = ReactiveCommand.Create(ToggleHitboxes);
+        ShowTriggerHitboxesCommand = ReactiveCommand.Create(ShowTriggerHitboxes);
+        ShowUnloadedRoomsHitboxesCommand = ReactiveCommand.Create(ShowUnloadedRoomsHitboxes);
+        ShowCameraHitboxesCommand = ReactiveCommand.Create(ShowCameraHitboxes);
+        SimplifiedHitboxesCommand = ReactiveCommand.Create(SimplifiedHitboxes);
+        ShowActualCollideHitboxesCommand = ReactiveCommand.Create(ShowActualCollideHitboxes);
+
+        SimplifiedGraphicsCommand = ReactiveCommand.Create(SimplifiedGraphics);
+        ShowGameplayCommand = ReactiveCommand.Create(ShowGameplay);
+
+        CenterCameraCommand = ReactiveCommand.Create(CenterCamera);
+
+        InfoHudCommand = ReactiveCommand.Create(InfoHud);
+        InfoTasInputCommand = ReactiveCommand.Create(InfoTasInput);
+        InfoGameCommand = ReactiveCommand.Create(InfoGame);
+        InfoWatchEntityCommand = ReactiveCommand.Create(InfoWatchEntity);
+        InfoCustomCommand = ReactiveCommand.Create(InfoCustom);
+        InfoSubpixelIndicatorCommand = ReactiveCommand.Create(InfoSubpixelIndicator);
+
         // Context
         ToggleCommentsCommand = ReactiveCommand.Create(ToggleComments);
 
@@ -108,23 +145,23 @@ public class MainWindowViewModel : ViewModelBase
         new MenuModel("Toggles")
         {
             new MenuModel("Hitboxes", command: ToggleHitboxesCommand),
-            new MenuModel("Trigger Hitboxes"),
-            new MenuModel("Unloaded Rooms Hitboxes"),
-            new MenuModel("Camera Hitboxes"),
-            new MenuModel("Simplified Hitboxes"),
-            new MenuModel("Actual Collide Hitboxes"),
+            new MenuModel("Trigger Hitboxes", command: ShowTriggerHitboxesCommand),
+            new MenuModel("Unloaded Rooms Hitboxes", command: ShowUnloadedRoomsHitboxesCommand),
+            new MenuModel("Camera Hitboxes", command: ShowCameraHitboxesCommand),
+            new MenuModel("Simplified Hitboxes", command: SimplifiedHitboxesCommand),
+            new MenuModel("Actual Collide Hitboxes", command: ShowActualCollideHitboxesCommand),
             MenuModel.Separator,
-            new MenuModel("Simplified Graphics"),
-            new MenuModel("Gameplay"),
+            new MenuModel("Simplified Graphics", command: SimplifiedGraphicsCommand),
+            new MenuModel("Gameplay", command: ShowGameplayCommand),
             MenuModel.Separator,
-            new MenuModel("Center Camera"),
+            new MenuModel("Center Camera", command: CenterCameraCommand),
             MenuModel.Separator,
-            new MenuModel("Info HUD"),
-            new MenuModel("TAS Input Info"),
-            new MenuModel("Game Info"),
-            new MenuModel("Watch Entity Info"),
-            new MenuModel("Custom Info"),
-            new MenuModel("Subpixel Indicator"),
+            new MenuModel("Info HUD", command: InfoHudCommand),
+            new MenuModel("TAS Input Info", command: InfoTasInputCommand),
+            new MenuModel("Game Info", command: InfoGameCommand),
+            new MenuModel("Watch Entity Info", command: InfoWatchEntityCommand),
+            new MenuModel("Custom Info", command: InfoCustomCommand),
+            new MenuModel("Subpixel Indicator", command: InfoSubpixelIndicatorCommand),
             MenuModel.Separator,
             new MenuModel("Position Decimals"),
             new MenuModel("Speed Decimals"),
@@ -206,6 +243,65 @@ public class MainWindowViewModel : ViewModelBase
     private void ToggleHitboxes()
     {
         _celesteService.ToggleHitboxes();
+    }
+    private void ShowTriggerHitboxes()
+    {
+        _celesteService.ShowTriggerHitboxes();
+    }
+    private void ShowUnloadedRoomsHitboxes()
+    {
+        _celesteService.ShowUnloadedRoomsHitboxes();
+    }
+    private void ShowCameraHitboxes()
+    {
+        _celesteService.ShowCameraHitboxes();
+    }
+    private void SimplifiedHitboxes()
+    {
+        _celesteService.SimplifiedHitboxes();
+    }
+    private void ShowActualCollideHitboxes()
+    {
+        _celesteService.ShowActualCollideHitboxes();
+    }
+
+    private void SimplifiedGraphics()
+    {
+        _celesteService.SimplifiedGraphics();
+    }
+    private void ShowGameplay()
+    {
+        _celesteService.ShowGameplay();
+    }
+
+    private void CenterCamera()
+    {
+        _celesteService.CenterCamera();
+    }
+
+    private void InfoHud()
+    {
+        _celesteService.InfoHud();
+    }
+    private void InfoTasInput()
+    {
+        _celesteService.InfoTasInput();
+    }
+    private void InfoGame()
+    {
+        _celesteService.InfoGame();
+    }
+    private void InfoWatchEntity()
+    {
+        _celesteService.InfoWatchEntity();
+    }
+    private void InfoCustom()
+    {
+        _celesteService.InfoCustom();
+    }
+    private void InfoSubpixelIndicator()
+    {
+        _celesteService.InfoSubpixelIndicator();
     }
 
     private async Task<bool> ConfirmDiscardChangesAsync()

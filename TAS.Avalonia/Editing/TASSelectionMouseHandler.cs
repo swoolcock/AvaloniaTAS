@@ -77,90 +77,94 @@ internal sealed class TASSelectionMouseHandler : ITextAreaInputHandler
         {
             if (!TextArea.RightClickMovesCaret || e.Handled) return;
             SetCaretOffsetToMousePosition(e);
+            return;
+        }
+
+        TextArea.Cursor = Cursor.Parse("IBeam");
+        PointerPoint currentPoint = e.GetCurrentPoint(TextArea);
+        _mode = SelectionMode.None;
+
+        if (e.Handled)
+        {
+            return;
+        }
+
+        KeyModifiers keyModifiers = e.KeyModifiers;
+        bool flag = keyModifiers.HasFlag(KeyModifiers.Shift);
+        if (_enableTextDragDrop && e.ClickCount == 1 && !flag && TextArea.Selection.Contains(GetOffsetFromMousePosition(e, out int _, out bool _)))
+        {
+            if (TextArea.CapturePointer(e.Pointer))
+            {
+                _mode = SelectionMode.PossibleDragStart;
+                _possibleDragStartMousePos = e.GetPosition(TextArea);
+            }
+
+            e.Handled = true;
+            return;
+        }
+
+        TextViewPosition position = TextArea.Caret.Position;
+        SetCaretOffsetToMousePosition(e);
+        if (!flag) TextArea.ClearSelection();
+        if (!TextArea.CapturePointer(e.Pointer))
+        {
+            e.Handled = true;
+            return;
+        }
+
+        if (keyModifiers.HasFlag(KeyModifiers.Alt) && TextArea.Options.EnableRectangularSelection)
+        {
+            _mode = SelectionMode.Rectangular;
+            if (flag && TextArea.Selection is RectangleSelection) TextArea.Selection = TextArea.Selection.StartSelectionOrSetEndpoint(position, TextArea.Caret.Position);
+        }
+        else if (keyModifiers.HasFlag(KeyModifiers.Control) && e.ClickCount == 1)
+        {
+            _mode = SelectionMode.WholeWord;
+            if (flag && !(TextArea.Selection is RectangleSelection)) TextArea.Selection = TextArea.Selection.StartSelectionOrSetEndpoint(position, TextArea.Caret.Position);
+        }
+        else if (currentPoint.Properties.IsLeftButtonPressed && e.ClickCount == 1)
+        {
+            _mode = SelectionMode.Normal;
+            if (flag && !(TextArea.Selection is RectangleSelection)) TextArea.Selection = TextArea.Selection.StartSelectionOrSetEndpoint(position, TextArea.Caret.Position);
         }
         else
         {
-            TextArea.Cursor = Cursor.Parse("IBeam");
-            PointerPoint currentPoint = e.GetCurrentPoint(TextArea);
-            _mode = SelectionMode.None;
-            if (!e.Handled)
+            _mode = SelectionMode.WholeWord;
+            GetWordAtMousePosition(e);
+            SimpleSegment simpleSegment;
+            if (e.ClickCount == 3)
             {
-                KeyModifiers keyModifiers = e.KeyModifiers;
-                bool flag = keyModifiers.HasFlag(KeyModifiers.Shift);
-                if (_enableTextDragDrop && e.ClickCount == 1 && !flag && TextArea.Selection.Contains(GetOffsetFromMousePosition(e, out int _, out bool _)))
-                {
-                    if (TextArea.CapturePointer(e.Pointer))
-                    {
-                        _mode = SelectionMode.PossibleDragStart;
-                        _possibleDragStartMousePos = e.GetPosition(TextArea);
-                    }
+                _mode = SelectionMode.WholeLine;
+                simpleSegment = GetLineAtMousePosition(e);
+            }
+            else
+            {
+                _mode = SelectionMode.WholeWord;
+                simpleSegment = GetWordAtMousePosition(e);
+            }
 
-                    e.Handled = true;
-                }
-                else
-                {
-                    TextViewPosition position = TextArea.Caret.Position;
-                    SetCaretOffsetToMousePosition(e);
-                    if (!flag) TextArea.ClearSelection();
-                    if (TextArea.CapturePointer(e.Pointer))
-                    {
-                        if (keyModifiers.HasFlag(KeyModifiers.Alt) && TextArea.Options.EnableRectangularSelection)
-                        {
-                            _mode = SelectionMode.Rectangular;
-                            if (flag && TextArea.Selection is RectangleSelection) TextArea.Selection = TextArea.Selection.StartSelectionOrSetEndpoint(position, TextArea.Caret.Position);
-                        }
-                        else if (keyModifiers.HasFlag(KeyModifiers.Control) && e.ClickCount == 1)
-                        {
-                            _mode = SelectionMode.WholeWord;
-                            if (flag && !(TextArea.Selection is RectangleSelection)) TextArea.Selection = TextArea.Selection.StartSelectionOrSetEndpoint(position, TextArea.Caret.Position);
-                        }
-                        else if (currentPoint.Properties.IsLeftButtonPressed && e.ClickCount == 1)
-                        {
-                            _mode = SelectionMode.Normal;
-                            if (flag && !(TextArea.Selection is RectangleSelection)) TextArea.Selection = TextArea.Selection.StartSelectionOrSetEndpoint(position, TextArea.Caret.Position);
-                        }
-                        else
-                        {
-                            _mode = SelectionMode.WholeWord;
-                            GetWordAtMousePosition(e);
-                            SimpleSegment simpleSegment;
-                            if (e.ClickCount == 3)
-                            {
-                                _mode = SelectionMode.WholeLine;
-                                simpleSegment = GetLineAtMousePosition(e);
-                            }
-                            else
-                            {
-                                _mode = SelectionMode.WholeWord;
-                                simpleSegment = GetWordAtMousePosition(e);
-                            }
+            if (simpleSegment == SimpleSegment.Invalid)
+            {
+                _mode = SelectionMode.None;
+                TextArea.ReleasePointerCapture(e.Pointer);
+                return;
+            }
 
-                            if (simpleSegment == SimpleSegment.Invalid)
-                            {
-                                _mode = SelectionMode.None;
-                                TextArea.ReleasePointerCapture(e.Pointer);
-                                return;
-                            }
-
-                            if (flag && !TextArea.Selection.IsEmpty)
-                            {
-                                if (simpleSegment.Offset < TextArea.Selection.SurroundingSegment.Offset)
-                                    TextArea.Selection = TextArea.Selection.SetEndpoint(new TextViewPosition(TextArea.Document.GetLocation(simpleSegment.Offset)));
-                                else if (simpleSegment.EndOffset > TextArea.Selection.SurroundingSegment.EndOffset) TextArea.Selection = TextArea.Selection.SetEndpoint(new TextViewPosition(TextArea.Document.GetLocation(simpleSegment.EndOffset)));
-                                _startWord = new AnchorSegment(TextArea.Document, TextArea.Selection.SurroundingSegment);
-                            }
-                            else
-                            {
-                                TextArea.Selection = Selection.Create(TextArea, simpleSegment.Offset, simpleSegment.EndOffset);
-                                _startWord = new AnchorSegment(TextArea.Document, simpleSegment.Offset, simpleSegment.Length);
-                            }
-                        }
-                    }
-
-                    e.Handled = true;
-                }
+            if (flag && !TextArea.Selection.IsEmpty)
+            {
+                if (simpleSegment.Offset < TextArea.Selection.SurroundingSegment.Offset)
+                    TextArea.Selection = TextArea.Selection.SetEndpoint(new TextViewPosition(TextArea.Document.GetLocation(simpleSegment.Offset)));
+                else if (simpleSegment.EndOffset > TextArea.Selection.SurroundingSegment.EndOffset) TextArea.Selection = TextArea.Selection.SetEndpoint(new TextViewPosition(TextArea.Document.GetLocation(simpleSegment.EndOffset)));
+                _startWord = new AnchorSegment(TextArea.Document, TextArea.Selection.SurroundingSegment);
+            }
+            else
+            {
+                TextArea.Selection = Selection.Create(TextArea, simpleSegment.Offset, simpleSegment.EndOffset);
+                _startWord = new AnchorSegment(TextArea.Document, simpleSegment.Offset, simpleSegment.Length);
             }
         }
+
+        e.Handled = true;
     }
 
     private SimpleSegment GetWordAtMousePosition(PointerEventArgs e)
