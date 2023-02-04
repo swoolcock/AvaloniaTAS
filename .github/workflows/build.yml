@@ -31,14 +31,14 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: AvaloniaTAS-osx-x64
-          path: publish/osx-x64/**/*
+          path: publish-osx-x64/**/*
       - name: Upload Linux
         uses: actions/upload-artifact@v2
         with:
           name: AvaloniaTAS-linux-x64
-          path: publish/linux-x64/**/*
+          path: publish-linux-x64/**/*
       - name: Upload Windows
         uses: actions/upload-artifact@v2
         with:
           name: AvaloniaTAS-win-x64
-          path: publish/win-x64/**/*
+          path: publish-win-x64/**/*
