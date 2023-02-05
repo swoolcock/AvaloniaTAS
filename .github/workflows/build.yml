@@ -2,8 +2,6 @@ name: Build
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ main ]
   pull_request:
     branches: [ main ]
 
@@ -21,24 +19,3 @@ jobs:
         run: dotnet restore
       - name: Build
         run: dotnet build TAS.Avalonia/TAS.Avalonia.csproj --configuration Release --no-restore
-      - name: Publish macOS
-        run: dotnet publish -r osx-x64 --self-contained=false /p:PublishSingleFile=true --output ./publish-osx-x64
-      - name: Publish Linux
-        run: dotnet publish -r linux-x64 --self-contained=false /p:PublishSingleFile=true --output ./publish-linux-x64
-      - name: Publish Windows
-        run: dotnet publish -r win-x64 --self-contained=false /p:PublishSingleFile=true --output ./publish-win-x64
-      - name: Upload macOS
-        uses: actions/upload-artifact@v2
-        with:
-          name: AvaloniaTAS-osx-x64
-          path: publish-osx-x64/**/*
-      - name: Upload Linux
-        uses: actions/upload-artifact@v2
-        with:
-          name: AvaloniaTAS-linux-x64
-          path: publish-linux-x64/**/*
-      - name: Upload Windows
-        uses: actions/upload-artifact@v2
-        with:
-          name: AvaloniaTAS-win-x64
-          path: publish-win-x64/**/*
