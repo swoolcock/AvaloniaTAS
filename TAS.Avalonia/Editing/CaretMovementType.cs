@@ -1,10 +1,10 @@
 using Avalonia.Input;
 using AvaloniaEdit;
+using System.Diagnostics.CodeAnalysis;
 
 namespace TAS.Avalonia.Editing;
 
-public enum CaretMovementType
-{
+public enum CaretMovementType {
     None,
     CharLeft,
     CharRight,
@@ -21,10 +21,9 @@ public enum CaretMovementType
     DocumentEnd,
 }
 
-public static class CaretMovementTypeExtensions
-{
-    public static CaretMovementType ForKeyBinding(KeyBinding binding)
-    {
+public static class CaretMovementTypeExtensions {
+    [SuppressMessage("ReSharper", "PossibleUnintendedReferenceComparison")]
+    public static CaretMovementType ForKeyBinding(KeyBinding binding) {
         var command = binding.Command;
         if (command == EditingCommands.MoveLeftByCharacter)
             return CaretMovementType.CharLeft;

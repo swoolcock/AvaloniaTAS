@@ -1,4 +1,3 @@
-using System;
 using System.Reactive.Linq;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -9,11 +8,9 @@ namespace TAS.Avalonia;
 
 #nullable disable
 
-public static class Extensions
-{
+public static class Extensions {
     public static TASAction ActionForKey(this Key self) =>
-        self switch
-        {
+        self switch {
             Key.R => TASAction.Right,
             Key.L => TASAction.Left,
             Key.U => TASAction.Up,
@@ -39,8 +36,7 @@ public static class Extensions
         self.KeyModifiers is KeyModifiers.None or KeyModifiers.Shift && self.Key.ActionForKey() != TASAction.None;
 
     public static int NumberForKey(this Key self) =>
-        self switch
-        {
+        self switch {
             >= Key.D0 and <= Key.D9 => self - Key.D0,
             >= Key.NumPad0 and < Key.NumPad9 => self - Key.NumPad0,
             _ => -1,

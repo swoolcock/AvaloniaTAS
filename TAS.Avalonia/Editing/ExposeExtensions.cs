@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using System.Reflection;
 using Avalonia;
 using AvaloniaEdit;
@@ -15,8 +13,7 @@ namespace TAS.Avalonia.Editing;
 
 #nullable disable
 
-public static class ExposeExtensions
-{
+public static class ExposeExtensions {
     #region TextArea
 
     private static readonly MethodInfo TextArea_RemoveSelectedText = typeof(TextArea).GetMethod("RemoveSelectedText", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -25,7 +22,7 @@ public static class ExposeExtensions
     private static readonly MethodInfo TextArea_OnTextCopied = typeof(TextArea).GetMethod("OnTextCopied", BindingFlags.Instance | BindingFlags.NonPublic);
 
     private static T Invoke<T>(MethodInfo methodInfo, TextArea textArea, params object[] args) =>
-        (T)methodInfo.Invoke(textArea, args);
+        (T) methodInfo.Invoke(textArea, args);
 
     public static void RemoveSelectedText(this TextArea self) =>
         Invoke<object>(TextArea_RemoveSelectedText, self);
@@ -44,21 +41,17 @@ public static class ExposeExtensions
     #region VisualLine
 
     // copied from VisualLine since it's hard to reflect with an out parameter
-    public static int GetVisualColumn(this VisualLine self, Point point, bool allowVirtualSpace, out bool isAtEndOfLine)
-    {
+    public static int GetVisualColumn(this VisualLine self, Point point, bool allowVirtualSpace, out bool isAtEndOfLine) {
         TextLine byVisualYposition = self.GetTextLineByVisualYPosition(point.Y);
         int visualColumn = self.GetVisualColumn(byVisualYposition, point.X, allowVirtualSpace);
 
         // handle tas action lines
         var textRuns = byVisualYposition.GetTextRuns();
         if (textRuns.FirstOrDefault()?.StringRange.String is { } text &&
-            TASActionLine.TryParse(text, out var actionLine))
-        {
+            TASActionLine.TryParse(text, out var actionLine)) {
             visualColumn = Math.Clamp(visualColumn, TASActionLine.MaxFramesDigits - actionLine.Frames.Digits(), TASActionLine.MaxFramesDigits);
             isAtEndOfLine = visualColumn == TASActionLine.MaxFramesDigits;
-        }
-        else
-        {
+        } else {
             isAtEndOfLine = visualColumn >= self.GetTextLineVisualStartColumn(byVisualYposition) + byVisualYposition.Length;
         }
 
@@ -69,15 +62,9 @@ public static class ExposeExtensions
 
     #region SimpleSelection
 
-    public static SimpleSelection CreateSimpleSelection(TextArea textArea, TextViewPosition start, TextViewPosition end)
-    {
-        var cons = typeof(SimpleSelection).GetConstructor(new[]
-        {
-            typeof(TextArea),
-            typeof(TextViewPosition),
-            typeof(TextViewPosition),
-        });
-        return (SimpleSelection)cons?.Invoke(new object[] { textArea, start, end });
+    public static SimpleSelection CreateSimpleSelection(TextArea textArea, TextViewPosition start, TextViewPosition end) {
+        var cons = typeof(SimpleSelection).GetConstructor(new[] { typeof(TextArea), typeof(TextViewPosition), typeof(TextViewPosition), });
+        return (SimpleSelection) cons?.Invoke(new object[] { textArea, start, end });
     }
 
     #endregion
