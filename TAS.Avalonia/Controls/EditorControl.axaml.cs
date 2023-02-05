@@ -8,19 +8,16 @@ using TextMateSharp.Grammars;
 
 namespace TAS.Avalonia.Controls;
 
-public partial class EditorControl : UserControl
-{
+public partial class EditorControl : UserControl {
     public static readonly StyledProperty<TASDocument> DocumentProperty = AvaloniaProperty.Register<EditorControl, TASDocument>(nameof(Document));
     public static readonly StyledProperty<TextViewPosition> CaretPositionProperty = AvaloniaProperty.Register<EditorControl, TextViewPosition>(nameof(CaretPosition));
 
-    public TextViewPosition CaretPosition
-    {
+    public TextViewPosition CaretPosition {
         get => GetValue(CaretPositionProperty);
         set => SetValue(CaretPositionProperty, value);
     }
 
-    public TASDocument Document
-    {
+    public TASDocument Document {
         get => GetValue(DocumentProperty);
         set => SetValue(DocumentProperty, value);
     }
@@ -29,13 +26,11 @@ public partial class EditorControl : UserControl
     private readonly RegistryOptions _registryOptions;
     private readonly TextMate.Installation _textMateInstallation;
 
-    public EditorControl()
-    {
+    public EditorControl() {
         InitializeComponent();
         editor.ShowLineNumbers = true;
         editor.TextArea.IndentationStrategy = null;
-        DocumentProperty.Changed.Subscribe(args =>
-        {
+        DocumentProperty.Changed.Subscribe(args => {
             editor.Document = args.NewValue.Value.Document;
             // if it's a small file, jump to the end (covers new documents), otherwise the start
             editor.TextArea.Caret.Position = new TextViewPosition(editor.Document.GetLocation(editor.Document.LineCount <= 10 ? editor.Document.TextLength : 0));
@@ -49,10 +44,10 @@ public partial class EditorControl : UserControl
         editor.TextArea.PushStackedInputHandler(new TASStackedInputHandler(editor.TextArea));
         editor.TextArea.Caret.PositionChanged += (_, _) => CaretPosition = editor.TextArea.Caret.Position;
 
-        PropertyChanged += (_, e) =>
-        {
-            if (e.Property == CaretPositionProperty)
-                editor.TextArea.Caret.Position = (TextViewPosition)e.NewValue!;
+        PropertyChanged += (_, e) => {
+            if (e.Property == CaretPositionProperty) {
+                editor.TextArea.Caret.Position = (TextViewPosition) e.NewValue!;
+            }
         };
     }
 }

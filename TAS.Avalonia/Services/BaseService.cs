@@ -1,5 +1,4 @@
 namespace TAS.Avalonia.Services;
 
-public class BaseService : IService
-{
+public class BaseService : IService {
 }

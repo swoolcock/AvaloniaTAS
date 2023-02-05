@@ -1,8 +1,7 @@
 namespace TAS.Avalonia;
 
 // from WinForms
-public enum Keys
-  {
+public enum Keys {
     /// <summary><para>No key pressed.</para></summary>
     None = 0,
     /// <summary><para>The left mouse button.</para></summary>
@@ -391,4 +390,4 @@ public enum Keys
     Packet = Oem3 | Right, // 0x000000E7
     /// <summary><para>The computer sleep key.</para></summary>
     Sleep = IMEAccept | A, // 0x0000005F
-  }
+}

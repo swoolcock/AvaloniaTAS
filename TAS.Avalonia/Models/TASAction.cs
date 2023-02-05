@@ -1,10 +1,8 @@
 namespace TAS.Avalonia.Models;
 
 // ReSharper disable InconsistentNaming
-
 [Flags]
-public enum TASAction
-{
+public enum TASAction {
     None = 0,
 
     Right = 1 << 0, // R
@@ -37,11 +35,9 @@ public enum TASAction
     NOAF = JournalTalk2 | Confirm2 | DashOnlyDirection | FeatherAim,
 }
 
-public static class TASActionExtensions
-{
+public static class TASActionExtensions {
     public static TASAction ActionForChar(char c) =>
-        c.ToString().ToUpper()[0] switch
-        {
+        c.ToString().ToUpper()[0] switch {
             'R' => TASAction.Right,
             'L' => TASAction.Left,
             'U' => TASAction.Up,
@@ -63,8 +59,7 @@ public static class TASActionExtensions
         };
 
     public static char CharForAction(this TASAction self) =>
-        self switch
-        {
+        self switch {
             TASAction.Right => 'R',
             TASAction.Left => 'L',
             TASAction.Up => 'U',
@@ -85,12 +80,10 @@ public static class TASActionExtensions
             _ => ' ',
         };
 
-    public static TASAction ToggleAction(this TASAction self, TASAction other)
-    {
+    public static TASAction ToggleAction(this TASAction self, TASAction other) {
         if (self.HasFlag(other))
             return self & ~other;
-        return other switch
-        {
+        return other switch {
             TASAction.Left or TASAction.Right => (self & ~TASAction.RL) | other,
             TASAction.Up or TASAction.Down => (self & ~TASAction.UD) | other,
             TASAction.JumpConfirm or TASAction.Jump2 => (self & ~TASAction.JK) | other,
@@ -101,13 +94,23 @@ public static class TASActionExtensions
         };
     }
 
-    public static IEnumerable<TASAction> Sorted(this TASAction self) => new[]
-    {
-        TASAction.Right, TASAction.Left,
-        TASAction.Up, TASAction.Down,
-        TASAction.JumpConfirm, TASAction.Jump2,
-        TASAction.DashTalkCancel, TASAction.Dash2Cancel2, TASAction.CrouchDash, TASAction.CrouchDash2,
-        TASAction.Grab, TASAction.Pause, TASAction.QuickRestart,
-        TASAction.JournalTalk2, TASAction.Confirm2, TASAction.DashOnlyDirection, TASAction.FeatherAim,
+    public static IEnumerable<TASAction> Sorted(this TASAction self) => new[] {
+        TASAction.Right,
+        TASAction.Left,
+        TASAction.Up,
+        TASAction.Down,
+        TASAction.JumpConfirm,
+        TASAction.Jump2,
+        TASAction.DashTalkCancel,
+        TASAction.Dash2Cancel2,
+        TASAction.CrouchDash,
+        TASAction.CrouchDash2,
+        TASAction.Grab,
+        TASAction.Pause,
+        TASAction.QuickRestart,
+        TASAction.JournalTalk2,
+        TASAction.Confirm2,
+        TASAction.DashOnlyDirection,
+        TASAction.FeatherAim,
     }.Where(e => self.HasFlag(e));
 }

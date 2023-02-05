@@ -4,18 +4,15 @@ using StudioCommunication;
 
 namespace TAS.Avalonia.Communication;
 
-public class StudioCommunicationServer : StudioCommunicationBase
-{
+public class StudioCommunicationServer : StudioCommunicationBase {
     public event Action<StudioInfo> StateUpdated;
     public event Action<Dictionary<HotkeyID, List<Keys>>> BindingsUpdated;
 
     protected virtual void OnStateUpdated(StudioInfo obj) => StateUpdated?.Invoke(obj);
     protected virtual void OnBindingsUpdated(Dictionary<HotkeyID, List<Keys>> obj) => BindingsUpdated?.Invoke(obj);
 
-    internal void Run()
-    {
-        Thread updateThread = new(UpdateLoop)
-        {
+    internal void Run() {
+        Thread updateThread = new(UpdateLoop) {
             CurrentCulture = CultureInfo.InvariantCulture,
             Name = "StudioCom Server",
             IsBackground = true,
@@ -34,9 +31,9 @@ public class StudioCommunicationServer : StudioCommunicationBase
     protected override void ReadData(Message message) {
         switch (message.Id) {
             case MessageID.EstablishConnection:
-                throw new NeedsResetException("Recieved initialization message (EstablishConnection) from main loop");
+                throw new NeedsResetException("received initialization message (EstablishConnection) from main loop");
             case MessageID.Reset:
-                throw new NeedsResetException("Recieved reset message from main loop");
+                throw new NeedsResetException("received reset message from main loop");
             case MessageID.Wait:
                 ProcessWait();
                 break;
@@ -50,7 +47,7 @@ public class StudioCommunicationServer : StudioCommunicationBase
                 ProcessUpdateLines(message.Data);
                 break;
             case MessageID.SendPath:
-                throw new NeedsResetException("Recieved initialization message (SendPath) from main loop");
+                throw new NeedsResetException("received initialization message (SendPath) from main loop");
             case MessageID.ReturnData:
                 ProcessReturnData(message.Data);
                 break;
@@ -129,7 +126,7 @@ public class StudioCommunicationServer : StudioCommunicationBase
         // celeste.SendCurrentBindings(Hotkeys.listHotkeyKeys);
         lastMessage = studio.ReadMessageGuaranteed();
         if (lastMessage.Id != MessageID.SendCurrentBindings) {
-            throw new NeedsResetException("Invalid data recieved while establishing connection");
+            throw new NeedsResetException("Invalid data received while establishing connection");
         }
 
         studio.ProcessSendCurrentBindings(lastMessage.Data);
@@ -137,7 +134,7 @@ public class StudioCommunicationServer : StudioCommunicationBase
         // celeste.SendModVersion();
         lastMessage = studio.ReadMessageGuaranteed();
         if (lastMessage.Id != MessageID.VersionInfo) {
-            throw new NeedsResetException("Invalid data recieved while establishing connection");
+            throw new NeedsResetException("Invalid data received while establishing connection");
         }
 
         studio.ProcessVersionInfo(lastMessage.Data);
@@ -174,7 +171,7 @@ public class StudioCommunicationServer : StudioCommunicationBase
             return;
         }
 
-        byte[] hotkeyBytes = {(byte) hotkey, Convert.ToByte(released)};
+        byte[] hotkeyBytes = { (byte) hotkey, Convert.ToByte(released) };
         WriteMessageGuaranteed(new Message(MessageID.SendHotkeyPressed, hotkeyBytes));
     }
 
@@ -183,9 +180,7 @@ public class StudioCommunicationServer : StudioCommunicationBase
             return;
         }
 
-        byte[] bytes = BinaryFormatterHelper.ToByteArray(new[] {
-            settingName, value
-        });
+        byte[] bytes = BinaryFormatterHelper.ToByteArray(new[] { settingName, value });
         WriteMessageGuaranteed(new Message(MessageID.ToggleGameSetting, bytes));
     }
 
@@ -194,9 +189,7 @@ public class StudioCommunicationServer : StudioCommunicationBase
             return;
         }
 
-        byte[] bytes = BinaryFormatterHelper.ToByteArray(new[] {
-            gameDataType, arg
-        });
+        byte[] bytes = BinaryFormatterHelper.ToByteArray(new[] { gameDataType, arg });
         WriteMessageGuaranteed(new Message(MessageID.GetData, bytes));
     }
 
