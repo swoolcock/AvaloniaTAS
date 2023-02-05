@@ -37,8 +37,20 @@ public class TASDocument
 
     public void Save(string? path = null)
     {
-        // TODO: save file
-        Dirty = false;
+        path ??= Filename;
+
+        if (path != null)
+        {
+            try
+            {
+                File.WriteAllText(path, Document.Text);
+                Dirty = false;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+        }
     }
 
     private void Document_TextChanged(object? sender, EventArgs eventArgs)
