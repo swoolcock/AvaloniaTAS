@@ -371,7 +371,7 @@ public class MainWindowViewModel : ViewModelBase
             _celesteService.SendPath(filename);
     }
 
-    private async Task<string?> SaveFileAsAsync(bool force)
+    private async Task<string> SaveFileAsAsync(bool force)
     {
         var filename = Document.Filename;
         if (force || filename == null)

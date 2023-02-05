@@ -13,12 +13,12 @@ public partial class MainWindow : Window
         InitializeComponent();
     }
 
-    private void Window_GotFocus(object? sender, GotFocusEventArgs e)
+    private void Window_GotFocus(object sender, GotFocusEventArgs e)
     {
         this.FindControl<EditorControl>("editor")?.editor.Focus();
     }
 
-    private void Window_Closed(object? sender, EventArgs e)
+    private void Window_Closed(object sender, EventArgs e)
     {
         var celesteService = AvaloniaLocator.Current.GetService<ICelesteService>()!;
         celesteService.SendPath(string.Empty);

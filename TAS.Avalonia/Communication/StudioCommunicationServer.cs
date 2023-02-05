@@ -10,8 +10,8 @@ namespace TAS.Avalonia.Communication;
 
 public class StudioCommunicationServer : StudioCommunicationBase
 {
-    public event Action<StudioInfo>? StateUpdated;
-    public event Action<Dictionary<HotkeyID, List<Keys>>>? BindingsUpdated;
+    public event Action<StudioInfo> StateUpdated;
+    public event Action<Dictionary<HotkeyID, List<Keys>>> BindingsUpdated;
 
     protected virtual void OnStateUpdated(StudioInfo obj) => StateUpdated?.Invoke(obj);
     protected virtual void OnBindingsUpdated(Dictionary<HotkeyID, List<Keys>> obj) => BindingsUpdated?.Invoke(obj);

@@ -11,16 +11,16 @@ public class MenuModel : IEnumerable<MenuModel>
 {
     public static readonly MenuModel Separator = new MenuModel(string.Empty);
 
-    public string? Header { get; init; }
-    public ICommand? Command { get; init; }
-    public object? CommandParameter { get; init; }
-    public KeyGesture? Gesture { get; init; }
+    public string Header { get; init; }
+    public ICommand Command { get; init; }
+    public object CommandParameter { get; init; }
+    public KeyGesture Gesture { get; init; }
     public List<MenuModel> Items { get; init; } = new List<MenuModel>();
     public bool? IsEnabled { get; init; }
     public bool IsChecked { get; init; } = false;
     public bool IsVisible { get; init; } = true;
 
-    public MenuModel(string header, ICommand? command = null, object? commandParameter = null, KeyGesture? gesture = null, bool? isEnabled = null, bool isChecked = false, bool isVisible = true)
+    public MenuModel(string header, ICommand command = null, object commandParameter = null, KeyGesture gesture = null, bool? isEnabled = null, bool isChecked = false, bool isVisible = true)
     {
         Header = header;
         Command = command;
@@ -31,7 +31,7 @@ public class MenuModel : IEnumerable<MenuModel>
         IsVisible = isVisible;
     }
 
-    public NativeMenuItemBase? ToNativeMenuItem()
+    public NativeMenuItemBase ToNativeMenuItem()
     {
         if (!IsVisible) return null;
         if (string.IsNullOrEmpty(Header)) return new NativeMenuItemSeparator();

@@ -7,7 +7,7 @@ public class TASDocument
     private const string EmptyDocument = "RecordCount: 1\n\n#Start\n";
 
     public TextDocument Document { get; }
-    public string? Filename { get; set; }
+    public string Filename { get; set; }
     public bool Dirty { get; private set; }
 
     private TASDocument(string contents)
@@ -18,7 +18,7 @@ public class TASDocument
 
     public static TASDocument CreateBlank() => new TASDocument(EmptyDocument);
 
-    public static TASDocument? Load(string path)
+    public static TASDocument Load(string path)
     {
         try
         {
@@ -35,7 +35,7 @@ public class TASDocument
         return null;
     }
 
-    public void Save(string? path = null)
+    public void Save(string path = null)
     {
         path ??= Filename;
 
@@ -53,7 +53,7 @@ public class TASDocument
         }
     }
 
-    private void Document_TextChanged(object? sender, EventArgs eventArgs)
+    private void Document_TextChanged(object sender, EventArgs eventArgs)
     {
         Dirty = true;
     }
