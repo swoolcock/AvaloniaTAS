@@ -1,14 +1,10 @@
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using Avalonia;
 using Avalonia.Input;
 using AvaloniaEdit;
 using AvaloniaEdit.Document;
 using AvaloniaEdit.Editing;
 using AvaloniaEdit.Utils;
-using DynamicData;
 using TAS.Avalonia.Models;
 
 namespace TAS.Avalonia.Editing;

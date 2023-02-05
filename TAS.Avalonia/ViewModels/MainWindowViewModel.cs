@@ -1,14 +1,8 @@
-using System;
-using System.IO;
 using System.Reactive;
-using System.Reactive.Linq;
 using System.Runtime.InteropServices;
 using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input;
 using AvaloniaEdit;
-using AvaloniaEdit.Document;
 using ReactiveUI;
 using TAS.Avalonia.Models;
 using TAS.Avalonia.Services;

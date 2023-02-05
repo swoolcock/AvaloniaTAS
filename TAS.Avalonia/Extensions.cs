@@ -1,4 +1,3 @@
-using System;
 using System.Reactive.Linq;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;

@@ -1,9 +1,6 @@
-using System;
 using Avalonia;
 using Avalonia.Controls;
 using AvaloniaEdit;
-using AvaloniaEdit.Document;
-using AvaloniaEdit.Rendering;
 using AvaloniaEdit.TextMate;
 using TAS.Avalonia.Editing;
 using TAS.Avalonia.Models;
