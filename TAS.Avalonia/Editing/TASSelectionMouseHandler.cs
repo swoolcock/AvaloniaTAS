@@ -254,7 +254,9 @@ internal sealed class TASSelectionMouseHandler : ITextAreaInputHandler
             if (_mode != SelectionMode.PossibleDragStart) return;
             e.Handled = true;
             Vector vector = e.GetPosition(TextArea) - _possibleDragStartMousePos;
-            if (Math.Abs(vector.X) <= 2.0 && Math.Abs(vector.Y) <= 2.0) ;
+            if (Math.Abs(vector.X) <= 2.0 && Math.Abs(vector.Y) <= 2.0)
+            {
+            }
         }
     }
 

@@ -352,7 +352,7 @@ internal class TASEditingCommandHandler
         {
             Application.Current.Clipboard.SetTextAsync(text).GetAwaiter().GetResult();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
         }
     }
@@ -391,7 +391,7 @@ internal class TASEditingCommandHandler
             {
                 text = await Application.Current.Clipboard.GetTextAsync();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 textArea.Document.EndUpdate();
                 textArea = null;
@@ -424,7 +424,7 @@ internal class TASEditingCommandHandler
             text = textArea.Options.ConvertTabsToSpaces ? text.Replace("\t", new string(' ', textArea.Options.IndentationSize)) : text;
             return text;
         }
-        catch (OutOfMemoryException ex)
+        catch (OutOfMemoryException)
         {
             return null;
         }
