@@ -1,0 +1,70 @@
+name: Publish macOS
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+      - name: Install dependencies
+        run: dotnet restore
+      - name: Bundle
+        run: |
+          dotnet restore -r osx-x64
+          dotnet msbuild -t:BundleApp -p:Configuration=Release -p:RuntimeIdentifier=osx-x64
+      - name: Codesign
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PWD: ${{ secrets.APPLE_CERTIFICATE_PWD }}
+          APPLE_IDENTITY: ${{ secrets.APPLE_IDENTITY }}
+          KEYCHAIN_PWD: ${{ secrets.KEYCHAIN_PWD }}
+        run: |
+          echo "::add-mask::$APPLE_CERTIFICATE"
+          echo "::add-mask::$APPLE_CERTIFICATE_PWD"
+          echo "::add-mask::$APPLE_IDENTITY"
+          echo "::add-mask::$KEYCHAIN_PWD"
+          echo $APPLE_CERTIFICATE | base64 --decode > Certificates.p12
+          security create-keychain -p $KEYCHAIN_PWD build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p $KEYCHAIN_PWD build.keychain
+          security import Certificates.p12 -k build.keychain -P $APPLE_CERTIFICATE_PWD -T /usr/bin/codesign
+          rm Certificates.p12
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k $KEYCHAIN_PWD build.keychain
+          /usr/bin/codesign --force --deep -s $APPLE_IDENTITY ./TAS.Avalonia/bin/Release/net6.0/osx-x64/publish/AvaloniaTAS.app -v
+          mkdir output
+          mv ./TAS.Avalonia/bin/Release/net6.0/osx-x64/publish/AvaloniaTAS.app output/
+      - name: Install create-dmg
+        uses: ConorMacBride/install-package@v1
+        with:
+          brew: create-dmg
+      - name: Create DMG
+        run: |
+          create-dmg \
+            --volname "AvaloniaTAS" \
+            --background "deployment/dmg_background.png" \
+            --window-pos 200 120 \
+            --window-size 700 580 \
+            --icon-size 100 \
+            --icon "AvaloniaTAS.app" 165 250 \
+            --hide-extension "AvaloniaTAS.app" \
+            --app-drop-link 535 250 \
+            "AvaloniaTAS.dmg" \
+            "output/"
+      - name: Upload
+        uses: actions/upload-artifact@v2
+        with:
+          name: AvaloniaTAS-macos-universal
+          path: AvaloniaTAS.dmg
