@@ -1,0 +1,26 @@
+name: Publish Windows
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+      - name: Install dependencies
+        run: dotnet restore
+      - name: Publish
+        run: dotnet publish -r win-x64 --self-contained=false /p:PublishSingleFile=true --output ./publish-win-x64
+      - name: Upload
+        uses: actions/upload-artifact@v2
+        with:
+          name: AvaloniaTAS-win-x64
+          path: publish-win-x64/**/*
