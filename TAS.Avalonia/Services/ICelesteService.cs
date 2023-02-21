@@ -6,25 +6,25 @@ public interface ICelesteService : IService {
     void Play();
 
     void ToggleHitboxes();
-    void ShowTriggerHitboxes();
-    void ShowUnloadedRoomsHitboxes();
-    void ShowCameraHitboxes();
-    void SimplifiedHitboxes();
-    void ShowActualCollideHitboxes();
+    void ToggleTriggerHitboxes();
+    void ToggleUnloadedRoomsHitboxes();
+    void ToggleCameraHitboxes();
+    void ToggleSimplifiedHitboxes();
+    void ToggleActualCollideHitboxes();
 
-    void SimplifiedGraphics();
-    void ShowGameplay();
+    void ToggleSimplifiedGraphics();
+    void ToggleGameplay();
 
-    void CenterCamera();
+    void ToggleCenterCamera();
 
-    void InfoHud();
-    void InfoTasInput();
-    void InfoGame();
-    void InfoWatchEntity();
-    void InfoCustom();
-    void InfoSubpixelIndicator();
+    void ToggleInfoHud();
+    void ToggleInfoTasInput();
+    void ToggleInfoGame();
+    void ToggleInfoWatchEntity();
+    void ToggleInfoCustom();
+    void ToggleInfoSubpixelIndicator();
 
-    void SpeedUnit();
+    void ToggleSpeedUnit();
     // ("Copy Custom Info Template to Clipboard", null, sender);
     // ("Set Custom Info Template From Clipboard", null, sender);
     // ("Clear Custom Info Template", null, sender);
