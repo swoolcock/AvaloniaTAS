@@ -146,7 +146,29 @@ public class StudioCommunicationServer : StudioCommunicationBase {
     public void ConvertToLibTas(string path) => PendingWrite = () => ConvertToLibTasNow(path);
     public void SendHotkeyPressed(HotkeyID hotkey, bool released = false) => PendingWrite = () => SendHotkeyPressedNow(hotkey, released);
     public void ToggleGameSetting(string settingName, object value) => PendingWrite = () => ToggleGameSettingNow(settingName, value);
-    public void GetDataFromGame(GameDataType gameDataType, object arg) => PendingWrite = () => GetGameDataNow(gameDataType, arg);
+    public void RequestDataFromGame(GameDataType gameDataType, object arg) => PendingWrite = () => RequestGameDataNow(gameDataType, arg);
+
+    public string GetDataFromGame(GameDataType gameDataType, object arg = null) {
+        // GameDataType is in the TAS.Avalonia assembly which CelesteTAS can't find, and crashes the Communication thread.
+        // Somehow this doesn't apply for Celeste Studio for some reason I don't know.
+        // TODO: Properly implement getting data from the game.
+
+        // CommunicationWrapper.ReturnData = null;
+        // RequestDataFromGame(gameDataType, arg);
+
+        // int sleepTimeout = 150;
+        // while (CommunicationWrapper.ReturnData == null && sleepTimeout > 0) {
+        //     Thread.Sleep(10);
+        //     sleepTimeout -= 10;
+        // }
+
+        // if (CommunicationWrapper.ReturnData == null && sleepTimeout <= 0) {
+        //     Console.Error.WriteLine("Getting data from the game timed out.");
+        // }
+
+        // return CommunicationWrapper.ReturnData == string.Empty ? null : CommunicationWrapper.ReturnData;
+        return "2";
+    }
 
     private void SendPathNow(string path, bool canFail) {
         if (Initialized || !canFail) {
@@ -184,7 +206,7 @@ public class StudioCommunicationServer : StudioCommunicationBase {
         WriteMessageGuaranteed(new Message(MessageID.ToggleGameSetting, bytes));
     }
 
-    private void GetGameDataNow(GameDataType gameDataType, object arg) {
+    private void RequestGameDataNow(GameDataType gameDataType, object arg) {
         if (!Initialized) {
             return;
         }
