@@ -1,4 +1,5 @@
 using System.Reactive;
+using System.Reactive.Linq;
 using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Input;
@@ -37,8 +38,19 @@ public class MainWindowViewModel : ViewModelBase {
     public ReactiveCommand<Unit, Unit> ToggleInfoCustomCommand { get; }
     public ReactiveCommand<Unit, Unit> ToggleInfoSubpixelIndicatorCommand { get; }
 
+    public ReactiveCommand<Unit, Unit> SetPositionDecimalsCommand { get; }
+    public ReactiveCommand<Unit, Unit> SetSpeedDecimalsCommand { get; }
+    public ReactiveCommand<Unit, Unit> SetVelocityDecimalsCommand { get; }
+    public ReactiveCommand<Unit, Unit> SetCustomInfoDecimalsCommand { get; }
+    public ReactiveCommand<Unit, Unit> SetSubpixelIndicatorDecimalsCommand { get; }
+
+    public ReactiveCommand<Unit, Unit> SetFastForwardSpeedCommand { get; }
+    public ReactiveCommand<Unit, Unit> SetSlowForwardSpeedCommand { get; }
+
     // Context
     public ReactiveCommand<Unit, Unit> ToggleCommentsCommand { get; }
+
+    public Interaction<InputDialogWindowViewModel, object> ShowInputDialog { get; }
 
     private TASDocument _document;
     public TASDocument Document {
@@ -55,12 +67,14 @@ public class MainWindowViewModel : ViewModelBase {
     public bool MenuVisible => true; //!RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
 
     private readonly ICelesteService _celesteService;
+    private readonly IDialogService _dialogService;
 
     private MenuModel[] MainMenu { get; }
     private MenuModel[] EditorContextMenu { get; }
 
     public MainWindowViewModel() {
         _celesteService = AvaloniaLocator.Current.GetService<ICelesteService>()!;
+        _dialogService = AvaloniaLocator.Current.GetService<IDialogService>()!;
 
         // File
         NewFileCommand = ReactiveCommand.Create(NewFile);
@@ -89,8 +103,19 @@ public class MainWindowViewModel : ViewModelBase {
         ToggleInfoCustomCommand = ReactiveCommand.Create(ToggleInfoCustom);
         ToggleInfoSubpixelIndicatorCommand = ReactiveCommand.Create(ToggleInfoSubpixelIndicator);
 
+        SetPositionDecimalsCommand = ReactiveCommand.CreateFromTask(SetPositionDecimals);
+        SetSpeedDecimalsCommand = ReactiveCommand.CreateFromTask(SetSpeedDecimals);
+        SetVelocityDecimalsCommand = ReactiveCommand.CreateFromTask(SetVelocityDecimals);
+        SetCustomInfoDecimalsCommand = ReactiveCommand.CreateFromTask(SetCustomInfoDecimals);
+        SetSubpixelIndicatorDecimalsCommand = ReactiveCommand.CreateFromTask(SetSubpixelIndicatorDecimals);
+
+        SetFastForwardSpeedCommand = ReactiveCommand.CreateFromTask(SetFastForwardSpeed);
+        SetSlowForwardSpeedCommand = ReactiveCommand.CreateFromTask(SetSlowForwardSpeed);
+
         // Context
         ToggleCommentsCommand = ReactiveCommand.Create(ToggleComments);
+
+        ShowInputDialog = new Interaction<InputDialogWindowViewModel, object>();
 
         Document = TASDocument.Load("/Users/shane/Celeste/Celeste.tas") ?? TASDocument.CreateBlank();
         MainMenu = CreateMenu(MenuVisible);
@@ -152,15 +177,15 @@ public class MainWindowViewModel : ViewModelBase {
             new MenuModel("Custom Info", command: ToggleInfoCustomCommand),
             new MenuModel("Subpixel Indicator", command: ToggleInfoSubpixelIndicatorCommand),
             MenuModel.Separator,
-            new MenuModel("Position Decimals"),
-            new MenuModel("Speed Decimals"),
-            new MenuModel("Velocity Decimals"),
-            new MenuModel("Custom Info Decimals"),
-            new MenuModel("Subpixel Indicator Decimals"),
+            new MenuModel("Position Decimals", command: SetPositionDecimalsCommand),
+            new MenuModel("Speed Decimals", command: SetSpeedDecimalsCommand),
+            new MenuModel("Velocity Decimals", command: SetVelocityDecimalsCommand),
+            new MenuModel("Custom Info Decimals", command: SetCustomInfoDecimalsCommand),
+            new MenuModel("Subpixel Indicator Decimals", command: SetSubpixelIndicatorDecimalsCommand),
             new MenuModel("Unit of Speed"),
             MenuModel.Separator,
-            new MenuModel("Fast Forward Speed"),
-            new MenuModel("Slow Forward Speed"),
+            new MenuModel("Fast Forward Speed", command: SetFastForwardSpeedCommand),
+            new MenuModel("Slow Forward Speed", command: SetSlowForwardSpeedCommand),
         },
     };
 
@@ -245,15 +270,35 @@ public class MainWindowViewModel : ViewModelBase {
 
     private const int MinDecimals = 2;
     private const int MaxDecimals = 12;
+    private const int MinFastForwardSpeed = 2;
+    private const int MaxFastForwardSpeed = 30;
+    private const float MinSlowForwardSpeed = 0.1f;
+    private const float MaxSlowForwardSpeed = 0.9f;
 
-    private async Task SetPositionDecimals() {
-        var input = new InputDialogWindowViewModel(currentValue, MinDecimals, MaxDecimals);
-    }
+    private async Task SetPositionDecimals() => _celesteService.SetPositionDecimals(
+        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetPositionDecimals(), MinDecimals, MaxDecimals));
+
+    private async Task SetSpeedDecimals() => _celesteService.SetSpeedDecimals(
+        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetSpeedDecimals(), MinDecimals, MaxDecimals));
+
+    private async Task SetVelocityDecimals() => _celesteService.SetVelocityDecimals(
+        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetVelocityDecimals(), MinDecimals, MaxDecimals));
+
+    private async Task SetCustomInfoDecimals() => _celesteService.SetCustomInfoDecimals(
+        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetCustomInfoDecimals(), MinDecimals, MaxDecimals));
+
+    private async Task SetSubpixelIndicatorDecimals() => _celesteService.SetSubpixelIndicatorDecimals(
+        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetSubpixelIndicatorDecimals(), MinDecimals, MaxDecimals));
+
+    private async Task SetFastForwardSpeed() => _celesteService.SetFastForwardSpeed(
+        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetFastForwardSpeed(), MinFastForwardSpeed, MaxFastForwardSpeed));
+
+    private async Task SetSlowForwardSpeed() => _celesteService.SetSlowForwardSpeed(
+        await _dialogService.ShowFloatInputDialogAsync(_celesteService.GetSlowForwardSpeed(), MinSlowForwardSpeed, MaxSlowForwardSpeed));
 
     private async Task<bool> ConfirmDiscardChangesAsync() {
         if (!Document.Dirty) return true;
-        var dialogService = AvaloniaLocator.Current.GetService<IDialogService>()!;
-        bool result = await dialogService.ShowConfirmDialogAsync("You have unsaved changes. Are you sure?");
+        bool result = await _dialogService.ShowConfirmDialogAsync("You have unsaved changes. Are you sure?");
         if (result) await Task.Delay(TimeSpan.FromSeconds(0.1f));
         return result;
     }
@@ -271,13 +316,12 @@ public class MainWindowViewModel : ViewModelBase {
         await Task.Delay(TimeSpan.FromSeconds(0.1f));
 
         if (!await ConfirmDiscardChangesAsync()) return;
-        var dialogService = AvaloniaLocator.Current.GetService<IDialogService>()!;
-        string[] results = await dialogService.ShowOpenFileDialogAsync("Celeste TAS", "tas");
+        string[] results = await _dialogService.ShowOpenFileDialogAsync("Celeste TAS", "tas");
 
         if (results?.FirstOrDefault() is not { } filepath) return;
 
         if (TASDocument.Load(filepath) is not { } doc) {
-            await dialogService.ShowDialogAsync($"Error loading file: {filepath}");
+            await _dialogService.ShowDialogAsync($"Error loading file: {filepath}");
             return;
         }
 
@@ -310,11 +354,10 @@ public class MainWindowViewModel : ViewModelBase {
     private async Task<string> SaveFileAsAsync(bool force) {
         string filename = Document.Filename;
         if (force || filename == null) {
-            var dialogService = AvaloniaLocator.Current.GetService<IDialogService>()!;
-            filename = await dialogService.ShowSaveFileDialogAsync("Celeste TAS", "tas");
+            filename = await _dialogService.ShowSaveFileDialogAsync("Celeste TAS", "tas");
             if (filename != null && File.Exists(filename) && !RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
                 // we don't need to confirm on macOS since the finder file dialog does it for us
-                bool confirm = await dialogService.ShowConfirmDialogAsync("This file already exists. Are you sure you want to overwrite it?", "Celeste TAS");
+                bool confirm = await _dialogService.ShowConfirmDialogAsync("This file already exists. Are you sure you want to overwrite it?", "Celeste TAS");
                 if (!confirm) return null;
             }
         }
