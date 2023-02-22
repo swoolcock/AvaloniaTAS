@@ -4,6 +4,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Dialogs.Avalonia;
 using Dialogs.Buttons;
 using TAS.Avalonia.Views;
+using TAS.Avalonia.ViewModels;
 
 namespace TAS.Avalonia.Services;
 
@@ -40,5 +41,17 @@ public class DialogService : BaseService, IDialogService {
             Name = name, Extensions = extensions.ToList()
         });
         return await dialog.ShowAsync(MainWindow!).ConfigureAwait(true);
+    }
+
+    public async Task<int> ShowIntInputDialogAsync(int currentValue, int minValue, int maxValue, string title = null) {
+        var dialog = new InputDialogWindow();
+        dialog.DataContext = new InputDialogWindowViewModel(currentValue, minValue, maxValue);
+        return (int)await dialog.ShowDialog<object>(MainWindow);
+    }
+
+    public async Task<float> ShowFloatInputDialogAsync(float currentValue, float minValue, float maxValue, string title = null) {
+        var dialog = new InputDialogWindow();
+        dialog.DataContext = new InputDialogWindowViewModel(currentValue, minValue, maxValue);
+        return (float)await dialog.ShowDialog<object>(MainWindow);
     }
 }
