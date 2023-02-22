@@ -29,4 +29,25 @@ public interface ICelesteService : IService {
     // ("Set Custom Info Template From Clipboard", null, sender);
     // ("Clear Custom Info Template", null, sender);
     // ("Clear Watch Entity Info", null, sender);
+
+    int GetPositionDecimals();
+    void SetPositionDecimals(int value);
+    
+    int GetSpeedDecimals();
+    void SetSpeedDecimals(int value);
+
+    int GetVelocityDecimals();
+    void SetVelocityDecimals(int value);
+
+    int GetCustomInfoDecimals();
+    void SetCustomInfoDecimals(int value);
+
+    int GetSubpixelIndicatorDecimals();
+    void SetSubpixelIndicatorDecimals(int value);
+
+    int GetFastForwardSpeed();
+    void SetFastForwardSpeed(int value);
+
+    float GetSlowForwardSpeed();
+    void SetSlowForwardSpeed(float value);
 }
