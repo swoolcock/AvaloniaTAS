@@ -37,6 +37,7 @@ public class MainWindowViewModel : ViewModelBase {
     public ReactiveCommand<Unit, Unit> ToggleInfoWatchEntityCommand { get; }
     public ReactiveCommand<Unit, Unit> ToggleInfoCustomCommand { get; }
     public ReactiveCommand<Unit, Unit> ToggleInfoSubpixelIndicatorCommand { get; }
+    public ReactiveCommand<Unit, Unit> ToggleUnitOfSpeedCommand { get; }
 
     public ReactiveCommand<Unit, Unit> SetPositionDecimalsCommand { get; }
     public ReactiveCommand<Unit, Unit> SetSpeedDecimalsCommand { get; }
@@ -102,6 +103,7 @@ public class MainWindowViewModel : ViewModelBase {
         ToggleInfoWatchEntityCommand = ReactiveCommand.Create(ToggleInfoWatchEntity);
         ToggleInfoCustomCommand = ReactiveCommand.Create(ToggleInfoCustom);
         ToggleInfoSubpixelIndicatorCommand = ReactiveCommand.Create(ToggleInfoSubpixelIndicator);
+        ToggleUnitOfSpeedCommand = ReactiveCommand.Create(ToggleUnitOfSpeed);
 
         SetPositionDecimalsCommand = ReactiveCommand.CreateFromTask(SetPositionDecimals);
         SetSpeedDecimalsCommand = ReactiveCommand.CreateFromTask(SetSpeedDecimals);
@@ -176,13 +178,13 @@ public class MainWindowViewModel : ViewModelBase {
             new MenuModel("Watch Entity Info", command: ToggleInfoWatchEntityCommand),
             new MenuModel("Custom Info", command: ToggleInfoCustomCommand),
             new MenuModel("Subpixel Indicator", command: ToggleInfoSubpixelIndicatorCommand),
+            new MenuModel("Unit of Speed", command: ToggleUnitOfSpeedCommand),
             MenuModel.Separator,
             new MenuModel("Position Decimals", command: SetPositionDecimalsCommand),
             new MenuModel("Speed Decimals", command: SetSpeedDecimalsCommand),
             new MenuModel("Velocity Decimals", command: SetVelocityDecimalsCommand),
             new MenuModel("Custom Info Decimals", command: SetCustomInfoDecimalsCommand),
             new MenuModel("Subpixel Indicator Decimals", command: SetSubpixelIndicatorDecimalsCommand),
-            new MenuModel("Unit of Speed"),
             MenuModel.Separator,
             new MenuModel("Fast Forward Speed", command: SetFastForwardSpeedCommand),
             new MenuModel("Slow Forward Speed", command: SetSlowForwardSpeedCommand),
@@ -267,6 +269,7 @@ public class MainWindowViewModel : ViewModelBase {
     private void ToggleInfoWatchEntity() => _celesteService.ToggleInfoWatchEntity();
     private void ToggleInfoCustom() => _celesteService.ToggleInfoCustom();
     private void ToggleInfoSubpixelIndicator() => _celesteService.ToggleInfoSubpixelIndicator();
+    private void ToggleUnitOfSpeed() => _celesteService.ToggleSpeedUnit();
 
     private const int MinDecimals = 2;
     private const int MaxDecimals = 12;
