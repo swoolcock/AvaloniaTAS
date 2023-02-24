@@ -102,7 +102,7 @@ public class StudioCommunicationServer : StudioCommunicationBase {
     }
 
     private void ProcessReturnData(byte[] data) {
-        // CommunicationWrapper.ReturnData = Encoding.Default.GetString(data);
+        CommunicationWrapper.ReturnData = Encoding.Default.GetString(data);
     }
 
     #endregion
@@ -149,25 +149,20 @@ public class StudioCommunicationServer : StudioCommunicationBase {
     public void RequestDataFromGame(GameDataType gameDataType, object arg) => PendingWrite = () => RequestGameDataNow(gameDataType, arg);
 
     public string GetDataFromGame(GameDataType gameDataType, object arg = null) {
-        // GameDataType is in the TAS.Avalonia assembly which CelesteTAS can't find, and crashes the Communication thread.
-        // Somehow this doesn't apply for Celeste Studio for some reason I don't know.
-        // TODO: Properly implement getting data from the game.
+        CommunicationWrapper.ReturnData = null;
+        RequestDataFromGame(gameDataType, arg);
 
-        // CommunicationWrapper.ReturnData = null;
-        // RequestDataFromGame(gameDataType, arg);
+        int sleepTimeout = 150;
+        while (CommunicationWrapper.ReturnData == null && sleepTimeout > 0) {
+            Thread.Sleep(10);
+            sleepTimeout -= 10;
+        }
 
-        // int sleepTimeout = 150;
-        // while (CommunicationWrapper.ReturnData == null && sleepTimeout > 0) {
-        //     Thread.Sleep(10);
-        //     sleepTimeout -= 10;
-        // }
+        if (CommunicationWrapper.ReturnData == null && sleepTimeout <= 0) {
+            Console.Error.WriteLine("Getting data from the game timed out.");
+        }
 
-        // if (CommunicationWrapper.ReturnData == null && sleepTimeout <= 0) {
-        //     Console.Error.WriteLine("Getting data from the game timed out.");
-        // }
-
-        // return CommunicationWrapper.ReturnData == string.Empty ? null : CommunicationWrapper.ReturnData;
-        return "2";
+        return CommunicationWrapper.ReturnData == string.Empty ? null : CommunicationWrapper.ReturnData;
     }
 
     private void SendPathNow(string path, bool canFail) {
@@ -211,7 +206,7 @@ public class StudioCommunicationServer : StudioCommunicationBase {
             return;
         }
 
-        byte[] bytes = BinaryFormatterHelper.ToByteArray(new[] { gameDataType, arg });
+        byte[] bytes = BinaryFormatterHelper.ToByteArray(new[] { (byte) gameDataType, arg });
         WriteMessageGuaranteed(new Message(MessageID.GetData, bytes));
     }
 
