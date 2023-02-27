@@ -11,6 +11,8 @@ public class StudioCommunicationServer : StudioCommunicationBase {
     protected virtual void OnStateUpdated(StudioInfo obj) => StateUpdated?.Invoke(obj);
     protected virtual void OnBindingsUpdated(Dictionary<HotkeyID, List<Keys>> obj) => BindingsUpdated?.Invoke(obj);
 
+    private static string _returnData;
+
     internal void Run() {
         Thread updateThread = new(UpdateLoop) {
             CurrentCulture = CultureInfo.InvariantCulture,
@@ -102,7 +104,7 @@ public class StudioCommunicationServer : StudioCommunicationBase {
     }
 
     private void ProcessReturnData(byte[] data) {
-        CommunicationWrapper.ReturnData = Encoding.Default.GetString(data);
+        _returnData = Encoding.Default.GetString(data);
     }
 
     #endregion
@@ -149,20 +151,20 @@ public class StudioCommunicationServer : StudioCommunicationBase {
     public void RequestDataFromGame(GameDataType gameDataType, object arg) => PendingWrite = () => RequestGameDataNow(gameDataType, arg);
 
     public string GetDataFromGame(GameDataType gameDataType, object arg = null) {
-        CommunicationWrapper.ReturnData = null;
+        _returnData = null;
         RequestDataFromGame(gameDataType, arg);
 
         int sleepTimeout = 150;
-        while (CommunicationWrapper.ReturnData == null && sleepTimeout > 0) {
+        while (_returnData == null && sleepTimeout > 0) {
             Thread.Sleep(10);
             sleepTimeout -= 10;
         }
 
-        if (CommunicationWrapper.ReturnData == null && sleepTimeout <= 0) {
+        if (_returnData == null && sleepTimeout <= 0) {
             Console.Error.WriteLine("Getting data from the game timed out.");
         }
 
-        return CommunicationWrapper.ReturnData == string.Empty ? null : CommunicationWrapper.ReturnData;
+        return _returnData == string.Empty ? null : _returnData;
     }
 
     private void SendPathNow(string path, bool canFail) {
