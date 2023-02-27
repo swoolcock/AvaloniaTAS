@@ -51,8 +51,6 @@ public class MainWindowViewModel : ViewModelBase {
     // Context
     public ReactiveCommand<Unit, Unit> ToggleCommentsCommand { get; }
 
-    public Interaction<InputDialogWindowViewModel, object> ShowInputDialog { get; }
-
     private TASDocument _document;
     public TASDocument Document {
         get => _document;
@@ -116,8 +114,6 @@ public class MainWindowViewModel : ViewModelBase {
 
         // Context
         ToggleCommentsCommand = ReactiveCommand.Create(ToggleComments);
-
-        ShowInputDialog = new Interaction<InputDialogWindowViewModel, object>();
 
         Document = TASDocument.Load("/Users/shane/Celeste/Celeste.tas") ?? TASDocument.CreateBlank();
         MainMenu = CreateMenu(MenuVisible);
