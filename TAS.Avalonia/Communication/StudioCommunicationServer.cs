@@ -11,7 +11,7 @@ public class StudioCommunicationServer : StudioCommunicationBase {
     protected virtual void OnStateUpdated(StudioInfo obj) => StateUpdated?.Invoke(obj);
     protected virtual void OnBindingsUpdated(Dictionary<HotkeyID, List<Keys>> obj) => BindingsUpdated?.Invoke(obj);
 
-    private static string _returnData;
+    private string _returnData;
 
     internal void Run() {
         Thread updateThread = new(UpdateLoop) {
