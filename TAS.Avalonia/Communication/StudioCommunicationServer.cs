@@ -11,6 +11,8 @@ public class StudioCommunicationServer : StudioCommunicationBase {
     protected virtual void OnStateUpdated(StudioInfo obj) => StateUpdated?.Invoke(obj);
     protected virtual void OnBindingsUpdated(Dictionary<HotkeyID, List<Keys>> obj) => BindingsUpdated?.Invoke(obj);
 
+    private string _returnData;
+
     internal void Run() {
         Thread updateThread = new(UpdateLoop) {
             CurrentCulture = CultureInfo.InvariantCulture,
@@ -102,7 +104,7 @@ public class StudioCommunicationServer : StudioCommunicationBase {
     }
 
     private void ProcessReturnData(byte[] data) {
-        // CommunicationWrapper.ReturnData = Encoding.Default.GetString(data);
+        _returnData = Encoding.Default.GetString(data);
     }
 
     #endregion
@@ -146,7 +148,24 @@ public class StudioCommunicationServer : StudioCommunicationBase {
     public void ConvertToLibTas(string path) => PendingWrite = () => ConvertToLibTasNow(path);
     public void SendHotkeyPressed(HotkeyID hotkey, bool released = false) => PendingWrite = () => SendHotkeyPressedNow(hotkey, released);
     public void ToggleGameSetting(string settingName, object value) => PendingWrite = () => ToggleGameSettingNow(settingName, value);
-    public void GetDataFromGame(GameDataType gameDataType, object arg) => PendingWrite = () => GetGameDataNow(gameDataType, arg);
+    public void RequestDataFromGame(GameDataType gameDataType, object arg) => PendingWrite = () => RequestGameDataNow(gameDataType, arg);
+
+    public string GetDataFromGame(GameDataType gameDataType, object arg = null) {
+        _returnData = null;
+        RequestDataFromGame(gameDataType, arg);
+
+        int sleepTimeout = 150;
+        while (_returnData == null && sleepTimeout > 0) {
+            Thread.Sleep(10);
+            sleepTimeout -= 10;
+        }
+
+        if (_returnData == null && sleepTimeout <= 0) {
+            Console.Error.WriteLine("Getting data from the game timed out.");
+        }
+
+        return _returnData == string.Empty ? null : _returnData;
+    }
 
     private void SendPathNow(string path, bool canFail) {
         if (Initialized || !canFail) {
@@ -184,12 +203,12 @@ public class StudioCommunicationServer : StudioCommunicationBase {
         WriteMessageGuaranteed(new Message(MessageID.ToggleGameSetting, bytes));
     }
 
-    private void GetGameDataNow(GameDataType gameDataType, object arg) {
+    private void RequestGameDataNow(GameDataType gameDataType, object arg) {
         if (!Initialized) {
             return;
         }
 
-        byte[] bytes = BinaryFormatterHelper.ToByteArray(new[] { gameDataType, arg });
+        byte[] bytes = BinaryFormatterHelper.ToByteArray(new[] { (byte) gameDataType, arg });
         WriteMessageGuaranteed(new Message(MessageID.GetData, bytes));
     }
 

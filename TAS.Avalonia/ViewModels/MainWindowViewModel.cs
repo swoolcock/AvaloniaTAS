@@ -1,4 +1,5 @@
 using System.Reactive;
+using System.Reactive.Linq;
 using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Input;
@@ -10,31 +11,45 @@ using TAS.Avalonia.Services;
 namespace TAS.Avalonia.ViewModels;
 
 public class MainWindowViewModel : ViewModelBase {
+    // File
     public ReactiveCommand<Unit, Unit> NewFileCommand { get; }
     public ReactiveCommand<Unit, Unit> OpenFileCommand { get; }
     public ReactiveCommand<Unit, Unit> SaveFileCommand { get; }
     public ReactiveCommand<Unit, Unit> SaveFileAsCommand { get; }
     public ReactiveCommand<Unit, Unit> ExitCommand { get; }
-    public ReactiveCommand<Unit, Unit> ToggleCommentsCommand { get; }
 
+    // Toggles
     public ReactiveCommand<Unit, Unit> ToggleHitboxesCommand { get; }
-    public ReactiveCommand<Unit, Unit> ShowTriggerHitboxesCommand { get; }
-    public ReactiveCommand<Unit, Unit> ShowUnloadedRoomsHitboxesCommand { get; }
-    public ReactiveCommand<Unit, Unit> ShowCameraHitboxesCommand { get; }
-    public ReactiveCommand<Unit, Unit> SimplifiedHitboxesCommand { get; }
-    public ReactiveCommand<Unit, Unit> ShowActualCollideHitboxesCommand { get; }
+    public ReactiveCommand<Unit, Unit> ToggleTriggerHitboxesCommand { get; }
+    public ReactiveCommand<Unit, Unit> ToggleUnloadedRoomsHitboxesCommand { get; }
+    public ReactiveCommand<Unit, Unit> ToggleCameraHitboxesCommand { get; }
+    public ReactiveCommand<Unit, Unit> ToggleSimplifiedHitboxesCommand { get; }
+    public ReactiveCommand<Unit, Unit> ToggleActualCollideHitboxesCommand { get; }
 
-    public ReactiveCommand<Unit, Unit> SimplifiedGraphicsCommand { get; }
-    public ReactiveCommand<Unit, Unit> ShowGameplayCommand { get; }
+    public ReactiveCommand<Unit, Unit> ToggleSimplifiedGraphicsCommand { get; }
+    public ReactiveCommand<Unit, Unit> ToggleGameplayCommand { get; }
 
-    public ReactiveCommand<Unit, Unit> CenterCameraCommand { get; }
+    public ReactiveCommand<Unit, Unit> ToggleCenterCameraCommand { get; }
 
-    public ReactiveCommand<Unit, Unit> InfoHudCommand { get; }
-    public ReactiveCommand<Unit, Unit> InfoTasInputCommand { get; }
-    public ReactiveCommand<Unit, Unit> InfoGameCommand { get; }
-    public ReactiveCommand<Unit, Unit> InfoWatchEntityCommand { get; }
-    public ReactiveCommand<Unit, Unit> InfoCustomCommand { get; }
-    public ReactiveCommand<Unit, Unit> InfoSubpixelIndicatorCommand { get; }
+    public ReactiveCommand<Unit, Unit> ToggleInfoHudCommand { get; }
+    public ReactiveCommand<Unit, Unit> ToggleInfoTasInputCommand { get; }
+    public ReactiveCommand<Unit, Unit> ToggleInfoGameCommand { get; }
+    public ReactiveCommand<Unit, Unit> ToggleInfoWatchEntityCommand { get; }
+    public ReactiveCommand<Unit, Unit> ToggleInfoCustomCommand { get; }
+    public ReactiveCommand<Unit, Unit> ToggleInfoSubpixelIndicatorCommand { get; }
+    public ReactiveCommand<Unit, Unit> ToggleUnitOfSpeedCommand { get; }
+
+    public ReactiveCommand<Unit, Unit> SetPositionDecimalsCommand { get; }
+    public ReactiveCommand<Unit, Unit> SetSpeedDecimalsCommand { get; }
+    public ReactiveCommand<Unit, Unit> SetVelocityDecimalsCommand { get; }
+    public ReactiveCommand<Unit, Unit> SetCustomInfoDecimalsCommand { get; }
+    public ReactiveCommand<Unit, Unit> SetSubpixelIndicatorDecimalsCommand { get; }
+
+    public ReactiveCommand<Unit, Unit> SetFastForwardSpeedCommand { get; }
+    public ReactiveCommand<Unit, Unit> SetSlowForwardSpeedCommand { get; }
+
+    // Context
+    public ReactiveCommand<Unit, Unit> ToggleCommentsCommand { get; }
 
     private TASDocument _document;
     public TASDocument Document {
@@ -51,12 +66,14 @@ public class MainWindowViewModel : ViewModelBase {
     public bool MenuVisible => true; //!RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
 
     private readonly ICelesteService _celesteService;
+    private readonly IDialogService _dialogService;
 
     private MenuModel[] MainMenu { get; }
     private MenuModel[] EditorContextMenu { get; }
 
     public MainWindowViewModel() {
         _celesteService = AvaloniaLocator.Current.GetService<ICelesteService>()!;
+        _dialogService = AvaloniaLocator.Current.GetService<IDialogService>()!;
 
         // File
         NewFileCommand = ReactiveCommand.Create(NewFile);
@@ -67,23 +84,33 @@ public class MainWindowViewModel : ViewModelBase {
 
         // Toggles
         ToggleHitboxesCommand = ReactiveCommand.Create(ToggleHitboxes);
-        ShowTriggerHitboxesCommand = ReactiveCommand.Create(ShowTriggerHitboxes);
-        ShowUnloadedRoomsHitboxesCommand = ReactiveCommand.Create(ShowUnloadedRoomsHitboxes);
-        ShowCameraHitboxesCommand = ReactiveCommand.Create(ShowCameraHitboxes);
-        SimplifiedHitboxesCommand = ReactiveCommand.Create(SimplifiedHitboxes);
-        ShowActualCollideHitboxesCommand = ReactiveCommand.Create(ShowActualCollideHitboxes);
+        ToggleTriggerHitboxesCommand = ReactiveCommand.Create(ToggleTriggerHitboxes);
+        ToggleUnloadedRoomsHitboxesCommand = ReactiveCommand.Create(ToggleUnloadedRoomsHitboxes);
+        ToggleCameraHitboxesCommand = ReactiveCommand.Create(ToggleCameraHitboxes);
+        ToggleSimplifiedHitboxesCommand = ReactiveCommand.Create(ToggleSimplifiedHitboxes);
+        ToggleActualCollideHitboxesCommand = ReactiveCommand.Create(ToggleActualCollideHitboxes);
 
-        SimplifiedGraphicsCommand = ReactiveCommand.Create(SimplifiedGraphics);
-        ShowGameplayCommand = ReactiveCommand.Create(ShowGameplay);
+        ToggleSimplifiedGraphicsCommand = ReactiveCommand.Create(ToggleSimplifiedGraphics);
+        ToggleGameplayCommand = ReactiveCommand.Create(ToggleGameplay);
 
-        CenterCameraCommand = ReactiveCommand.Create(CenterCamera);
+        ToggleCenterCameraCommand = ReactiveCommand.Create(ToggleCenterCamera);
 
-        InfoHudCommand = ReactiveCommand.Create(InfoHud);
-        InfoTasInputCommand = ReactiveCommand.Create(InfoTasInput);
-        InfoGameCommand = ReactiveCommand.Create(InfoGame);
-        InfoWatchEntityCommand = ReactiveCommand.Create(InfoWatchEntity);
-        InfoCustomCommand = ReactiveCommand.Create(InfoCustom);
-        InfoSubpixelIndicatorCommand = ReactiveCommand.Create(InfoSubpixelIndicator);
+        ToggleInfoHudCommand = ReactiveCommand.Create(ToggleInfoHud);
+        ToggleInfoTasInputCommand = ReactiveCommand.Create(ToggleInfoTasInput);
+        ToggleInfoGameCommand = ReactiveCommand.Create(ToggleInfoGame);
+        ToggleInfoWatchEntityCommand = ReactiveCommand.Create(ToggleInfoWatchEntity);
+        ToggleInfoCustomCommand = ReactiveCommand.Create(ToggleInfoCustom);
+        ToggleInfoSubpixelIndicatorCommand = ReactiveCommand.Create(ToggleInfoSubpixelIndicator);
+        ToggleUnitOfSpeedCommand = ReactiveCommand.Create(ToggleUnitOfSpeed);
+
+        SetPositionDecimalsCommand = ReactiveCommand.CreateFromTask(SetPositionDecimals);
+        SetSpeedDecimalsCommand = ReactiveCommand.CreateFromTask(SetSpeedDecimals);
+        SetVelocityDecimalsCommand = ReactiveCommand.CreateFromTask(SetVelocityDecimals);
+        SetCustomInfoDecimalsCommand = ReactiveCommand.CreateFromTask(SetCustomInfoDecimals);
+        SetSubpixelIndicatorDecimalsCommand = ReactiveCommand.CreateFromTask(SetSubpixelIndicatorDecimals);
+
+        SetFastForwardSpeedCommand = ReactiveCommand.CreateFromTask(SetFastForwardSpeed);
+        SetSlowForwardSpeedCommand = ReactiveCommand.CreateFromTask(SetSlowForwardSpeed);
 
         // Context
         ToggleCommentsCommand = ReactiveCommand.Create(ToggleComments);
@@ -130,33 +157,33 @@ public class MainWindowViewModel : ViewModelBase {
         },
         new MenuModel("Toggles") {
             new MenuModel("Hitboxes", command: ToggleHitboxesCommand),
-            new MenuModel("Trigger Hitboxes", command: ShowTriggerHitboxesCommand),
-            new MenuModel("Unloaded Rooms Hitboxes", command: ShowUnloadedRoomsHitboxesCommand),
-            new MenuModel("Camera Hitboxes", command: ShowCameraHitboxesCommand),
-            new MenuModel("Simplified Hitboxes", command: SimplifiedHitboxesCommand),
-            new MenuModel("Actual Collide Hitboxes", command: ShowActualCollideHitboxesCommand),
+            new MenuModel("Trigger Hitboxes", command: ToggleTriggerHitboxesCommand),
+            new MenuModel("Unloaded Rooms Hitboxes", command: ToggleUnloadedRoomsHitboxesCommand),
+            new MenuModel("Camera Hitboxes", command: ToggleCameraHitboxesCommand),
+            new MenuModel("Simplified Hitboxes", command: ToggleSimplifiedHitboxesCommand),
+            new MenuModel("Actual Collide Hitboxes", command: ToggleActualCollideHitboxesCommand),
             MenuModel.Separator,
-            new MenuModel("Simplified Graphics", command: SimplifiedGraphicsCommand),
-            new MenuModel("Gameplay", command: ShowGameplayCommand),
+            new MenuModel("Simplified Graphics", command: ToggleSimplifiedGraphicsCommand),
+            new MenuModel("Gameplay", command: ToggleGameplayCommand),
             MenuModel.Separator,
-            new MenuModel("Center Camera", command: CenterCameraCommand),
+            new MenuModel("Center Camera", command: ToggleCenterCameraCommand),
             MenuModel.Separator,
-            new MenuModel("Info HUD", command: InfoHudCommand),
-            new MenuModel("TAS Input Info", command: InfoTasInputCommand),
-            new MenuModel("Game Info", command: InfoGameCommand),
-            new MenuModel("Watch Entity Info", command: InfoWatchEntityCommand),
-            new MenuModel("Custom Info", command: InfoCustomCommand),
-            new MenuModel("Subpixel Indicator", command: InfoSubpixelIndicatorCommand),
+            new MenuModel("Info HUD", command: ToggleInfoHudCommand),
+            new MenuModel("TAS Input Info", command: ToggleInfoTasInputCommand),
+            new MenuModel("Game Info", command: ToggleInfoGameCommand),
+            new MenuModel("Watch Entity Info", command: ToggleInfoWatchEntityCommand),
+            new MenuModel("Custom Info", command: ToggleInfoCustomCommand),
+            new MenuModel("Subpixel Indicator", command: ToggleInfoSubpixelIndicatorCommand),
+            new MenuModel("Unit of Speed", command: ToggleUnitOfSpeedCommand),
             MenuModel.Separator,
-            new MenuModel("Position Decimals"),
-            new MenuModel("Speed Decimals"),
-            new MenuModel("Velocity Decimals"),
-            new MenuModel("Custom Info Decimals"),
-            new MenuModel("Subpixel Indicator Decimals"),
-            new MenuModel("Unit of Speed"),
+            new MenuModel("Position Decimals", command: SetPositionDecimalsCommand),
+            new MenuModel("Speed Decimals", command: SetSpeedDecimalsCommand),
+            new MenuModel("Velocity Decimals", command: SetVelocityDecimalsCommand),
+            new MenuModel("Custom Info Decimals", command: SetCustomInfoDecimalsCommand),
+            new MenuModel("Subpixel Indicator Decimals", command: SetSubpixelIndicatorDecimalsCommand),
             MenuModel.Separator,
-            new MenuModel("Fast Forward Speed"),
-            new MenuModel("Slow Forward Speed"),
+            new MenuModel("Fast Forward Speed", command: SetFastForwardSpeedCommand),
+            new MenuModel("Slow Forward Speed", command: SetSlowForwardSpeedCommand),
         },
     };
 
@@ -224,25 +251,53 @@ public class MainWindowViewModel : ViewModelBase {
     };
 
     private void ToggleHitboxes() => _celesteService.ToggleHitboxes();
-    private void ShowTriggerHitboxes() => _celesteService.ShowTriggerHitboxes();
-    private void ShowUnloadedRoomsHitboxes() => _celesteService.ShowUnloadedRoomsHitboxes();
-    private void ShowCameraHitboxes() => _celesteService.ShowCameraHitboxes();
-    private void SimplifiedHitboxes() => _celesteService.SimplifiedHitboxes();
-    private void ShowActualCollideHitboxes() => _celesteService.ShowActualCollideHitboxes();
-    private void SimplifiedGraphics() => _celesteService.SimplifiedGraphics();
-    private void ShowGameplay() => _celesteService.ShowGameplay();
-    private void CenterCamera() => _celesteService.CenterCamera();
-    private void InfoHud() => _celesteService.InfoHud();
-    private void InfoTasInput() => _celesteService.InfoTasInput();
-    private void InfoGame() => _celesteService.InfoGame();
-    private void InfoWatchEntity() => _celesteService.InfoWatchEntity();
-    private void InfoCustom() => _celesteService.InfoCustom();
-    private void InfoSubpixelIndicator() => _celesteService.InfoSubpixelIndicator();
+    private void ToggleTriggerHitboxes() => _celesteService.ToggleTriggerHitboxes();
+    private void ToggleUnloadedRoomsHitboxes() => _celesteService.ToggleUnloadedRoomsHitboxes();
+    private void ToggleCameraHitboxes() => _celesteService.ToggleCameraHitboxes();
+    private void ToggleSimplifiedHitboxes() => _celesteService.ToggleSimplifiedHitboxes();
+    private void ToggleActualCollideHitboxes() => _celesteService.ToggleActualCollideHitboxes();
+    private void ToggleSimplifiedGraphics() => _celesteService.ToggleSimplifiedGraphics();
+    private void ToggleGameplay() => _celesteService.ToggleGameplay();
+    private void ToggleCenterCamera() => _celesteService.ToggleCenterCamera();
+    private void ToggleInfoHud() => _celesteService.ToggleInfoHud();
+    private void ToggleInfoTasInput() => _celesteService.ToggleInfoTasInput();
+    private void ToggleInfoGame() => _celesteService.ToggleInfoGame();
+    private void ToggleInfoWatchEntity() => _celesteService.ToggleInfoWatchEntity();
+    private void ToggleInfoCustom() => _celesteService.ToggleInfoCustom();
+    private void ToggleInfoSubpixelIndicator() => _celesteService.ToggleInfoSubpixelIndicator();
+    private void ToggleUnitOfSpeed() => _celesteService.ToggleSpeedUnit();
+
+    private const int MinDecimals = 2;
+    private const int MaxDecimals = 12;
+    private const int MinFastForwardSpeed = 2;
+    private const int MaxFastForwardSpeed = 30;
+    private const float MinSlowForwardSpeed = 0.1f;
+    private const float MaxSlowForwardSpeed = 0.9f;
+
+    private async Task SetPositionDecimals() => _celesteService.SetPositionDecimals(
+        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetPositionDecimals(), MinDecimals, MaxDecimals));
+
+    private async Task SetSpeedDecimals() => _celesteService.SetSpeedDecimals(
+        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetSpeedDecimals(), MinDecimals, MaxDecimals));
+
+    private async Task SetVelocityDecimals() => _celesteService.SetVelocityDecimals(
+        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetVelocityDecimals(), MinDecimals, MaxDecimals));
+
+    private async Task SetCustomInfoDecimals() => _celesteService.SetCustomInfoDecimals(
+        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetCustomInfoDecimals(), MinDecimals, MaxDecimals));
+
+    private async Task SetSubpixelIndicatorDecimals() => _celesteService.SetSubpixelIndicatorDecimals(
+        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetSubpixelIndicatorDecimals(), MinDecimals, MaxDecimals));
+
+    private async Task SetFastForwardSpeed() => _celesteService.SetFastForwardSpeed(
+        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetFastForwardSpeed(), MinFastForwardSpeed, MaxFastForwardSpeed));
+
+    private async Task SetSlowForwardSpeed() => _celesteService.SetSlowForwardSpeed(
+        await _dialogService.ShowFloatInputDialogAsync(_celesteService.GetSlowForwardSpeed(), MinSlowForwardSpeed, MaxSlowForwardSpeed));
 
     private async Task<bool> ConfirmDiscardChangesAsync() {
         if (!Document.Dirty) return true;
-        var dialogService = AvaloniaLocator.Current.GetService<IDialogService>()!;
-        bool result = await dialogService.ShowConfirmDialogAsync("You have unsaved changes. Are you sure?");
+        bool result = await _dialogService.ShowConfirmDialogAsync("You have unsaved changes. Are you sure?");
         if (result) await Task.Delay(TimeSpan.FromSeconds(0.1f));
         return result;
     }
@@ -260,13 +315,12 @@ public class MainWindowViewModel : ViewModelBase {
         await Task.Delay(TimeSpan.FromSeconds(0.1f));
 
         if (!await ConfirmDiscardChangesAsync()) return;
-        var dialogService = AvaloniaLocator.Current.GetService<IDialogService>()!;
-        string[] results = await dialogService.ShowOpenFileDialogAsync("Celeste TAS", "tas");
+        string[] results = await _dialogService.ShowOpenFileDialogAsync("Celeste TAS", "tas");
 
         if (results?.FirstOrDefault() is not { } filepath) return;
 
         if (TASDocument.Load(filepath) is not { } doc) {
-            await dialogService.ShowDialogAsync($"Error loading file: {filepath}");
+            await _dialogService.ShowDialogAsync($"Error loading file: {filepath}");
             return;
         }
 
@@ -299,11 +353,10 @@ public class MainWindowViewModel : ViewModelBase {
     private async Task<string> SaveFileAsAsync(bool force) {
         string filename = Document.Filename;
         if (force || filename == null) {
-            var dialogService = AvaloniaLocator.Current.GetService<IDialogService>()!;
-            filename = await dialogService.ShowSaveFileDialogAsync("Celeste TAS", "tas");
+            filename = await _dialogService.ShowSaveFileDialogAsync("Celeste TAS", "tas");
             if (filename != null && File.Exists(filename) && !RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
                 // we don't need to confirm on macOS since the finder file dialog does it for us
-                bool confirm = await dialogService.ShowConfirmDialogAsync("This file already exists. Are you sure you want to overwrite it?", "Celeste TAS");
+                bool confirm = await _dialogService.ShowConfirmDialogAsync("This file already exists. Are you sure you want to overwrite it?", "Celeste TAS");
                 if (!confirm) return null;
             }
         }
