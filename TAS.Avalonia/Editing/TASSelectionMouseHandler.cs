@@ -1,12 +1,13 @@
 using System.ComponentModel;
 using Avalonia;
 using Avalonia.Input;
+using Avalonia.Media.TextFormatting;
 using AvaloniaEdit;
 using AvaloniaEdit.Document;
 using AvaloniaEdit.Editing;
 using AvaloniaEdit.Rendering;
-using AvaloniaEdit.Text;
 using AvaloniaEdit.Utils;
+using LogicalDirection = AvaloniaEdit.Document.LogicalDirection;
 
 namespace TAS.Avalonia.Editing;
 

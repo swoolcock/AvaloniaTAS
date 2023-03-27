@@ -2,13 +2,14 @@ using System.Diagnostics;
 using Avalonia;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
+using Avalonia.Media.TextFormatting;
 using AvaloniaEdit;
 using AvaloniaEdit.Document;
 using AvaloniaEdit.Editing;
 using AvaloniaEdit.Rendering;
-using AvaloniaEdit.Text;
 using AvaloniaEdit.Utils;
 using TAS.Avalonia.Models;
+using LogicalDirection = AvaloniaEdit.Document.LogicalDirection;
 
 namespace TAS.Avalonia.Editing;
 
