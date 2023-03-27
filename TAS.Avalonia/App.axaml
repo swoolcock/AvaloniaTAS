@@ -3,13 +3,14 @@
              xmlns:local="using:TAS.Avalonia"
              xmlns:converters="clr-namespace:TAS.Avalonia.Converters"
              Name="TAS Studio"
-             x:Class="TAS.Avalonia.App">
+             x:Class="TAS.Avalonia.App"
+             RequestedThemeVariant="Dark">
     <Application.DataTemplates>
         <local:ViewLocator/>
     </Application.DataTemplates>
 
     <Application.Styles>
-        <SimpleTheme Mode="Dark"/>
+        <SimpleTheme />
         <StyleInclude Source="avares://AvaloniaEdit/AvaloniaEdit.xaml" />
     </Application.Styles>
     

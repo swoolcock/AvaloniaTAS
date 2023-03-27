@@ -37,15 +37,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="11.0.0-preview1" />
-    <PackageReference Include="Avalonia.ReactiveUI" Version="11.0.0-preview1" />
-    <PackageReference Include="Avalonia.Xaml.Interactions" Version="11.0.0-preview1" />
-    <PackageReference Include="Avalonia.Desktop" Version="11.0.0-preview1" />
+    <PackageReference Include="Avalonia" Version="11.0.0-preview5" />
+    <PackageReference Include="Avalonia.ReactiveUI" Version="11.0.0-preview5" />
+    <PackageReference Include="Avalonia.Xaml.Interactions" Version="11.0.0-preview5" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.0.0-preview5" />
     <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.0.0-preview1" />
+    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.0.0-preview5" />
 
-    <PackageReference Include="Avalonia.AvaloniaEdit" Version="11.0.0-preview1" />
-    <PackageReference Include="AvaloniaEdit.TextMate" Version="11.0.0-preview1" />
+    <PackageReference Include="Avalonia.AvaloniaEdit" Version="11.0.0-preview5" />
+    <PackageReference Include="AvaloniaEdit.TextMate" Version="11.0.0-preview5" />
     <PackageReference Include="AvaloniaEdit.TextMate.Grammars" Version="0.10.12" />
 
     <PackageReference Include="ReactiveUI" Version="18.3.1" />
