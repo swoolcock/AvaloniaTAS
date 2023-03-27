@@ -1,6 +1,8 @@
+using System.Drawing;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Platform.Storage;
 using Dialogs.Avalonia;
 using Dialogs.Buttons;
 using TAS.Avalonia.Views;
@@ -27,20 +29,24 @@ public class DialogService : BaseService, IDialogService {
         await dialog.ShowAsync().ConfigureAwait(true);
     }
 
-    public async Task<string[]> ShowOpenFileDialogAsync(string name, params string[] extensions) {
-        var dialog = new OpenFileDialog();
-        dialog.Filters!.Add(new FileDialogFilter {
-            Name = name, Extensions = extensions.ToList()
-        });
-        return await dialog.ShowAsync(MainWindow!).ConfigureAwait(true);
+    public async Task<string[]> ShowOpenFileDialogAsync(string title, params FilePickerFileType[] fileTypes) {
+        var files = await MainWindow.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions {
+            Title = title,
+            AllowMultiple = false,
+            FileTypeFilter = fileTypes,
+        }).ConfigureAwait(true);
+
+        return files.Select(file => file.Path.AbsolutePath).ToArray();
     }
 
-    public async Task<string> ShowSaveFileDialogAsync(string name, params string[] extensions) {
-        var dialog = new SaveFileDialog();
-        dialog.Filters!.Add(new FileDialogFilter {
-            Name = name, Extensions = extensions.ToList()
-        });
-        return await dialog.ShowAsync(MainWindow!).ConfigureAwait(true);
+    public async Task<string> ShowSaveFileDialogAsync(string title, string defaultExtension, params FilePickerFileType[] fileTypes) {
+        var file = await MainWindow.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions {
+            Title = title,
+            ShowOverwritePrompt = true,
+            DefaultExtension = defaultExtension,
+            FileTypeChoices = fileTypes
+        }).ConfigureAwait(true);
+        return file.Path.AbsolutePath;
     }
 
     public async Task<int> ShowIntInputDialogAsync(int currentValue, int minValue, int maxValue, string title = null) {
