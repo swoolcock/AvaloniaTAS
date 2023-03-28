@@ -52,6 +52,8 @@ public class MenuModel : IEnumerable<MenuModel> {
             Header = Header,
             Command = Command,
             CommandParameter = CommandParameter,
+            HotKey = Gesture,
+            InputGesture = Gesture,
             IsEnabled = IsEnabled ?? (Items.Any() || Command?.CanExecute(CommandParameter) == true),
             IsVisible = IsVisible,
         };
