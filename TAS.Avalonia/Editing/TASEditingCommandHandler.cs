@@ -134,7 +134,23 @@ internal class TASEditingCommandHandler {
     private static void OnEnter(object target, ExecutedRoutedEventArgs args) {
         TextArea textArea = GetTextArea(target);
         if (textArea == null || !textArea.IsFocused) return;
-        textArea.PerformTextInput("\n");
+
+        var caretPosition = textArea.Caret.Position;
+        if (textArea.Document is not { } document ||
+            document.GetLineByNumber(caretPosition.Line) is not { } line ||
+            document.GetText(line) is not { } lineText) 
+        {
+            textArea.PerformTextInput(Environment.NewLine);
+            args.Handled = true;
+            return;
+        }
+
+        // don't split framecount and inputs
+        document.Insert(line.EndOffset, Environment.NewLine);
+
+        caretPosition.Line++;
+        textArea.Caret.Position = caretPosition;
+
         args.Handled = true;
     }
 
