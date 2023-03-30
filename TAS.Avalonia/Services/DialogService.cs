@@ -17,8 +17,14 @@ public class DialogService : BaseService, IDialogService {
         var dialog = new SimpleDialog {
             Title = title ?? string.Empty, Description = message
         };
-        var result = await dialog.ShowAsync().ConfigureAwait(true);
-        return !result.IsCancel;
+        try {
+            var result = await dialog.ShowAsync().ConfigureAwait(true);
+            return !result.IsCancel;
+        } catch (FileNotFoundException ex) {
+            // Probably a bug in Dialogs.Avalonia
+            Console.Error.WriteLine($"Failed showing confirm dialog: {ex}");
+            return false;
+        }
     }
 
     public async Task ShowDialogAsync(string message, string title = null) {
