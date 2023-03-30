@@ -27,7 +27,8 @@ internal static class TASCaretNavigationCommandHandler {
 
     private static void AddBinding(
         RoutedCommand command,
-        EventHandler<ExecutedRoutedEventArgs> handler) {
+        EventHandler<ExecutedRoutedEventArgs> handler)
+    {
         CommandBindings.Add(new RoutedCommandBinding(command, handler));
     }
 
@@ -35,14 +36,16 @@ internal static class TASCaretNavigationCommandHandler {
         RoutedCommand command,
         KeyModifiers modifiers,
         Key key,
-        EventHandler<ExecutedRoutedEventArgs> handler) {
+        EventHandler<ExecutedRoutedEventArgs> handler)
+    {
         AddBinding(command, new KeyGesture(key, modifiers), handler);
     }
 
     private static void AddBinding(
         RoutedCommand command,
         KeyGesture gesture,
-        EventHandler<ExecutedRoutedEventArgs> handler) {
+        EventHandler<ExecutedRoutedEventArgs> handler)
+    {
         AddBinding(command, handler);
         KeyBindings.Add(TASInputHandler.CreateKeyBinding(command, gesture));
     }
@@ -159,17 +162,85 @@ internal static class TASCaretNavigationCommandHandler {
         };
     }
 
+    private static TextViewPosition TrySnapCaretToActionLine(TextViewPosition caretPosition, string lineText, TASActionLine actionLine) {
+        int leadingSpaces = lineText.Length - lineText.TrimStart().Length;
+        int digitCount = actionLine.Frames.Digits();
+
+        if (caretPosition.Column >= 1 && caretPosition.Column <= TASActionLine.MaxFramesDigits + 1) {
+            // snap to valid position inside frame counter
+            var newColumn = Math.Clamp(caretPosition.Column, leadingSpaces + 1, leadingSpaces + digitCount + 1);
+            return new TextViewPosition(caretPosition.Line, newColumn, visualColumn: newColumn - 1);
+        } else {
+            // snap to first valid position to the left of caret
+            int currentColumn = TASActionLine.MaxFramesDigits + 1; // starting before first comma
+            var validColumns = actionLine.Actions
+                .Sorted()
+                .Select((action, idx) => {
+                    int actionLength = 2; // TODO: Support custom, move-only and dash-only binds
+                    currentColumn += actionLength;
+                    return currentColumn;
+                })
+                .ToList();
+            if (validColumns.Count() == 0)
+                return caretPosition;
+
+            var newColumn = validColumns.Last();
+            foreach (int column in validColumns) {
+                // First valid column to the right
+                if (column >= caretPosition.Column) {
+                    newColumn = column;
+                    break;
+                }
+            }
+
+            return new TextViewPosition(caretPosition.Line, newColumn, visualColumn: newColumn - 1);
+        }
+    }
+
     internal static void MoveCaret(TextArea textArea, CaretMovementType direction) {
         double desiredXpos = textArea.Caret.DesiredXPos;
-        var newPosition = GetNewCaretPosition(textArea.TextView, textArea.Caret.Position, direction, textArea.Selection.EnableVirtualSpace, ref desiredXpos);
+        var caretPosition = textArea.Caret.Position;
 
-        // ensure we're within the frame count, even if it's not formatted
-        if (textArea.Document.GetLineByNumber(newPosition.Line) is { } line &&
+        var newPosition = caretPosition;
+        var caretLine = textArea.Document.GetLineByNumber(caretPosition.Line);
+        var caretVisualLine = textArea.TextView.GetOrConstructVisualLine(caretLine);
+        var caretTextLine = caretVisualLine.GetTextLine(caretPosition.VisualColumn, caretPosition.IsAtEndOfLine);
+
+        // try to handle the movement by ourselves if it's a action line
+        if (textArea.Document.GetLineByNumber(caretPosition.Line) is { } line &&
             textArea.Document.GetText(line) is { } lineText &&
-            TASActionLine.TryParse(lineText, out var actionLine)) {
-            int leadingSpaces = lineText.Length - lineText.TrimStart().Length;
-            int digitCount = actionLine.Frames.Digits();
-            newPosition.Column = Math.Clamp(newPosition.Column, leadingSpaces + 1, leadingSpaces + digitCount + 1);
+            TASActionLine.TryParse(lineText, out var actionLine))
+        {
+            if (caretPosition.Column >= 1 && caretPosition.Column <= TASActionLine.MaxFramesDigits + 1) {
+                // inside frame count just move normally since it'll get snapped anyway
+                newPosition = GetNewCaretPosition(textArea.TextView, caretPosition, direction, textArea.Selection.EnableVirtualSpace, ref desiredXpos);
+            } else {
+                // handle moving inside actions
+                int newColumn = direction switch {
+                    // TODO: Support custom, move-only and dash-only binds
+                    CaretMovementType.CharLeft or CaretMovementType.WordLeft => caretPosition.Column - 2,
+                    CaretMovementType.CharRight or CaretMovementType.WordRight => caretPosition.Column + 2,
+                    CaretMovementType.LineStart => TASActionLine.MaxFramesDigits + 1,
+                    _ => -1,
+                };
+                newColumn = Math.Min(newColumn, line.Length);
+
+                if (newColumn == -1)
+                    // fallback to generic handler
+                    newPosition = GetNewCaretPosition(textArea.TextView, caretPosition, direction, textArea.Selection.EnableVirtualSpace, ref desiredXpos);
+                else
+                    newPosition = new TextViewPosition(caretPosition.Line, newColumn);
+            }
+        } else {
+            newPosition = GetNewCaretPosition(textArea.TextView, caretPosition, direction, textArea.Selection.EnableVirtualSpace, ref desiredXpos);
+        }
+        
+        // ensure we're within the frame count or after an action, even if it's not formatted
+        if (textArea.Document.GetLineByNumber(newPosition.Line) is { } newLine &&
+            textArea.Document.GetText(newLine) is { } newLineText &&
+            TASActionLine.TryParse(newLineText, out var newActionLine))
+        {
+            newPosition = TrySnapCaretToActionLine(newPosition, newLineText, newActionLine);
             newPosition.VisualColumn = newPosition.Column - 1;
         }
 

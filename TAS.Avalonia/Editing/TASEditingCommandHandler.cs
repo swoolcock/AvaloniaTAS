@@ -145,7 +145,7 @@ internal class TASEditingCommandHandler {
             return;
         }
 
-        // don't split framecount and inputs
+        // don't split frame count and action
         document.Insert(line.EndOffset, Environment.NewLine);
 
         caretPosition.Line++;
