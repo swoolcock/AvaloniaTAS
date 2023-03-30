@@ -120,72 +120,79 @@ public class MainWindowViewModel : ViewModelBase {
         EditorContextMenu = CreateContextMenu();
     }
 
-    private MenuModel[] CreateMenu(bool includeExit) => new[] {
-        new MenuModel("_File", isEnabled: true) {
-            new MenuModel("New File", NewFileCommand, gesture: new KeyGesture(Key.N, KeyModifiers.Meta)),
-            MenuModel.Separator,
-            new MenuModel("Open File...", OpenFileCommand, gesture: new KeyGesture(Key.O, KeyModifiers.Meta)),
-            new MenuModel("Open Previous File"),
-            new MenuModel("Open Recent") {
-                new MenuModel("Celeste.tas"),
+    private MenuModel[] CreateMenu(bool includeExit) {
+        var commandModifier = KeyModifiers.Control;
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
+            commandModifier = KeyModifiers.Meta;
+        }
+
+        return new[] {
+            new MenuModel("_File", isEnabled: true) {
+                new MenuModel("New File", NewFileCommand, gesture: new KeyGesture(Key.N, commandModifier)),
+                MenuModel.Separator,
+                new MenuModel("Open File...", OpenFileCommand, gesture: new KeyGesture(Key.O, commandModifier)),
+                new MenuModel("Open Previous File"),
+                new MenuModel("Open Recent") {
+                    new MenuModel("Celeste.tas"),
+                },
+                new MenuModel("Open Backup") {
+                    new MenuModel("Celeste.tas"),
+                },
+                MenuModel.Separator,
+                new MenuModel("Save", SaveFileCommand, gesture: new KeyGesture(Key.S, commandModifier)),
+                new MenuModel("Save As...", SaveFileAsCommand, gesture: new KeyGesture(Key.S, commandModifier | KeyModifiers.Shift)),
+                new MenuModel("Convert to LibTAS Inputs..."),
+                new MenuModel(string.Empty, isVisible: includeExit),
+                new MenuModel("Exit", ExitCommand, isVisible: includeExit),
             },
-            new MenuModel("Open Backup") {
-                new MenuModel("Celeste.tas"),
+            new MenuModel("Settings") {
+                new MenuModel("Send Inputs to Celeste"),
+                new MenuModel("Auto Remove Mutually Exclusive Actions"),
+                new MenuModel("Show Game Info"),
+                new MenuModel("Automatic Backup") {
+                    new MenuModel("Enabled"),
+                    new MenuModel("Backup Rate (minutes): 1"),
+                    new MenuModel("Backup File Count: 100"),
+                },
+                new MenuModel("Font..."),
+                new MenuModel("Themes") {
+                    new MenuModel("Light"),
+                    new MenuModel("Dark"),
+                    new MenuModel("Custom"),
+                },
             },
-            MenuModel.Separator,
-            new MenuModel("Save", SaveFileCommand, gesture: new KeyGesture(Key.S, KeyModifiers.Meta)),
-            new MenuModel("Save As...", SaveFileAsCommand, gesture: new KeyGesture(Key.S, KeyModifiers.Meta | KeyModifiers.Shift)),
-            new MenuModel("Convert to LibTAS Inputs..."),
-            new MenuModel(string.Empty, isVisible: includeExit),
-            new MenuModel("Exit", ExitCommand, isVisible: includeExit),
-        },
-        new MenuModel("Settings") {
-            new MenuModel("Send Inputs to Celeste"),
-            new MenuModel("Auto Remove Mutually Exclusive Actions"),
-            new MenuModel("Show Game Info"),
-            new MenuModel("Automatic Backup") {
-                new MenuModel("Enabled"),
-                new MenuModel("Backup Rate (minutes): 1"),
-                new MenuModel("Backup File Count: 100"),
+            new MenuModel("Toggles") {
+                new MenuModel("Hitboxes", command: ToggleHitboxesCommand),
+                new MenuModel("Trigger Hitboxes", command: ToggleTriggerHitboxesCommand),
+                new MenuModel("Unloaded Rooms Hitboxes", command: ToggleUnloadedRoomsHitboxesCommand),
+                new MenuModel("Camera Hitboxes", command: ToggleCameraHitboxesCommand),
+                new MenuModel("Simplified Hitboxes", command: ToggleSimplifiedHitboxesCommand),
+                new MenuModel("Actual Collide Hitboxes", command: ToggleActualCollideHitboxesCommand),
+                MenuModel.Separator,
+                new MenuModel("Simplified Graphics", command: ToggleSimplifiedGraphicsCommand),
+                new MenuModel("Gameplay", command: ToggleGameplayCommand),
+                MenuModel.Separator,
+                new MenuModel("Center Camera", command: ToggleCenterCameraCommand),
+                MenuModel.Separator,
+                new MenuModel("Info HUD", command: ToggleInfoHudCommand),
+                new MenuModel("TAS Input Info", command: ToggleInfoTasInputCommand),
+                new MenuModel("Game Info", command: ToggleInfoGameCommand),
+                new MenuModel("Watch Entity Info", command: ToggleInfoWatchEntityCommand),
+                new MenuModel("Custom Info", command: ToggleInfoCustomCommand),
+                new MenuModel("Subpixel Indicator", command: ToggleInfoSubpixelIndicatorCommand),
+                new MenuModel("Unit of Speed", command: ToggleUnitOfSpeedCommand),
+                MenuModel.Separator,
+                new MenuModel("Position Decimals", command: SetPositionDecimalsCommand),
+                new MenuModel("Speed Decimals", command: SetSpeedDecimalsCommand),
+                new MenuModel("Velocity Decimals", command: SetVelocityDecimalsCommand),
+                new MenuModel("Custom Info Decimals", command: SetCustomInfoDecimalsCommand),
+                new MenuModel("Subpixel Indicator Decimals", command: SetSubpixelIndicatorDecimalsCommand),
+                MenuModel.Separator,
+                new MenuModel("Fast Forward Speed", command: SetFastForwardSpeedCommand),
+                new MenuModel("Slow Forward Speed", command: SetSlowForwardSpeedCommand),
             },
-            new MenuModel("Font..."),
-            new MenuModel("Themes") {
-                new MenuModel("Light"),
-                new MenuModel("Dark"),
-                new MenuModel("Custom"),
-            },
-        },
-        new MenuModel("Toggles") {
-            new MenuModel("Hitboxes", command: ToggleHitboxesCommand),
-            new MenuModel("Trigger Hitboxes", command: ToggleTriggerHitboxesCommand),
-            new MenuModel("Unloaded Rooms Hitboxes", command: ToggleUnloadedRoomsHitboxesCommand),
-            new MenuModel("Camera Hitboxes", command: ToggleCameraHitboxesCommand),
-            new MenuModel("Simplified Hitboxes", command: ToggleSimplifiedHitboxesCommand),
-            new MenuModel("Actual Collide Hitboxes", command: ToggleActualCollideHitboxesCommand),
-            MenuModel.Separator,
-            new MenuModel("Simplified Graphics", command: ToggleSimplifiedGraphicsCommand),
-            new MenuModel("Gameplay", command: ToggleGameplayCommand),
-            MenuModel.Separator,
-            new MenuModel("Center Camera", command: ToggleCenterCameraCommand),
-            MenuModel.Separator,
-            new MenuModel("Info HUD", command: ToggleInfoHudCommand),
-            new MenuModel("TAS Input Info", command: ToggleInfoTasInputCommand),
-            new MenuModel("Game Info", command: ToggleInfoGameCommand),
-            new MenuModel("Watch Entity Info", command: ToggleInfoWatchEntityCommand),
-            new MenuModel("Custom Info", command: ToggleInfoCustomCommand),
-            new MenuModel("Subpixel Indicator", command: ToggleInfoSubpixelIndicatorCommand),
-            new MenuModel("Unit of Speed", command: ToggleUnitOfSpeedCommand),
-            MenuModel.Separator,
-            new MenuModel("Position Decimals", command: SetPositionDecimalsCommand),
-            new MenuModel("Speed Decimals", command: SetSpeedDecimalsCommand),
-            new MenuModel("Velocity Decimals", command: SetVelocityDecimalsCommand),
-            new MenuModel("Custom Info Decimals", command: SetCustomInfoDecimalsCommand),
-            new MenuModel("Subpixel Indicator Decimals", command: SetSubpixelIndicatorDecimalsCommand),
-            MenuModel.Separator,
-            new MenuModel("Fast Forward Speed", command: SetFastForwardSpeedCommand),
-            new MenuModel("Slow Forward Speed", command: SetSlowForwardSpeedCommand),
-        },
-    };
+        };
+    }
 
     private MenuModel[] CreateContextMenu() => new[] {
         new MenuModel("Cut"),
