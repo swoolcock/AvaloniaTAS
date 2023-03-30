@@ -124,7 +124,8 @@ internal static class TASCaretNavigationCommandHandler {
     private static EventHandler<ExecutedRoutedEventArgs> OnMoveCaret(CaretMovementType direction) {
         return (target, args) => {
             TextArea textArea = GetTextArea(target);
-            if (textArea?.Document == null) return;
+            if (textArea?.Document == null)
+                return;
             args.Handled = true;
             textArea.ClearSelection();
             MoveCaret(textArea, direction);
@@ -132,8 +133,7 @@ internal static class TASCaretNavigationCommandHandler {
         };
     }
 
-    private static EventHandler<ExecutedRoutedEventArgs> OnMoveCaretExtendSelection(
-        CaretMovementType direction) {
+    private static EventHandler<ExecutedRoutedEventArgs> OnMoveCaretExtendSelection(CaretMovementType direction) {
         return (target, args) => {
             TextArea textArea = GetTextArea(target);
             if (textArea?.Document == null)
@@ -146,8 +146,7 @@ internal static class TASCaretNavigationCommandHandler {
         };
     }
 
-    private static EventHandler<ExecutedRoutedEventArgs> OnMoveCaretBoxSelection(
-        CaretMovementType direction) {
+    private static EventHandler<ExecutedRoutedEventArgs> OnMoveCaretBoxSelection(CaretMovementType direction) {
         return (target, args) => {
             TextArea textArea = GetTextArea(target);
             if (textArea?.Document == null)
@@ -248,12 +247,8 @@ internal static class TASCaretNavigationCommandHandler {
         textArea.Caret.DesiredXPos = desiredXpos;
     }
 
-    internal static TextViewPosition GetNewCaretPosition(
-        TextView textView,
-        TextViewPosition caretPosition,
-        CaretMovementType direction,
-        bool enableVirtualSpace,
-        ref double desiredXPos) {
+    internal static TextViewPosition GetNewCaretPosition(TextView textView, TextViewPosition caretPosition, CaretMovementType direction, 
+                                                         bool enableVirtualSpace, ref double desiredXPos) {
         switch (direction) {
             case CaretMovementType.None:
                 return caretPosition;
@@ -300,11 +295,7 @@ internal static class TASCaretNavigationCommandHandler {
         }
     }
 
-    private static TextViewPosition GetStartOfLineCaretPosition(
-        int oldVisualColumn,
-        VisualLine visualLine,
-        TextLine textLine,
-        bool enableVirtualSpace) {
+    private static TextViewPosition GetStartOfLineCaretPosition(int oldVisualColumn, VisualLine visualLine, TextLine textLine, bool enableVirtualSpace) {
         int visualColumn = visualLine.GetTextLineVisualStartColumn(textLine);
         if (visualColumn == 0)
             visualColumn = visualLine.GetNextCaretPosition(visualColumn - 1, LogicalDirection.Forward, CaretPositioningMode.WordStart, enableVirtualSpace);
@@ -315,19 +306,13 @@ internal static class TASCaretNavigationCommandHandler {
         return visualLine.GetTextViewPosition(visualColumn);
     }
 
-    private static TextViewPosition GetEndOfLineCaretPosition(
-        VisualLine visualLine,
-        TextLine textLine) {
+    private static TextViewPosition GetEndOfLineCaretPosition(VisualLine visualLine, TextLine textLine) {
         int visualColumn = visualLine.GetTextLineVisualStartColumn(textLine) + textLine.Length - textLine.TrailingWhitespaceLength;
         return visualLine.GetTextViewPosition(visualColumn) with { IsAtEndOfLine = true };
     }
 
-    private static TextViewPosition GetNextCaretPosition(
-        TextView textView,
-        TextViewPosition caretPosition,
-        VisualLine visualLine,
-        CaretPositioningMode mode,
-        bool enableVirtualSpace) {
+    private static TextViewPosition GetNextCaretPosition(TextView textView, TextViewPosition caretPosition, VisualLine visualLine, 
+                                                         CaretPositioningMode mode, bool enableVirtualSpace) {
         int nextCaretPosition1 = visualLine.GetNextCaretPosition(caretPosition.VisualColumn, LogicalDirection.Forward, mode, enableVirtualSpace);
         if (nextCaretPosition1 >= 0)
             return visualLine.GetTextViewPosition(nextCaretPosition1);
@@ -342,12 +327,8 @@ internal static class TASCaretNavigationCommandHandler {
         return new TextViewPosition(textView.Document.GetLocation(textView.Document.TextLength));
     }
 
-    private static TextViewPosition GetPrevCaretPosition(
-        TextView textView,
-        TextViewPosition caretPosition,
-        VisualLine visualLine,
-        CaretPositioningMode mode,
-        bool enableVirtualSpace) {
+    private static TextViewPosition GetPrevCaretPosition(TextView textView, TextViewPosition caretPosition, VisualLine visualLine,
+                                                         CaretPositioningMode mode, bool enableVirtualSpace) {
         int nextCaretPosition1 = visualLine.GetNextCaretPosition(caretPosition.VisualColumn, LogicalDirection.Backward, mode, enableVirtualSpace);
         if (nextCaretPosition1 >= 0)
             return visualLine.GetTextViewPosition(nextCaretPosition1);
@@ -362,14 +343,8 @@ internal static class TASCaretNavigationCommandHandler {
         return new TextViewPosition(0, 0);
     }
 
-    private static TextViewPosition GetUpDownCaretPosition(
-        TextView textView,
-        TextViewPosition caretPosition,
-        CaretMovementType direction,
-        VisualLine visualLine,
-        TextLine textLine,
-        bool enableVirtualSpace,
-        ref double xPos) {
+    private static TextViewPosition GetUpDownCaretPosition(TextView textView, TextViewPosition caretPosition, CaretMovementType direction,
+                                                           VisualLine visualLine, TextLine textLine, bool enableVirtualSpace, ref double xPos) {
         if (double.IsNaN(xPos))
             xPos = visualLine.GetTextLineVisualXPosition(textLine, caretPosition.VisualColumn);
         VisualLine visualLine1 = visualLine;

@@ -402,13 +402,17 @@ internal class TASEditingCommandHandler {
         args.Handled = true;
     }
 
-    private static void OnRemoveLeadingWhitespace(object target, ExecutedRoutedEventArgs args) => TransformSelectedLines((textArea, line) => textArea.Document.Remove(TextUtilities.GetLeadingWhitespace(textArea.Document, line)), target, args, DefaultSegmentType.WholeDocument);
+    private static void OnRemoveLeadingWhitespace(object target, ExecutedRoutedEventArgs args) => TransformSelectedLines((textArea, line) =>
+        textArea.Document.Remove(TextUtilities.GetLeadingWhitespace(textArea.Document, line)), target, args, DefaultSegmentType.WholeDocument);
 
-    private static void OnRemoveTrailingWhitespace(object target, ExecutedRoutedEventArgs args) => TransformSelectedLines((textArea, line) => textArea.Document.Remove(TextUtilities.GetTrailingWhitespace(textArea.Document, line)), target, args, DefaultSegmentType.WholeDocument);
+    private static void OnRemoveTrailingWhitespace(object target, ExecutedRoutedEventArgs args) => TransformSelectedLines((textArea, line) =>
+        textArea.Document.Remove(TextUtilities.GetTrailingWhitespace(textArea.Document, line)), target, args, DefaultSegmentType.WholeDocument);
 
-    private static void OnConvertTabsToSpaces(object target, ExecutedRoutedEventArgs args) => TransformSelectedSegments(ConvertTabsToSpaces, target, args, DefaultSegmentType.WholeDocument);
+    private static void OnConvertTabsToSpaces(object target, ExecutedRoutedEventArgs args) =>
+        TransformSelectedSegments(ConvertTabsToSpaces, target, args, DefaultSegmentType.WholeDocument);
 
-    private static void OnConvertLeadingTabsToSpaces(object target, ExecutedRoutedEventArgs args) => TransformSelectedLines((textArea, line) => ConvertTabsToSpaces(textArea, TextUtilities.GetLeadingWhitespace(textArea.Document, line)), target, args, DefaultSegmentType.WholeDocument);
+    private static void OnConvertLeadingTabsToSpaces(object target, ExecutedRoutedEventArgs args) =>
+        TransformSelectedLines((textArea, line) => ConvertTabsToSpaces(textArea, TextUtilities.GetLeadingWhitespace(textArea.Document, line)), target, args, DefaultSegmentType.WholeDocument);
 
     private static void ConvertTabsToSpaces(TextArea textArea, ISegment segment) {
         TextDocument document = textArea.Document;
@@ -422,9 +426,11 @@ internal class TASEditingCommandHandler {
         }
     }
 
-    private static void OnConvertSpacesToTabs(object target, ExecutedRoutedEventArgs args) => TransformSelectedSegments(ConvertSpacesToTabs, target, args, DefaultSegmentType.WholeDocument);
+    private static void OnConvertSpacesToTabs(object target, ExecutedRoutedEventArgs args) =>
+        TransformSelectedSegments(ConvertSpacesToTabs, target, args, DefaultSegmentType.WholeDocument);
 
-    private static void OnConvertLeadingSpacesToTabs(object target, ExecutedRoutedEventArgs args) => TransformSelectedLines((textArea, line) => ConvertSpacesToTabs(textArea, TextUtilities.GetLeadingWhitespace(textArea.Document, line)), target, args, DefaultSegmentType.WholeDocument);
+    private static void OnConvertLeadingSpacesToTabs(object target, ExecutedRoutedEventArgs args) =>
+        TransformSelectedLines((textArea, line) => ConvertSpacesToTabs(textArea, TextUtilities.GetLeadingWhitespace(textArea.Document, line)), target, args, DefaultSegmentType.WholeDocument);
 
     private static void ConvertSpacesToTabs(TextArea textArea, ISegment segment) {
         TextDocument document = textArea.Document;
