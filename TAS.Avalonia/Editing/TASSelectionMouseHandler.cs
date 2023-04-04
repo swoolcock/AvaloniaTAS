@@ -7,6 +7,8 @@ using AvaloniaEdit.Editing;
 using AvaloniaEdit.Rendering;
 using AvaloniaEdit.Text;
 using AvaloniaEdit.Utils;
+using TAS.Avalonia.Models;
+using LogicalDirection = AvaloniaEdit.Document.LogicalDirection;
 
 namespace TAS.Avalonia.Editing;
 
@@ -240,6 +242,13 @@ internal sealed class TASSelectionMouseHandler : ITextAreaInputHandler {
         if (offset < 0) return;
         TextArea.Caret.Position = new TextViewPosition(TextArea.Document.GetLocation(offset), visualColumn) { IsAtEndOfLine = isAtEndOfLine };
         TextArea.Caret.DesiredXPos = double.NaN;
+
+        if (TextArea.Document.GetLineByNumber(TextArea.Caret.Position.Line) is { } line &&
+            TextArea.Document.GetText(line) is { } lineText &&
+            TASActionLine.TryParse(lineText, out var actionLine))
+        {
+            TextArea.Caret.Position = TASCaretNavigationCommandHandler.SnapCaretToActionLine(TextArea.Caret.Position, lineText, actionLine);
+        }
     }
 
     private void ExtendSelectionToMouse(PointerEventArgs e) {

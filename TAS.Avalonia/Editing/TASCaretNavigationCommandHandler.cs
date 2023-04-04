@@ -161,7 +161,7 @@ internal static class TASCaretNavigationCommandHandler {
         };
     }
 
-    private static TextViewPosition SnapCaretToActionLine(TextViewPosition caretPosition, string lineText, TASActionLine actionLine) {
+    internal static TextViewPosition SnapCaretToActionLine(TextViewPosition caretPosition, string lineText, TASActionLine actionLine) {
         int leadingSpaces = lineText.Length - lineText.TrimStart().Length;
         int digitCount = actionLine.Frames.Digits();
 
