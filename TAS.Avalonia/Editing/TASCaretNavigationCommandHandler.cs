@@ -161,7 +161,7 @@ internal static class TASCaretNavigationCommandHandler {
         };
     }
 
-    private static TextViewPosition TrySnapCaretToActionLine(TextViewPosition caretPosition, string lineText, TASActionLine actionLine) {
+    private static TextViewPosition SnapCaretToActionLine(TextViewPosition caretPosition, string lineText, TASActionLine actionLine) {
         int leadingSpaces = lineText.Length - lineText.TrimStart().Length;
         int digitCount = actionLine.Frames.Digits();
 
@@ -198,51 +198,77 @@ internal static class TASCaretNavigationCommandHandler {
 
     internal static void MoveCaret(TextArea textArea, CaretMovementType direction) {
         double desiredXpos = textArea.Caret.DesiredXPos;
-        var caretPosition = textArea.Caret.Position;
 
+        var caretPosition = textArea.Caret.Position;
         var newPosition = caretPosition;
-        var caretLine = textArea.Document.GetLineByNumber(caretPosition.Line);
-        var caretVisualLine = textArea.TextView.GetOrConstructVisualLine(caretLine);
-        var caretTextLine = caretVisualLine.GetTextLine(caretPosition.VisualColumn, caretPosition.IsAtEndOfLine);
 
         // try to handle the movement by ourselves if it's a action line
         if (textArea.Document.GetLineByNumber(caretPosition.Line) is { } line &&
             textArea.Document.GetText(line) is { } lineText &&
             TASActionLine.TryParse(lineText, out var actionLine))
         {
-            if (caretPosition.Column >= 1 && caretPosition.Column <= TASActionLine.MaxFramesDigits + 1) {
-                // inside frame count just move normally since it'll get snapped anyway
-                newPosition = GetNewCaretPosition(textArea.TextView, caretPosition, direction, textArea.Selection.EnableVirtualSpace, ref desiredXpos);
-            } else {
-                // handle moving inside actions
-                int newColumn = direction switch {
-                    // TODO: Support custom, move-only and dash-only binds
-                    CaretMovementType.CharLeft or CaretMovementType.WordLeft => caretPosition.Column - 2,
-                    CaretMovementType.CharRight or CaretMovementType.WordRight => caretPosition.Column + 2,
-                    CaretMovementType.LineStart => TASActionLine.MaxFramesDigits + 1,
-                    _ => -1,
-                };
-                newColumn = Math.Min(newColumn, line.Length);
+            caretPosition = SnapCaretToActionLine(caretPosition, lineText, actionLine);
 
-                if (newColumn == -1)
-                    // fallback to generic handler
-                    newPosition = GetNewCaretPosition(textArea.TextView, caretPosition, direction, textArea.Selection.EnableVirtualSpace, ref desiredXpos);
-                else
-                    newPosition = new TextViewPosition(caretPosition.Line, newColumn);
+            if (caretPosition.Column >= 1 && caretPosition.Column < TASActionLine.MaxFramesDigits + 1) {
+                // inside frame count, just move normally since it'll get snapped anyway
+                newPosition = GetNewCaretPosition(textArea.TextView, caretPosition, direction, textArea.Selection.EnableVirtualSpace, ref desiredXpos);
+                if (textArea.Document.GetLineByNumber(newPosition.Line) is { } newLine &&
+                    textArea.Document.GetText(newLine) is { } newLineText &&
+                    TASActionLine.TryParse(newLineText, out var newActionLine))
+                {
+                    int leadingSpaces = TASActionLine.MaxFramesDigits - newActionLine.Frames.Digits();
+                    newPosition.Column = Math.Clamp(newPosition.Column, leadingSpaces + 1, leadingSpaces + newActionLine.Frames.Digits() + 1);
+                }
+            } else {
+                // TODO: Support custom, move-only and dash-only binds
+                if (caretPosition.Column == TASActionLine.MaxFramesDigits + 1) {
+                    // handle being inbetween frame count and actions
+                    int leadingSpaces = TASActionLine.MaxFramesDigits - actionLine.Frames.Digits();
+                    newPosition = direction switch {
+                        CaretMovementType.CharLeft => new TextViewPosition(caretPosition.Line, caretPosition.Column - 1),
+                        CaretMovementType.WordLeft => new TextViewPosition(caretPosition.Line, leadingSpaces + 1),
+                        CaretMovementType.CharRight or CaretMovementType.WordRight => new TextViewPosition(caretPosition.Line, caretPosition.Column + 2),
+                        CaretMovementType.LineStart => new TextViewPosition(caretPosition.Line, TASActionLine.MaxFramesDigits + 1),
+                        CaretMovementType.LineUp => new TextViewPosition(caretPosition.Line - 1, caretPosition.Column),
+                        CaretMovementType.LineDown => new TextViewPosition(caretPosition.Line + 1, caretPosition.Column),
+                        _ => GetNewCaretPosition(textArea.TextView, caretPosition, direction, textArea.Selection.EnableVirtualSpace, ref desiredXpos),
+                    };
+                } else {
+                    // handle moving inside actions
+                    newPosition = direction switch {
+                        CaretMovementType.CharLeft or CaretMovementType.WordLeft => new TextViewPosition(caretPosition.Line, caretPosition.Column - 2),
+                        CaretMovementType.CharRight or CaretMovementType.WordRight => new TextViewPosition(caretPosition.Line, caretPosition.Column + 2),
+                        CaretMovementType.LineStart => new TextViewPosition(caretPosition.Line, TASActionLine.MaxFramesDigits + 1),
+                        CaretMovementType.LineUp => new TextViewPosition(caretPosition.Line - 1, caretPosition.Column),
+                        CaretMovementType.LineDown => new TextViewPosition(caretPosition.Line + 1, caretPosition.Column),
+                        _ => GetNewCaretPosition(textArea.TextView, caretPosition, direction, textArea.Selection.EnableVirtualSpace, ref desiredXpos),
+                    };
+                }
+
+                newPosition.Line = Math.Clamp(newPosition.Line, 1, textArea.Document.LineCount);
+                var newLine = textArea.Document.GetLineByNumber(newPosition.Line);
+                newPosition.Column = Math.Clamp(newPosition.Column, 1, newLine.Length + 1);
             }
         } else {
             newPosition = GetNewCaretPosition(textArea.TextView, caretPosition, direction, textArea.Selection.EnableVirtualSpace, ref desiredXpos);
+            
+            if (textArea.Document.GetLineByNumber(newPosition.Line) is { } newLine &&
+                textArea.Document.GetText(newLine) is { } newLineText &&
+                TASActionLine.TryParse(newLineText, out var newActionLine))
+            {
+                newPosition = SnapCaretToActionLine(newPosition, newLineText, newActionLine);
+            }
         }
         
         // ensure we're within the frame count or after an action, even if it's not formatted
-        if (textArea.Document.GetLineByNumber(newPosition.Line) is { } newLine &&
-            textArea.Document.GetText(newLine) is { } newLineText &&
-            TASActionLine.TryParse(newLineText, out var newActionLine))
-        {
-            newPosition = TrySnapCaretToActionLine(newPosition, newLineText, newActionLine);
-            newPosition.VisualColumn = newPosition.Column - 1;
-        }
+        // if (textArea.Document.GetLineByNumber(newPosition.Line) is { } newLine &&
+        //     textArea.Document.GetText(newLine) is { } newLineText &&
+        //     TASActionLine.TryParse(newLineText, out var newActionLine))
+        // {
+        //     //newPosition = SnapCaretToActionLine(newPosition, newLineText, newActionLine);
+        // }
 
+        newPosition.VisualColumn = newPosition.Column - 1;
         textArea.Caret.Position = newPosition;
         textArea.Caret.DesiredXPos = desiredXpos;
     }
