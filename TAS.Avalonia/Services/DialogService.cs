@@ -3,6 +3,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
 using TAS.Avalonia.Views;
 using TAS.Avalonia.ViewModels;
+using TAS.Avalonia.Controls;
 
 namespace TAS.Avalonia.Services;
 
@@ -12,7 +13,7 @@ public class DialogService {
     public async Task ShowDialogAsync(string message, string title = null) {
         var dialog = new DialogWindowViewModel {
             Title = title ?? string.Empty,
-            Description = message
+            Description = message,
         };
         dialog.Buttons.AddOk();
 
@@ -47,18 +48,33 @@ public class DialogService {
             DefaultExtension = defaultExtension,
             FileTypeChoices = fileTypes
         }).ConfigureAwait(true);
+
         return file.Path.AbsolutePath;
     }
 
     public async Task<int> ShowIntInputDialogAsync(int currentValue, int minValue, int maxValue, string title = null) {
-        var dialog = new InputDialogWindow();
-        dialog.DataContext = new InputDialogWindowViewModel(currentValue, minValue, maxValue);
-        return (int) await dialog.ShowDialog<object>(_mainWindow);
+        var input = new IntRangeControl(minValue, maxValue) { Name = "My Range Control", Value = currentValue };
+        var dialog = new DialogWindowViewModel {
+            Title = title ?? string.Empty,
+            Description = "Set a new value",
+            Controls = { input },
+        };
+        dialog.Buttons.AddOkCancel();
+
+        var result = await dialog.ShowAsync().ConfigureAwait(true);
+        return result.IsCancel ? currentValue : input.Value;
     }
 
     public async Task<float> ShowFloatInputDialogAsync(float currentValue, float minValue, float maxValue, string title = null) {
-        var dialog = new InputDialogWindow();
-        dialog.DataContext = new InputDialogWindowViewModel(currentValue, minValue, maxValue);
-        return (float) await dialog.ShowDialog<object>(_mainWindow);
+        var input = new FloatRangeControl(minValue, maxValue) { Name = "My Range Control", Value = currentValue };
+        var dialog = new DialogWindowViewModel {
+            Title = title ?? string.Empty,
+            Description = "Set a new value",
+            Controls = { input },
+        };
+        dialog.Buttons.AddOkCancel();
+
+        var result = await dialog.ShowAsync().ConfigureAwait(true);
+        return result.IsCancel ? currentValue : input.Value;
     }
 }

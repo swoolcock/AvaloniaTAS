@@ -25,19 +25,25 @@
         <DataTemplate DataType="{x:Type controls:BoolControl}">
             <CheckBox Margin="10" IsChecked="{Binding Value}" Content="{Binding Name}"/>
         </DataTemplate>
+        <DataTemplate DataType="{x:Type controls:IntRangeControl}">
+            <NumericUpDown Value="{Binding Value}" Minimum="{Binding MinValue}" Maximum="{Binding MaxValue}" Increment="1.0" Margin="5" FormatString="N0"></NumericUpDown>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type controls:FloatRangeControl}">
+            <NumericUpDown Value="{Binding Value}" Minimum="{Binding MinValue}" Maximum="{Binding MaxValue}" Increment="0.1" Margin="5" FormatString="N2"></NumericUpDown>
+        </DataTemplate>
     </Window.DataTemplates>
 
-  <Grid RowDefinitions="Auto,*,Auto">
-    <TextBlock Grid.Row="0"
-               Text="{Binding Description}"
-               Margin="10"/>
-    <ItemsControl Grid.Row="1" ItemsSource="{Binding Controls}"/>
-    <ItemsControl Grid.Row="2" ItemsSource="{Binding Buttons}" HorizontalAlignment="Center">
-      <ItemsControl.ItemsPanel>
-        <ItemsPanelTemplate>
-          <StackPanel Orientation="Horizontal"/>
-        </ItemsPanelTemplate>
-      </ItemsControl.ItemsPanel>
-    </ItemsControl>
-  </Grid>
+    <Grid RowDefinitions="Auto,*,Auto">
+        <TextBlock Grid.Row="0"
+                Text="{Binding Description}"
+                Margin="10"/>
+        <ItemsControl Grid.Row="1" ItemsSource="{Binding Controls}"/>
+        <ItemsControl Grid.Row="2" ItemsSource="{Binding Buttons}" HorizontalAlignment="Center">
+        <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+            <StackPanel Orientation="Horizontal"/>
+            </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        </ItemsControl>
+    </Grid>
 </Window>

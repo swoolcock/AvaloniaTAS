@@ -76,3 +76,23 @@ public abstract class AbstractControl<T> : ReactiveObject, IDialogControl {
 // Styled with DataTemplates
 public class BoolControl : AbstractControl<bool> { }
 public class StringControl : AbstractControl<string> { }
+
+public class IntRangeControl : AbstractControl<int> {
+    public int MinValue { get; }
+    public int MaxValue { get; }
+
+    public IntRangeControl(int minValue, int maxValue) {
+        MinValue = minValue;
+        MaxValue = maxValue;
+    }
+}
+
+public class FloatRangeControl : AbstractControl<float> {
+    public float MinValue { get; }
+    public float MaxValue { get; }
+
+    public FloatRangeControl(float minValue, float maxValue) {
+        MinValue = minValue;
+        MaxValue = maxValue;
+    }
+}
