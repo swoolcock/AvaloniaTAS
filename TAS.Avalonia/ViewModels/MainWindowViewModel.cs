@@ -66,8 +66,8 @@ public class MainWindowViewModel : ViewModelBase {
 
     public bool MenuVisible => true; //!RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
 
-    private readonly ICelesteService _celesteService;
-    private readonly IDialogService _dialogService;
+    private readonly CelesteService _celesteService;
+    private readonly DialogService _dialogService;
 
     private MenuModel[] MainMenu { get; }
     private MenuModel[] EditorContextMenu { get; }
@@ -79,8 +79,8 @@ public class MainWindowViewModel : ViewModelBase {
     };
 
     public MainWindowViewModel() {
-        _celesteService = AvaloniaLocator.Current.GetService<ICelesteService>()!;
-        _dialogService = AvaloniaLocator.Current.GetService<IDialogService>()!;
+        _celesteService = (Application.Current as App).CelesteService;
+        _dialogService = (Application.Current as App).DialogService;
 
         // File
         NewFileCommand = ReactiveCommand.Create(NewFile);

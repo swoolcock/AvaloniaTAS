@@ -10,12 +10,13 @@ using TAS.Avalonia.ViewModels;
 
 namespace TAS.Avalonia.Services;
 
-public class DialogService : BaseService, IDialogService {
-    public MainWindow MainWindow => (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow as MainWindow;
+public class DialogService {
+    private static MainWindow _mainWindow => (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow as MainWindow;
 
     public async Task<bool> ShowConfirmDialogAsync(string message, string title = null) {
         var dialog = new SimpleDialog {
-            Title = title ?? string.Empty, Description = message
+            Title = title ?? string.Empty,
+            Description = message
         };
         try {
             var result = await dialog.ShowAsync().ConfigureAwait(true);
@@ -29,14 +30,15 @@ public class DialogService : BaseService, IDialogService {
 
     public async Task ShowDialogAsync(string message, string title = null) {
         var dialog = new Dialog {
-            Title = title ?? string.Empty, Description = message
+            Title = title ?? string.Empty,
+            Description = message
         };
         dialog.Buttons.AddButton(DefaultButtons.OkButton);
         await dialog.ShowAsync().ConfigureAwait(true);
     }
 
     public async Task<string[]> ShowOpenFileDialogAsync(string title, params FilePickerFileType[] fileTypes) {
-        var files = await MainWindow.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions {
+        var files = await _mainWindow.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions {
             Title = title,
             AllowMultiple = false,
             FileTypeFilter = fileTypes,
@@ -46,7 +48,7 @@ public class DialogService : BaseService, IDialogService {
     }
 
     public async Task<string> ShowSaveFileDialogAsync(string title, string defaultExtension, params FilePickerFileType[] fileTypes) {
-        var file = await MainWindow.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions {
+        var file = await _mainWindow.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions {
             Title = title,
             ShowOverwritePrompt = true,
             DefaultExtension = defaultExtension,
@@ -58,12 +60,12 @@ public class DialogService : BaseService, IDialogService {
     public async Task<int> ShowIntInputDialogAsync(int currentValue, int minValue, int maxValue, string title = null) {
         var dialog = new InputDialogWindow();
         dialog.DataContext = new InputDialogWindowViewModel(currentValue, minValue, maxValue);
-        return (int)await dialog.ShowDialog<object>(MainWindow);
+        return (int) await dialog.ShowDialog<object>(_mainWindow);
     }
 
     public async Task<float> ShowFloatInputDialogAsync(float currentValue, float minValue, float maxValue, string title = null) {
         var dialog = new InputDialogWindow();
         dialog.DataContext = new InputDialogWindowViewModel(currentValue, minValue, maxValue);
-        return (float)await dialog.ShowDialog<object>(MainWindow);
+        return (float) await dialog.ShowDialog<object>(_mainWindow);
     }
 }
