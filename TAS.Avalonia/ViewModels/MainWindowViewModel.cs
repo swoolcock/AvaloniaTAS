@@ -289,25 +289,25 @@ public class MainWindowViewModel : ViewModelBase {
     private const float MaxSlowForwardSpeed = 0.9f;
 
     private async Task SetPositionDecimals() => _celesteService.SetPositionDecimals(
-        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetPositionDecimals(), MinDecimals, MaxDecimals));
+        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetPositionDecimals(), MinDecimals, MaxDecimals, "Set position decimals"));
 
     private async Task SetSpeedDecimals() => _celesteService.SetSpeedDecimals(
-        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetSpeedDecimals(), MinDecimals, MaxDecimals));
+        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetSpeedDecimals(), MinDecimals, MaxDecimals, "Set speed decimals"));
 
     private async Task SetVelocityDecimals() => _celesteService.SetVelocityDecimals(
-        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetVelocityDecimals(), MinDecimals, MaxDecimals));
+        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetVelocityDecimals(), MinDecimals, MaxDecimals, "Set velocity decimals"));
 
     private async Task SetCustomInfoDecimals() => _celesteService.SetCustomInfoDecimals(
-        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetCustomInfoDecimals(), MinDecimals, MaxDecimals));
+        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetCustomInfoDecimals(), MinDecimals, MaxDecimals, "Set custom info decimals"));
 
     private async Task SetSubpixelIndicatorDecimals() => _celesteService.SetSubpixelIndicatorDecimals(
-        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetSubpixelIndicatorDecimals(), MinDecimals, MaxDecimals));
+        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetSubpixelIndicatorDecimals(), MinDecimals, MaxDecimals, "Set subpixel indicator decimals"));
 
     private async Task SetFastForwardSpeed() => _celesteService.SetFastForwardSpeed(
-        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetFastForwardSpeed(), MinFastForwardSpeed, MaxFastForwardSpeed));
+        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetFastForwardSpeed(), MinFastForwardSpeed, MaxFastForwardSpeed, "Set fast forward speed"));
 
     private async Task SetSlowForwardSpeed() => _celesteService.SetSlowForwardSpeed(
-        await _dialogService.ShowFloatInputDialogAsync(_celesteService.GetSlowForwardSpeed(), MinSlowForwardSpeed, MaxSlowForwardSpeed));
+        await _dialogService.ShowFloatInputDialogAsync(_celesteService.GetSlowForwardSpeed(), MinSlowForwardSpeed, MaxSlowForwardSpeed, "Set slow forward speed"));
 
     private async Task<bool> ConfirmDiscardChangesAsync() {
         if (!Document.Dirty) return true;
