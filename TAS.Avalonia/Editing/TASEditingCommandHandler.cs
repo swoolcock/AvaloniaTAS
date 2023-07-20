@@ -142,8 +142,7 @@ internal class TASEditingCommandHandler {
         var caretPosition = textArea.Caret.Position;
         if (textArea.Document is not { } document ||
             document.GetLineByNumber(caretPosition.Line) is not { } line ||
-            document.GetText(line) is not { } lineText) 
-        {
+            document.GetText(line) is not { } lineText) {
             textArea.PerformTextInput(Environment.NewLine);
             args.Handled = true;
             return;
@@ -194,42 +193,49 @@ internal class TASEditingCommandHandler {
         if (segment != null && segment.Length > 0) textArea.Document.Remove(segment.Offset, segment.Length);
     }, target, args, DefaultSegmentType.CurrentLine);
 
-    private static EventHandler<ExecutedRoutedEventArgs> OnDelete(CaretMovementType caretMovement) {
-        return (target, args) => {
-            TextArea textArea = GetTextArea(target);
-            if (textArea?.Document == null) return;
-            if (textArea.Selection.IsEmpty) {
-                TextViewPosition position = textArea.Caret.Position;
-                if (textArea.Document.GetLineByNumber(position.Line) is { } line &&
-                    textArea.Document.GetText(line) is { } lineText &&
-                    TASActionLine.TryParse(lineText, out var actionLine)) {
+    private static EventHandler<ExecutedRoutedEventArgs> OnDelete(CaretMovementType direction) => (target, args) => {
+        var textArea = GetTextArea(target);
+        if (textArea?.Document == null) return;
+
+        if (textArea.Selection.IsEmpty) {
+            double desiredXpos = textArea.Caret.DesiredXPos;
+
+            var position = textArea.Caret.Position;
+            var newPosition = position;
+
+            if (textArea.Document.GetLineByNumber(position.Line) is { } line &&
+                textArea.Document.GetText(line) is { } lineText &&
+                TASActionLine.TryParse(lineText, out var actionLine)) {
+                position = TASCaretNavigationCommandHandler.SnapCaretToActionLine(position, lineText, actionLine);
+
+                string newLineText = string.Empty;
+
+                bool insideFrameCount = position.Column < TASActionLine.MaxFramesDigits + 1; //  1|5,R,X
+                bool insideActions = position.Column > TASActionLine.MaxFramesDigits + 1; //  15,R|,X
+                bool betweenFrameCountAndActions = !insideFrameCount && !insideActions;
+
+                if (insideFrameCount || (betweenFrameCountAndActions && (direction == CaretMovementType.Backspace || direction == CaretMovementType.WordLeft))) {
                     int leadingSpaces = lineText.Length - lineText.TrimStart().Length;
-                    var lineStartPosition = new TextViewPosition(position.Line, 1);
-                    var lineEndPosition = new TextViewPosition(position.Line, line.Length + 1);
                     int cursorIndex = Math.Clamp(position.Column - leadingSpaces - 1, 0, actionLine.Frames.Digits());
-                    string newLineText = string.Empty;
 
                     string framesString = actionLine.Frames.ToString();
                     string leftOfCursor = framesString[..cursorIndex];
                     string rightOfCursor = framesString[cursorIndex..];
 
-                    if (actionLine.Frames == 0)
-                        newLineText = string.Empty;
-                    else if (leftOfCursor.Length == 0 && caretMovement is CaretMovementType.WordLeft or CaretMovementType.Backspace ||
-                        rightOfCursor.Length == 0 && caretMovement is CaretMovementType.WordRight or CaretMovementType.CharRight)
-                        newLineText = string.Empty;
-                    else {
+                    // Simply delete the line if the frame count is 0
+                    if (actionLine.Frames != 0) {
                         string newFramesString = string.Empty;
-                        if (caretMovement == CaretMovementType.WordLeft) {
+                        if (direction == CaretMovementType.WordLeft) {
                             newFramesString = rightOfCursor;
                             cursorIndex = 0;
-                        } else if (caretMovement == CaretMovementType.WordRight)
+                        } else if (direction == CaretMovementType.WordRight) {
                             newFramesString = leftOfCursor;
-                        else if (caretMovement == CaretMovementType.Backspace) {
+                        } else if (direction == CaretMovementType.Backspace) {
                             newFramesString = $"{leftOfCursor[..^1]}{rightOfCursor}";
                             cursorIndex--;
-                        } else if (caretMovement == CaretMovementType.CharRight)
+                        } else if (direction == CaretMovementType.CharRight) {
                             newFramesString = $"{leftOfCursor}{rightOfCursor[1..]}";
+                        }
 
                         actionLine.Frames = Math.Clamp(int.TryParse(newFramesString, out int value) ? value : 0, 0, TASActionLine.MaxFrames);
                         newLineText = actionLine.ToString();
@@ -237,30 +243,55 @@ internal class TASEditingCommandHandler {
                             ? TASActionLine.MaxFramesDigits + 1
                             : TASActionLine.MaxFramesDigits - actionLine.Frames.Digits() + cursorIndex + 1;
                     }
+                } else if (insideActions || (betweenFrameCountAndActions && (direction == CaretMovementType.CharRight || direction == CaretMovementType.WordRight))) {
+                    // TODO: Support custom, move-only and dash-only binds
+                    // Inside actions:
+                    var action = TASCaretNavigationCommandHandler.GetActionFromColumn(actionLine, position.Column, direction);
+                    if (actionLine.Actions.HasFlag(action))
+                        actionLine.Actions = actionLine.Actions & ~action;
 
-                    textArea.Selection.StartSelectionOrSetEndpoint(lineStartPosition, lineEndPosition).ReplaceSelectionWithText(newLineText);
-                    if (string.IsNullOrEmpty(newLineText)) position = lineStartPosition;
+                    position.Column = direction switch {
+                        CaretMovementType.Backspace or CaretMovementType.WordLeft => position.Column - 2,
+                        CaretMovementType.CharRight or CaretMovementType.WordRight => position.Column,
+                        _ => position.Column,
+                    };
 
-                    if (textArea.Caret.Position.Column != position.Column)
-                        position.VisualColumn = position.Column - 1;
-
-                    textArea.Caret.Position = position;
-                } else {
-                    bool enableVirtualSpace = textArea.Options.EnableVirtualSpace;
-                    if (caretMovement == CaretMovementType.CharRight) enableVirtualSpace = false;
-                    double desiredXpos = textArea.Caret.DesiredXPos;
-                    TextViewPosition endPosition = TASCaretNavigationCommandHandler.GetNewCaretPosition(textArea.TextView, position, caretMovement, enableVirtualSpace, ref desiredXpos);
-                    if (endPosition.Line < 1 || endPosition.Column < 1) endPosition = new TextViewPosition(Math.Max(endPosition.Line, 1), Math.Max(endPosition.Column, 1));
-                    if (textArea.Selection is RectangleSelection && position.Line != endPosition.Line) return;
-                    textArea.Selection.StartSelectionOrSetEndpoint(position, endPosition).ReplaceSelectionWithText(string.Empty);
+                    newLineText = actionLine.ToString();
                 }
-            } else
-                textArea.RemoveSelectedText();
 
-            textArea.Caret.BringCaretToView();
-            args.Handled = true;
-        };
-    }
+                var lineStartPosition = new TextViewPosition(position.Line, 1);
+                var lineEndPosition = new TextViewPosition(position.Line, line.Length + 1);
+
+                textArea.Selection.StartSelectionOrSetEndpoint(lineStartPosition, lineEndPosition)
+                                    .ReplaceSelectionWithText(newLineText);
+
+                if (string.IsNullOrEmpty(newLineText))
+                    position = lineStartPosition;
+
+                if (textArea.Caret.Position.Column != position.Column)
+                    position.VisualColumn = position.Column - 1;
+
+                textArea.Caret.Position = position;
+            } else {
+                bool enableVirtualSpace = textArea.Options.EnableVirtualSpace;
+                if (direction == CaretMovementType.CharRight)
+                    enableVirtualSpace = false;
+
+                var endPosition = TASCaretNavigationCommandHandler.GetNewCaretPosition(textArea.TextView, position, direction, enableVirtualSpace, ref desiredXpos);
+
+                if (endPosition.Line < 1 || endPosition.Column < 1)
+                    endPosition = new TextViewPosition(Math.Max(endPosition.Line, 1), Math.Max(endPosition.Column, 1));
+                if (textArea.Selection is RectangleSelection && position.Line != endPosition.Line)
+                    return;
+                textArea.Selection.StartSelectionOrSetEndpoint(position, endPosition).ReplaceSelectionWithText(string.Empty);
+            }
+        } else {
+            textArea.RemoveSelectedText();
+        }
+
+        textArea.Caret.BringCaretToView();
+        args.Handled = true;
+    };
 
     private static void CanDelete(object target, CanExecuteRoutedEventArgs args) {
         if (GetTextArea(target)?.Document == null) return;
