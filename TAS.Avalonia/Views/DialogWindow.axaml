@@ -1,0 +1,49 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:TAS.Avalonia.Controls"
+        x:Class="TAS.Avalonia.Views.DialogWindow"
+        SizeToContent="WidthAndHeight"
+        WindowStartupLocation="CenterOwner"
+        Title="{Binding Title}">
+
+    <Window.DataTemplates>
+        <DataTemplate DataType="{x:Type controls:DialogButton}">
+            <Button Content="{Binding Name}"
+                    Command="{Binding}"
+                    IsDefault="{Binding IsDefault}"
+                    IsVisible="{Binding IsVisible}"
+                    IsEnabled="{Binding IsEnabled}"
+                    Margin="5"/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type controls:StringControl}">
+            <Grid ColumnDefinitions="*,Auto,2*" Margin="10">
+                <TextBlock Grid.Column="0" Text="{Binding Name}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="*" IsVisible="{Binding IsRequired}" Foreground="Red"/>
+                <TextBox Grid.Column="2" Text="{Binding Value}"/>
+            </Grid>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type controls:BoolControl}">
+            <CheckBox Margin="10" IsChecked="{Binding Value}" Content="{Binding Name}"/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type controls:IntRangeControl}">
+            <NumericUpDown Value="{Binding Value}" Minimum="{Binding MinValue}" Maximum="{Binding MaxValue}" Increment="1.0" Margin="5" FormatString="N0"></NumericUpDown>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type controls:FloatRangeControl}">
+            <NumericUpDown Value="{Binding Value}" Minimum="{Binding MinValue}" Maximum="{Binding MaxValue}" Increment="0.1" Margin="5" FormatString="N2"></NumericUpDown>
+        </DataTemplate>
+    </Window.DataTemplates>
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        <TextBlock Grid.Row="0"
+                Text="{Binding Description}"
+                Margin="10"/>
+        <ItemsControl Grid.Row="1" ItemsSource="{Binding Controls}"/>
+        <ItemsControl Grid.Row="2" ItemsSource="{Binding Buttons}" HorizontalAlignment="Center">
+        <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+            <StackPanel Orientation="Horizontal"/>
+            </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        </ItemsControl>
+    </Grid>
+</Window>

@@ -20,7 +20,7 @@
     <DockPanel>
         <Menu DockPanel.Dock="Top"
               IsVisible="{Binding MenuVisible}"
-              Items="{Binding MainMenu, Converter={StaticResource MenuConverter}}" />
+              ItemsSource="{Binding MainMenu, Converter={StaticResource MenuConverter}}" />
         <controls:EditorControl x:Name="editor" Document="{Binding Document}"
                                 CaretPosition="{Binding CaretPosition, Mode=TwoWay}"
                                 ContextMenu="{Binding EditorContextMenu, Converter={StaticResource ContextMenuConverter}}" />

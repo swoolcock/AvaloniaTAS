@@ -1,6 +1,8 @@
 using System.Globalization;
 using Avalonia;
 using Avalonia.Input;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using AvaloniaEdit;
 using AvaloniaEdit.Document;
 using AvaloniaEdit.Editing;
@@ -14,6 +16,8 @@ namespace TAS.Avalonia.Editing;
 internal class TASEditingCommandHandler {
     private static readonly List<RoutedCommandBinding> CommandBindings = new List<RoutedCommandBinding>();
     private static readonly List<KeyBinding> KeyBindings = new List<KeyBinding>();
+
+    private static Window _window => (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
 
     public static TextAreaInputHandler Create(TextArea textArea) {
         var areaInputHandler = new TextAreaInputHandler(textArea);
@@ -307,7 +311,7 @@ internal class TASEditingCommandHandler {
 
     private static void SetClipboardText(string text) {
         try {
-            Application.Current.Clipboard.SetTextAsync(text).GetAwaiter().GetResult();
+            _window.Clipboard.SetTextAsync(text).GetAwaiter().GetResult();
         } catch (Exception) {
         }
     }
@@ -337,7 +341,7 @@ internal class TASEditingCommandHandler {
             textArea.Document.BeginUpdate();
             string text = null;
             try {
-                text = await Application.Current.Clipboard.GetTextAsync();
+                text = await _window.Clipboard.GetTextAsync();
             } catch (Exception) {
                 textArea.Document.EndUpdate();
                 textArea = null;

@@ -1,11 +1,11 @@
 using System.ComponentModel;
 using Avalonia;
 using Avalonia.Input;
+using Avalonia.Media.TextFormatting;
 using AvaloniaEdit;
 using AvaloniaEdit.Document;
 using AvaloniaEdit.Editing;
 using AvaloniaEdit.Rendering;
-using AvaloniaEdit.Text;
 using AvaloniaEdit.Utils;
 using TAS.Avalonia.Models;
 using LogicalDirection = AvaloniaEdit.Document.LogicalDirection;
@@ -245,8 +245,7 @@ internal sealed class TASSelectionMouseHandler : ITextAreaInputHandler {
 
         if (TextArea.Document.GetLineByNumber(TextArea.Caret.Position.Line) is { } line &&
             TextArea.Document.GetText(line) is { } lineText &&
-            TASActionLine.TryParse(lineText, out var actionLine))
-        {
+            TASActionLine.TryParse(lineText, out var actionLine)) {
             TextArea.Caret.Position = TASCaretNavigationCommandHandler.SnapCaretToActionLine(TextArea.Caret.Position, lineText, actionLine);
         }
     }
