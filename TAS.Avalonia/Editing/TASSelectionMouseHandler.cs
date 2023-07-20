@@ -246,7 +246,8 @@ internal sealed class TASSelectionMouseHandler : ITextAreaInputHandler {
         if (TextArea.Document.GetLineByNumber(TextArea.Caret.Position.Line) is { } line &&
             TextArea.Document.GetText(line) is { } lineText &&
             TASActionLine.TryParse(lineText, out var actionLine)) {
-            TextArea.Caret.Position = TASCaretNavigationCommandHandler.SnapCaretToActionLine(TextArea.Caret.Position, lineText, actionLine);
+            var newColumn = TASCaretNavigationCommandHandler.SnapColumnToActionLine(actionLine, TextArea.Caret.Position.Column);
+            TextArea.Caret.Position = new TextViewPosition(TextArea.Caret.Position.Line, newColumn, visualColumn: newColumn - 1);
         }
     }
 

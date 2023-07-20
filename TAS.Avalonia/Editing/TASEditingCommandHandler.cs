@@ -206,13 +206,13 @@ internal class TASEditingCommandHandler {
             if (textArea.Document.GetLineByNumber(position.Line) is { } line &&
                 textArea.Document.GetText(line) is { } lineText &&
                 TASActionLine.TryParse(lineText, out var actionLine)) {
-                position = TASCaretNavigationCommandHandler.SnapCaretToActionLine(position, lineText, actionLine);
+                position.Column = TASCaretNavigationCommandHandler.SnapColumnToActionLine(actionLine, position.Column);
 
                 string newLineText = string.Empty;
 
                 bool insideFrameCount = position.Column < TASActionLine.MaxFramesDigits + 1; //  1|5,R,X
-                bool insideActions = position.Column > TASActionLine.MaxFramesDigits + 1; //  15,R|,X
-                bool betweenFrameCountAndActions = !insideFrameCount && !insideActions;
+                bool insideActions = position.Column > TASActionLine.MaxFramesDigits + 1;    //  15,R|,X
+                bool betweenFrameCountAndActions = !insideFrameCount && !insideActions;      //  15|,R,X
 
                 if (insideFrameCount || (betweenFrameCountAndActions && (direction == CaretMovementType.Backspace || direction == CaretMovementType.WordLeft))) {
                     int leadingSpaces = lineText.Length - lineText.TrimStart().Length;
@@ -245,7 +245,6 @@ internal class TASEditingCommandHandler {
                     }
                 } else if (insideActions || (betweenFrameCountAndActions && (direction == CaretMovementType.CharRight || direction == CaretMovementType.WordRight))) {
                     // TODO: Support custom, move-only and dash-only binds
-                    // Inside actions:
                     var action = TASCaretNavigationCommandHandler.GetActionFromColumn(actionLine, position.Column, direction);
                     if (actionLine.Actions.HasFlag(action))
                         actionLine.Actions = actionLine.Actions & ~action;
