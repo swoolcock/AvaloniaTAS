@@ -245,13 +245,13 @@ internal class TASEditingCommandHandler {
                     }
                 } else if (insideActions || (betweenFrameCountAndActions && (direction == CaretMovementType.CharRight || direction == CaretMovementType.WordRight))) {
                     // TODO: Support custom, move-only and dash-only binds
-                    var action = TASCaretNavigationCommandHandler.GetActionFromColumn(actionLine, position.Column, direction);
-                    if (actionLine.Actions.HasFlag(action))
-                        actionLine.Actions = actionLine.Actions & ~action;
+                    var actions = TASCaretNavigationCommandHandler.GetActionFromColumn(actionLine, position.Column, direction);
+                    actionLine.Actions &= ~actions;
 
                     position.Column = direction switch {
-                        CaretMovementType.Backspace or CaretMovementType.WordLeft => position.Column - 2,
+                        CaretMovementType.Backspace => position.Column - 2,
                         CaretMovementType.CharRight or CaretMovementType.WordRight => position.Column,
+                        CaretMovementType.WordLeft => TASActionLine.MaxFramesDigits + 1,
                         _ => position.Column,
                     };
 

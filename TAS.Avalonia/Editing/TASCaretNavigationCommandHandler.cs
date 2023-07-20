@@ -197,21 +197,38 @@ internal static class TASCaretNavigationCommandHandler {
     internal static TASAction GetActionFromColumn(TASActionLine actionLine, int column, CaretMovementType direction) {
         var lineText = actionLine.ToString();
 
-        if (direction == CaretMovementType.CharLeft || direction == CaretMovementType.WordLeft || direction == CaretMovementType.Backspace) {
-            if (column <= TASActionLine.MaxFramesDigits + 1)
-                return TASAction.None; // There are no actions to the left of the caret
-
-            //  15,R|,X => R
-            return TASActionExtensions.ActionForChar(lineText[column - 2]);
-        } else if (direction == CaretMovementType.CharRight || direction == CaretMovementType.WordRight) {
-            if (column <= TASActionLine.MaxFramesDigits || column >= lineText.Length)
-                return TASAction.None; // There are no actions to the right of the caret
-
-            //  15,R|,X => X
-            return TASActionExtensions.ActionForChar(lineText[column]);
+        if ((column <= TASActionLine.MaxFramesDigits + 1) &&
+            (direction == CaretMovementType.CharLeft || direction == CaretMovementType.Backspace || direction == CaretMovementType.WordLeft)) {
+            return TASAction.None; // There are no actions to the left of the caret
+        }
+        if ((column <= TASActionLine.MaxFramesDigits || column >= lineText.Length) &&
+            (direction == CaretMovementType.CharRight || direction == CaretMovementType.WordRight)) {
+            return TASAction.None; // There are no actions to the right of the caret
         }
 
-        return TASAction.None;
+        if (direction == CaretMovementType.CharLeft || direction == CaretMovementType.Backspace) {
+            //  15,R|,X => R
+            return TASActionExtensions.ActionForChar(lineText[column - 2]);
+        } else if (direction == CaretMovementType.CharRight) {
+            //  15,R|,X => X
+            return TASActionExtensions.ActionForChar(lineText[column]);
+        } else if (direction == CaretMovementType.WordLeft) {
+            //  15,R,D|,X => R,D
+            TASAction actions = TASAction.None;
+            while (column > TASActionLine.MaxFramesDigits + 1) {
+                actions |= TASActionExtensions.ActionForChar(lineText[column - 2]);
+                column -= 2;
+            }
+            return actions;
+        } else {
+            //  15,R|,D,X => D,X
+            TASAction actions = TASAction.None;
+            while (column < lineText.Length) {
+                actions |= TASActionExtensions.ActionForChar(lineText[column]);
+                column += 2;
+            }
+            return actions;
+        }
     }
 
     internal static void MoveCaret(TextArea textArea, CaretMovementType direction) {
@@ -226,14 +243,16 @@ internal static class TASCaretNavigationCommandHandler {
             TASActionLine.TryParse(lineText, out var actionLine)) {
             position.Column = SnapColumnToActionLine(actionLine, position.Column);
 
+            int leadingSpaces = TASActionLine.MaxFramesDigits - actionLine.Frames.Digits();
+
             if (position.Column >= 1 && position.Column < TASActionLine.MaxFramesDigits + 1) {
                 // Inside frame count
-                int leadingSpaces = TASActionLine.MaxFramesDigits - actionLine.Frames.Digits();
                 newPosition = direction switch {
                     CaretMovementType.CharLeft => new TextViewPosition(position.Line, position.Column - 1),
                     CaretMovementType.CharRight => new TextViewPosition(position.Line, position.Column + 1),
                     CaretMovementType.WordLeft or CaretMovementType.LineStart => new TextViewPosition(position.Line, leadingSpaces + 1),
-                    CaretMovementType.WordRight or CaretMovementType.LineEnd => new TextViewPosition(position.Line, TASActionLine.MaxFramesDigits + 1),
+                    CaretMovementType.WordRight => new TextViewPosition(position.Line, TASActionLine.MaxFramesDigits + 1),
+                    CaretMovementType.LineEnd => new TextViewPosition(position.Line, line.Length + 1),
                     CaretMovementType.LineUp => new TextViewPosition(position.Line - 1, position.Column),
                     CaretMovementType.LineDown => new TextViewPosition(position.Line + 1, position.Column),
                     _ => GetNewCaretPosition(textArea.TextView, position, direction, textArea.Selection.EnableVirtualSpace, ref desiredXpos),
@@ -241,12 +260,11 @@ internal static class TASCaretNavigationCommandHandler {
             } else if (position.Column == TASActionLine.MaxFramesDigits + 1) {
                 // TODO: Support custom, move-only and dash-only binds
                 // Between frame count and actions
-                int leadingSpaces = TASActionLine.MaxFramesDigits - actionLine.Frames.Digits();
                 newPosition = direction switch {
                     CaretMovementType.CharLeft => new TextViewPosition(position.Line, position.Column - 1),
-                    CaretMovementType.CharRight or CaretMovementType.WordRight => new TextViewPosition(position.Line, position.Column + 2),
-                    CaretMovementType.WordLeft or CaretMovementType.LineStart => new TextViewPosition(position.Line, leadingSpaces + 1),
-                    CaretMovementType.LineEnd => new TextViewPosition(position.Line, line.Length + 1),
+                    CaretMovementType.CharRight => new TextViewPosition(position.Line, position.Column + 2),
+                    CaretMovementType.LineStart or CaretMovementType.WordLeft => new TextViewPosition(position.Line, leadingSpaces + 1),
+                    CaretMovementType.LineEnd or CaretMovementType.WordRight => new TextViewPosition(position.Line, line.Length + 1),
                     CaretMovementType.LineUp => new TextViewPosition(position.Line - 1, position.Column),
                     CaretMovementType.LineDown => new TextViewPosition(position.Line + 1, position.Column),
                     _ => GetNewCaretPosition(textArea.TextView, position, direction, textArea.Selection.EnableVirtualSpace, ref desiredXpos),
@@ -254,10 +272,11 @@ internal static class TASCaretNavigationCommandHandler {
             } else {
                 // Inside actions
                 newPosition = direction switch {
-                    CaretMovementType.CharLeft or CaretMovementType.WordLeft => new TextViewPosition(position.Line, position.Column - 2),
-                    CaretMovementType.CharRight or CaretMovementType.WordRight => new TextViewPosition(position.Line, position.Column + 2),
-                    CaretMovementType.LineStart => new TextViewPosition(position.Line, TASActionLine.MaxFramesDigits + 1),
-                    CaretMovementType.LineEnd => new TextViewPosition(position.Line, line.Length + 1),
+                    CaretMovementType.CharLeft => new TextViewPosition(position.Line, position.Column - 2),
+                    CaretMovementType.CharRight => new TextViewPosition(position.Line, position.Column + 2),
+                    CaretMovementType.WordLeft => new TextViewPosition(position.Line, TASActionLine.MaxFramesDigits + 1),
+                    CaretMovementType.LineStart => new TextViewPosition(position.Line, leadingSpaces + 1),
+                    CaretMovementType.LineEnd or CaretMovementType.WordRight => new TextViewPosition(position.Line, line.Length + 1),
                     CaretMovementType.LineUp => new TextViewPosition(position.Line - 1, position.Column),
                     CaretMovementType.LineDown => new TextViewPosition(position.Line + 1, position.Column),
                     _ => GetNewCaretPosition(textArea.TextView, position, direction, textArea.Selection.EnableVirtualSpace, ref desiredXpos),
