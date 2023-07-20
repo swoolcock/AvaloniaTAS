@@ -282,19 +282,17 @@ internal static class TASCaretNavigationCommandHandler {
                     _ => GetNewCaretPosition(textArea.TextView, position, direction, textArea.Selection.EnableVirtualSpace, ref desiredXpos),
                 };
             }
-
-            newPosition.Line = Math.Clamp(newPosition.Line, 1, textArea.Document.LineCount);
-            var newLine = textArea.Document.GetLineByNumber(newPosition.Line);
-            newPosition.Column = Math.Clamp(newPosition.Column, 1, newLine.Length + 1);
         } else {
             // Standart text behaviour
             newPosition = GetNewCaretPosition(textArea.TextView, position, direction, textArea.Selection.EnableVirtualSpace, ref desiredXpos);
+        }
 
-            if (textArea.Document.GetLineByNumber(newPosition.Line) is { } newLine &&
-                textArea.Document.GetText(newLine) is { } newLineText &&
-                TASActionLine.TryParse(newLineText, out var newActionLine)) {
-                newPosition.Column = SnapColumnToActionLine(newActionLine, newPosition.Column);
-            }
+        newPosition.Line = Math.Clamp(newPosition.Line, 1, textArea.Document.LineCount);
+        if (textArea.Document.GetLineByNumber(newPosition.Line) is { } newLine &&
+            textArea.Document.GetText(newLine) is { } newLineText &&
+            TASActionLine.TryParse(newLineText, out var newActionLine)) {
+            newPosition.Column = Math.Clamp(newPosition.Column, 1, newLine.Length + 1);
+            newPosition.Column = SnapColumnToActionLine(newActionLine, newPosition.Column);
         }
 
         newPosition.VisualColumn = newPosition.Column - 1;

@@ -17,8 +17,6 @@ internal class TASEditingCommandHandler {
     private static readonly List<RoutedCommandBinding> CommandBindings = new List<RoutedCommandBinding>();
     private static readonly List<KeyBinding> KeyBindings = new List<KeyBinding>();
 
-    private static Window _window => (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
-
     public static TextAreaInputHandler Create(TextArea textArea) {
         var areaInputHandler = new TextAreaInputHandler(textArea);
         areaInputHandler.CommandBindings.AddRange(CommandBindings);
@@ -311,8 +309,9 @@ internal class TASEditingCommandHandler {
         if (textArea.Selection.IsEmpty && textArea.Options.CutCopyWholeLine) {
             DocumentLine lineByNumber = textArea.Document.GetLineByNumber(textArea.Caret.Line);
             CopyWholeLine(textArea, lineByNumber);
-        } else
+        } else {
             CopySelectedText(textArea);
+        }
 
         args.Handled = true;
     }
@@ -334,25 +333,30 @@ internal class TASEditingCommandHandler {
 
     private static bool CopySelectedText(TextArea textArea) {
         string text = TextUtilities.NormalizeNewLines(textArea.Selection.GetText(), Environment.NewLine);
-        SetClipboardText(text);
+        SetClipboardText(text, textArea);
         textArea.OnTextCopied(new TextEventArgs(text));
         return true;
     }
 
-    private static void SetClipboardText(string text) {
+    private static void SetClipboardText(string text, Visual visual) {
         try {
-            _window.Clipboard.SetTextAsync(text).GetAwaiter().GetResult();
+            TopLevel.GetTopLevel(visual)?.Clipboard?.SetTextAsync(text).GetAwaiter().GetResult();
         } catch (Exception) {
+            // Apparently this exception sometimes happens randomly.
+            // The MS controls just ignore it, so we'll do the same.
         }
     }
 
     private static bool CopyWholeLine(TextArea textArea, DocumentLine line) {
-        ISegment segment = new SimpleSegment(line.Offset, line.TotalLength);
-        string text1 = textArea.Document.GetText(segment);
-        if (string.IsNullOrEmpty(text1)) return false;
-        string text2 = TextUtilities.NormalizeNewLines(text1, Environment.NewLine);
-        SetClipboardText(text2);
-        textArea.OnTextCopied(new TextEventArgs(text2));
+        ISegment wholeLine = new SimpleSegment(line.Offset, line.TotalLength);
+        var text = textArea.Document.GetText(wholeLine);
+        // Ignore empty line copy
+        if (string.IsNullOrEmpty(text)) return false;
+        // Ensure we use the appropriate newline sequence for the OS
+        text = TextUtilities.NormalizeNewLines(text, Environment.NewLine);
+
+        SetClipboardText(text, textArea);
+        textArea.OnTextCopied(new TextEventArgs(text));
         return true;
     }
 
@@ -364,32 +368,37 @@ internal class TASEditingCommandHandler {
     }
 
     private static async void OnPaste(object target, ExecutedRoutedEventArgs args) {
-        TextArea textArea = GetTextArea(target);
-        if (textArea?.Document == null) {
-            textArea = null;
-        } else {
-            textArea.Document.BeginUpdate();
-            string text = null;
-            try {
-                text = await _window.Clipboard.GetTextAsync();
-            } catch (Exception) {
-                textArea.Document.EndUpdate();
-                textArea = null;
-                return;
-            }
+        var textArea = GetTextArea(target);
+        if (textArea?.Document == null) return;
 
-            if (text == null) {
-                textArea = null;
-            } else {
-                text = GetTextToPaste(text, textArea);
-                if (!string.IsNullOrEmpty(text)) textArea.ReplaceSelectionWithText(text);
-                textArea.Caret.BringCaretToView();
-                args.Handled = true;
-                textArea.Document.EndUpdate();
-                text = null;
-                textArea = null;
-            }
+        textArea.Document.BeginUpdate();
+
+        string text = null;
+        try {
+            text = await TopLevel.GetTopLevel(textArea)?.Clipboard?.GetTextAsync();
+        } catch (Exception) {
+            textArea.Document.EndUpdate();
+            return;
         }
+
+        if (text == null)
+            return;
+
+        text = GetTextToPaste(text, textArea);
+
+        // Auto-format pasted inputs
+        if (TASActionLine.TryParse(text, out var actionLine)) {
+            text = actionLine.ToString();
+        }
+
+        if (!string.IsNullOrEmpty(text)) {
+            textArea.ReplaceSelectionWithText(text);
+        }
+
+        textArea.Caret.BringCaretToView();
+        args.Handled = true;
+
+        textArea.Document.EndUpdate();
     }
 
     internal static string GetTextToPaste(string text, TextArea textArea) {

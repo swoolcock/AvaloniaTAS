@@ -15,6 +15,10 @@ public class TASStackedInputHandler : TextAreaStackedInputHandler {
             // matched, skip for now
             return;
         }
+        // Let AvaloniaEdit handle commands like copy, cut, paste, etc.
+        if (inputHandler.Editing.CommandBindings.FirstOrDefault(b => b.Command.Gesture?.Matches(e) ?? false) is { } _) {
+            return;
+        }
 
         // get the text if possible
         var caretPosition = TextArea.Caret.Position;
