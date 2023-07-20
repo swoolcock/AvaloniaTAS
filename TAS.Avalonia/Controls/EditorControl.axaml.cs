@@ -1,5 +1,3 @@
-#define AUTOMATIC_CURSOR
-
 using Avalonia;
 using Avalonia.Controls;
 using AvaloniaEdit;
@@ -42,11 +40,9 @@ public partial class EditorControl : UserControl {
         _textMateInstallation = editor.InstallTextMate(_registryOptions);
         var csharpLanguage = _registryOptions.GetLanguageByExtension(".cs");
         _textMateInstallation.SetGrammar(_registryOptions.GetScopeByLanguageId(csharpLanguage.Id));
-#if AUTOMATIC_CURSOR
         editor.TextArea.ActiveInputHandler = new TASInputHandler(editor.TextArea);
         editor.TextArea.PushStackedInputHandler(new TASStackedInputHandler(editor.TextArea));
         editor.TextArea.Caret.PositionChanged += (_, _) => CaretPosition = editor.TextArea.Caret.Position;
-#endif
         PropertyChanged += (_, e) => {
             if (e.Property == CaretPositionProperty) {
                 editor.TextArea.Caret.Position = (TextViewPosition) e.NewValue!;
