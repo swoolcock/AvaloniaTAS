@@ -19,6 +19,8 @@ public class TASInputHandler : TextAreaInputHandler {
 
     public IEnumerable<KeyBinding> AllKeyBindings =>
         KeyBindings.Concat(CaretNavigation.KeyBindings).Concat(Editing.KeyBindings);
+    public IEnumerable<RoutedCommandBinding> AllCommandBindings =>
+        CommandBindings.Concat(CaretNavigation.CommandBindings).Concat(Editing.CommandBindings);
 
     public TASInputHandler(TextArea textArea) : base(textArea) {
         NestedInputHandlers.Add(CaretNavigation = TASCaretNavigationCommandHandler.Create(textArea));

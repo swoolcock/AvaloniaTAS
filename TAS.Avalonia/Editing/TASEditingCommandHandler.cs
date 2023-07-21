@@ -2,7 +2,6 @@ using System.Globalization;
 using Avalonia;
 using Avalonia.Input;
 using Avalonia.Controls;
-using Avalonia.Controls.ApplicationLifetimes;
 using AvaloniaEdit;
 using AvaloniaEdit.Document;
 using AvaloniaEdit.Editing;
@@ -62,6 +61,22 @@ internal class TASEditingCommandHandler {
     }
 
     private static TextArea GetTextArea(object target) => target as TextArea;
+
+    internal static void AutoFormatActionLines(TextArea textArea, int lineStart, int lineEnd) {
+        for (int i = lineStart; i <= lineEnd; i++) {
+            var line = textArea.Document.GetLineByNumber(i);
+            var lineText = textArea.Document.GetText(line);
+            if (TASActionLine.TryParse(lineText, out var actionLine)) {
+                // We don't want that auto-formatting messes with undo/redo
+                var oldUndoStack = textArea.Document._undoStack;
+                textArea.Document._undoStack = new UndoStack();
+
+                textArea.Document.Replace(line, actionLine.ToString());
+
+                textArea.Document._undoStack = oldUndoStack;
+            }
+        }
+    }
 
     private static void TransformSelectedLines(Action<TextArea, DocumentLine> transformLine, object target, ExecutedRoutedEventArgs args, DefaultSegmentType defaultSegmentType) {
         TextArea textArea = GetTextArea(target);
@@ -386,14 +401,13 @@ internal class TASEditingCommandHandler {
 
         text = GetTextToPaste(text, textArea);
 
-        // Auto-format pasted inputs
-        if (TASActionLine.TryParse(text, out var actionLine)) {
-            text = actionLine.ToString();
-        }
-
+        int lineStart = textArea.Caret.Position.Line;
         if (!string.IsNullOrEmpty(text)) {
             textArea.ReplaceSelectionWithText(text);
         }
+        int lineEnd = textArea.Caret.Position.Line;
+
+        AutoFormatActionLines(textArea, lineStart, lineEnd);
 
         textArea.Caret.BringCaretToView();
         args.Handled = true;
