@@ -63,6 +63,16 @@ internal class TASEditingCommandHandler {
 
     private static TextArea GetTextArea(object target) => target as TextArea;
 
+    internal static void AutoFormatActionLines(TextArea textArea, int lineStart, int lineEnd) {
+        for (int i = lineStart; i <= lineEnd; i++) {
+            var line = textArea.Document.GetLineByNumber(i);
+            var lineText = textArea.Document.GetText(line);
+            if (TASActionLine.TryParse(lineText, out var actionLine)) {
+                textArea.Document.Replace(line, actionLine.ToString());
+            }
+        }
+    }
+
     private static void TransformSelectedLines(Action<TextArea, DocumentLine> transformLine, object target, ExecutedRoutedEventArgs args, DefaultSegmentType defaultSegmentType) {
         TextArea textArea = GetTextArea(target);
         if (textArea?.Document == null) return;
@@ -386,14 +396,13 @@ internal class TASEditingCommandHandler {
 
         text = GetTextToPaste(text, textArea);
 
-        // Auto-format pasted inputs
-        if (TASActionLine.TryParse(text, out var actionLine)) {
-            text = actionLine.ToString();
-        }
-
+        int lineStart = textArea.Caret.Position.Line;
         if (!string.IsNullOrEmpty(text)) {
             textArea.ReplaceSelectionWithText(text);
         }
+        int lineEnd = textArea.Caret.Position.Line;
+
+        AutoFormatActionLines(textArea, lineStart, lineEnd);
 
         textArea.Caret.BringCaretToView();
         args.Handled = true;
