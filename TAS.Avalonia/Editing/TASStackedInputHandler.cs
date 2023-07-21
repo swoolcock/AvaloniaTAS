@@ -11,12 +11,9 @@ public class TASStackedInputHandler : TextAreaStackedInputHandler {
     public override void OnPreviewKeyDown(KeyEventArgs e) {
         // let bindings handle it first
         var inputHandler = (TASInputHandler) TextArea.ActiveInputHandler;
-        if (inputHandler.AllKeyBindings.FirstOrDefault(b => b.Gesture.Matches(e)) is { } keyBinding) {
+        if (inputHandler.AllKeyBindings.FirstOrDefault(b => b.Gesture.Matches(e)) is { } _ ||
+            inputHandler.AllCommandBindings.FirstOrDefault(b => b.Command.Gesture?.Matches(e) ?? false) is { } _) {
             // matched, skip for now
-            return;
-        }
-        // Let AvaloniaEdit handle commands like copy, cut, paste, etc.
-        if (inputHandler.Editing.CommandBindings.FirstOrDefault(b => b.Command.Gesture?.Matches(e) ?? false) is { } _) {
             return;
         }
 
@@ -54,7 +51,7 @@ public class TASStackedInputHandler : TextAreaStackedInputHandler {
                 // toggle it
                 actionLine.Actions = actionLine.Actions.ToggleAction(typedAction);
                 // warp the cursor after the number
-                caretPosition.Column = 5;
+                caretPosition.Column = TASActionLine.MaxFramesDigits + 1;
             }
             // if the key we entered is a number
             else if (numberForKey >= 0) {

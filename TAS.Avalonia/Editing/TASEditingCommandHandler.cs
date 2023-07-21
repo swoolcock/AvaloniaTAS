@@ -2,7 +2,6 @@ using System.Globalization;
 using Avalonia;
 using Avalonia.Input;
 using Avalonia.Controls;
-using Avalonia.Controls.ApplicationLifetimes;
 using AvaloniaEdit;
 using AvaloniaEdit.Document;
 using AvaloniaEdit.Editing;
@@ -68,7 +67,13 @@ internal class TASEditingCommandHandler {
             var line = textArea.Document.GetLineByNumber(i);
             var lineText = textArea.Document.GetText(line);
             if (TASActionLine.TryParse(lineText, out var actionLine)) {
+                // We don't want that auto-formatting messes with undo/redo
+                var oldUndoStack = textArea.Document._undoStack;
+                textArea.Document._undoStack = new UndoStack();
+
                 textArea.Document.Replace(line, actionLine.ToString());
+
+                textArea.Document._undoStack = oldUndoStack;
             }
         }
     }
