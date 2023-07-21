@@ -45,13 +45,32 @@ public class TASStackedInputHandler : TextAreaStackedInputHandler {
             // break if it's not a valid key
             if (!validForAction) return;
 
-            // if we entered an action
             var typedAction = e.Key.ActionForKey();
-            if (typedAction != TASAction.None) {
+
+            // Handle feather inputs
+            var featherStartColumn = TASCaretNavigationCommandHandler.GetColumnOfAction(actionLine, TASAction.FeatherAim);
+            if (featherStartColumn >= 1 && caretPosition.Column > featherStartColumn && (e.Key is Key.OemPeriod or Key.OemComma || numberForKey != -1)) {
+                string text = e.Key switch {
+                    Key.OemPeriod => ".",
+                    Key.OemComma => ",",
+                    _ => numberForKey.ToString(),
+                };
+
+                lineText = lineText.Insert(caretPosition.Column - 1, text);
+                if (TASActionLine.TryParse(lineText, out var newActionLine, ignoreInvalidFloats: false)) {
+                    actionLine = newActionLine;
+                    caretPosition.Column++;
+                }
+            }
+            // if we entered an action
+            else if (typedAction != TASAction.None) {
                 // toggle it
                 actionLine.Actions = actionLine.Actions.ToggleAction(typedAction);
                 // warp the cursor after the number
-                caretPosition.Column = TASActionLine.MaxFramesDigits + 1;
+                if (typedAction == TASAction.FeatherAim && actionLine.Actions.HasFlag(TASAction.FeatherAim))
+                    caretPosition.Column = 9999; // Jump to end, gets clamped anyway
+                else
+                    caretPosition.Column = TASActionLine.MaxFramesDigits + 1;
             }
             // if the key we entered is a number
             else if (numberForKey >= 0) {
@@ -96,6 +115,8 @@ public class TASStackedInputHandler : TextAreaStackedInputHandler {
             caretPosition.Column = TASActionLine.MaxFramesDigits + 1;
         }
 
+        line = document.GetLineByNumber(caretPosition.Line);
+        caretPosition.Column = Math.Clamp(caretPosition.Column, 1, line.Length + 1);
         caretPosition.VisualColumn = caretPosition.Column - 1;
         TextArea.Caret.Position = caretPosition;
     }

@@ -280,7 +280,6 @@ internal class TASEditingCommandHandler {
                             actionLine.Actions &= ~actions;
                             actionLine.FeatherAngle = null;
                             actionLine.FeatherMagnitude = null;
-                            actionLine.HasMagnitudeCommand = false;
 
                             position.Column = direction switch {
                                 CaretMovementType.Backspace => position.Column - 2,
@@ -291,13 +290,11 @@ internal class TASEditingCommandHandler {
                                    !isAngle && position.Column == leftColumn && direction == CaretMovementType.WordRight ||
                                    !isAngle && position.Column == rightColumn && direction == CaretMovementType.WordLeft) {
                             actionLine.FeatherMagnitude = null;
-                            actionLine.HasMagnitudeCommand = false;
                         } else if (isAngle && position.Column == leftColumn && direction == CaretMovementType.WordRight ||
                                    isAngle && position.Column == rightColumn && direction == CaretMovementType.WordLeft ||
                                    !isAngle && position.Column == leftColumn && direction is CaretMovementType.Backspace or CaretMovementType.WordLeft) {
                             actionLine.FeatherAngle = actionLine.FeatherMagnitude;
                             actionLine.FeatherMagnitude = null;
-                            actionLine.HasMagnitudeCommand = false;
                             position.Column = TASCaretNavigationCommandHandler.GetColumnOfAction(actionLine, TASAction.FeatherAim) + 1;
                         } else {
                             string leftOfCursor = lineText[(leftColumn - 1)..(position.Column - 1)];
@@ -327,7 +324,6 @@ internal class TASEditingCommandHandler {
                             actionLine.Actions &= ~actions;
                             actionLine.FeatherAngle = null;
                             actionLine.FeatherMagnitude = null;
-                            actionLine.HasMagnitudeCommand = false;
 
                             position.Column = direction switch {
                                 CaretMovementType.Backspace => position.Column - 2,
@@ -337,7 +333,6 @@ internal class TASEditingCommandHandler {
                         } else {
                             actionLine.FeatherAngle = null;
                             actionLine.FeatherMagnitude = null;
-                            actionLine.HasMagnitudeCommand = false;
                             position.Column += TASCaretNavigationCommandHandler.GetColumnOfAction(actionLine, TASAction.FeatherAim) + 1;
                         }
                     } else {
