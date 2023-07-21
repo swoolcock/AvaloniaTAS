@@ -27,6 +27,11 @@ public struct TASActionLine {
             var action = TASActionExtensions.ActionForChar(tokens[i][0]);
             value.Actions |= action;
 
+            // Parse dash-only/move-only/custom bindings
+            if (action is TASAction.DashOnly or TASAction.MoveOnly) {
+
+            }
+
             // Parse feather angle/magnitude
             bool validAngle = true;
             if (action == TASAction.FeatherAim && i + 1 < tokens.Length && (validAngle = float.TryParse(tokens[i + 1], out var _))) {

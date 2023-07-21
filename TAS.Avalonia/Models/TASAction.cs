@@ -5,13 +5,13 @@ namespace TAS.Avalonia.Models;
 public enum TASAction {
     None = 0,
 
-    Right = 1 << 0, // R
-    Left = 1 << 1, // L
-    RL = Right | Left,
+    Left = 1 << 0, // L
+    Right = 1 << 1, // R
+    LRF = Right | Left | FeatherAim,
 
     Up = 1 << 2, // U
     Down = 1 << 3, // D
-    UD = Up | Down,
+    UDF = Up | Down | FeatherAim,
 
     JumpConfirm = 1 << 4, // J
     Jump2 = 1 << 5, // K
@@ -26,13 +26,29 @@ public enum TASAction {
     Grab = 1 << 10, // G
     Pause = 1 << 11, // S
     QuickRestart = 1 << 12, // Q
-    GSQ = Grab | Pause | QuickRestart,
 
     JournalTalk2 = 1 << 13, // N
     Confirm2 = 1 << 14, // O
-    DashOnlyDirection = 1 << 15, // A
-    FeatherAim = 1 << 16, // F
-    NOAF = JournalTalk2 | Confirm2 | DashOnlyDirection | FeatherAim,
+    DashOnly = 1 << 15, // A
+    MoveOnly = 1 << 16, // M
+    CustomBinding = 1 << 17, // P
+    FeatherAim = 1 << 18, // F
+
+    LeftDashOnly = 1 << 19, // AL
+    RightDashOnly = 1 << 20, // AR
+    DashOnlyLR = LeftDashOnly | RightDashOnly,
+
+    UpDashOnly = 1 << 21, // AU
+    DownDashOnly = 1 << 22, // AD
+    DashOnlyUD = UpDashOnly | DownDashOnly,
+
+    LeftMoveOnly = 1 << 23, // ML
+    RightMoveOnly = 1 << 24, // MR
+    MoveOnlyLR = LeftMoveOnly | RightMoveOnly,
+
+    UpMoveOnly = 1 << 25, // MU
+    DownMoveOnly = 1 << 26, // MD
+    MoveOnlyUD = UpMoveOnly | DownMoveOnly,
 }
 
 public static class TASActionExtensions {
@@ -53,7 +69,9 @@ public static class TASActionExtensions {
             'Q' => TASAction.QuickRestart,
             'N' => TASAction.JournalTalk2,
             'O' => TASAction.Confirm2,
-            'A' => TASAction.DashOnlyDirection,
+            'A' => TASAction.DashOnly,
+            'M' => TASAction.MoveOnly,
+            'P' => TASAction.CustomBinding,
             'F' => TASAction.FeatherAim,
             _ => TASAction.None,
         };
@@ -75,7 +93,9 @@ public static class TASActionExtensions {
             TASAction.QuickRestart => 'Q',
             TASAction.JournalTalk2 => 'N',
             TASAction.Confirm2 => 'O',
-            TASAction.DashOnlyDirection => 'A',
+            TASAction.DashOnly => 'A',
+            TASAction.MoveOnly => 'M',
+            TASAction.CustomBinding => 'P',
             TASAction.FeatherAim => 'F',
             _ => ' ',
         };
@@ -84,19 +104,21 @@ public static class TASActionExtensions {
         if (self.HasFlag(other))
             return self & ~other;
         return other switch {
-            TASAction.Left or TASAction.Right => (self & ~TASAction.RL) | other,
-            TASAction.Up or TASAction.Down => (self & ~TASAction.UD) | other,
+            TASAction.Left or TASAction.Right or TASAction.FeatherAim => (self & ~TASAction.LRF) | other,
+            TASAction.Up or TASAction.Down or TASAction.FeatherAim => (self & ~TASAction.UDF) | other,
             TASAction.JumpConfirm or TASAction.Jump2 => (self & ~TASAction.JK) | other,
             TASAction.DashTalkCancel or TASAction.Dash2Cancel2 or TASAction.CrouchDash or TASAction.CrouchDash2 => (self & ~TASAction.XCZV) | other,
-            TASAction.Grab or TASAction.Pause or TASAction.QuickRestart => (self & ~TASAction.GSQ) | other,
-            TASAction.JournalTalk2 or TASAction.Confirm2 or TASAction.DashOnlyDirection or TASAction.FeatherAim => (self & ~TASAction.NOAF) | other,
+            TASAction.LeftDashOnly or TASAction.RightDashOnly => (self & ~TASAction.DashOnlyLR) | other,
+            TASAction.UpDashOnly or TASAction.DownDashOnly => (self & ~TASAction.DashOnlyUD) | other,
+            TASAction.LeftMoveOnly or TASAction.RightMoveOnly => (self & ~TASAction.MoveOnlyLR) | other,
+            TASAction.UpMoveOnly or TASAction.DownMoveOnly => (self & ~TASAction.MoveOnlyUD) | other,
             _ => self,
         };
     }
 
     public static IEnumerable<TASAction> Sorted(this TASAction self) => new[] {
-        TASAction.Right,
         TASAction.Left,
+        TASAction.Right,
         TASAction.Up,
         TASAction.Down,
         TASAction.JumpConfirm,
@@ -110,7 +132,9 @@ public static class TASActionExtensions {
         TASAction.QuickRestart,
         TASAction.JournalTalk2,
         TASAction.Confirm2,
-        TASAction.DashOnlyDirection,
+        TASAction.DashOnly,
+        TASAction.MoveOnly,
+        TASAction.CustomBinding,
         TASAction.FeatherAim,
     }.Where(e => self.HasFlag(e));
 }
