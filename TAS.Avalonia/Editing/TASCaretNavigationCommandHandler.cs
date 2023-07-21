@@ -296,14 +296,24 @@ internal static class TASCaretNavigationCommandHandler {
                     while (rightColumn <= lineText.Length && lineText[rightColumn - 1] != ',') {
                         rightColumn++;
                     }
+                    int dpColumn = leftColumn;
+                    while (dpColumn <= rightColumn && dpColumn <= lineText.Length && lineText[dpColumn - 1] != '.') {
+                        dpColumn++;
+                    }
 
-                    newPosition = direction switch {
-                        CaretMovementType.CharLeft => new TextViewPosition(position.Line, position.Column - 1),
-                        CaretMovementType.CharRight => new TextViewPosition(position.Line, position.Column + 1),
-                        CaretMovementType.WordLeft => new TextViewPosition(position.Line, leftColumn),
-                        CaretMovementType.WordRight => new TextViewPosition(position.Line, rightColumn),
-                        _ => newPosition,
-                    };
+                    if (position.Column == leftColumn && direction is CaretMovementType.CharLeft or CaretMovementType.WordLeft) {
+                        newPosition = new TextViewPosition(position.Line, position.Column - 1);
+                    } else if (position.Column == rightColumn && direction is CaretMovementType.CharRight or CaretMovementType.WordRight) {
+                        newPosition = new TextViewPosition(position.Line, position.Column + 1);
+                    } else {
+                        newPosition = direction switch {
+                            CaretMovementType.CharLeft => new TextViewPosition(position.Line, position.Column - 1),
+                            CaretMovementType.CharRight => new TextViewPosition(position.Line, position.Column + 1),
+                            CaretMovementType.WordLeft => new TextViewPosition(position.Line, position.Column > dpColumn ? dpColumn : leftColumn),
+                            CaretMovementType.WordRight => new TextViewPosition(position.Line, position.Column < dpColumn + 1 ? dpColumn + 1 : rightColumn),
+                            _ => newPosition,
+                        };
+                    }
                 } else if (currentAction == TASAction.FeatherAim) {
                     newPosition = direction switch {
                         CaretMovementType.CharLeft => new TextViewPosition(position.Line, position.Column - 2),

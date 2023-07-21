@@ -268,10 +268,6 @@ internal class TASEditingCommandHandler {
                         while (rightColumn <= lineText.Length && lineText[rightColumn - 1] != ',') {
                             rightColumn++;
                         }
-                        int dpColumn = leftColumn;
-                        while (dpColumn <= rightColumn && dpColumn <= lineText.Length && lineText[dpColumn - 1] != '.') {
-                            dpColumn++;
-                        }
 
                         bool isAngle = TASCaretNavigationCommandHandler.GetActionFromColumn(actionLine, leftColumn - 1, CaretMovementType.CharLeft) == TASAction.FeatherAim;
 
@@ -333,7 +329,7 @@ internal class TASEditingCommandHandler {
                         } else {
                             actionLine.FeatherAngle = null;
                             actionLine.FeatherMagnitude = null;
-                            position.Column += TASCaretNavigationCommandHandler.GetColumnOfAction(actionLine, TASAction.FeatherAim) + 1;
+                            position.Column++;
                         }
                     } else {
                         var actions = TASCaretNavigationCommandHandler.GetActionFromColumn(actionLine, position.Column, direction);
