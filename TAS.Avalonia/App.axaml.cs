@@ -20,10 +20,6 @@ public partial class App : Application {
 
     public override void OnFrameworkInitializationCompleted() {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop) {
-            // Line below is needed to remove Avalonia data validation.
-            // Without this line you will get duplicate validations from both Avalonia and CT
-            // ? ExpressionObserver + DataAnnotationsValidationPlugin was made internal in 11.0.0-preview5, is this still needed or was this fixed?
-            // ExpressionObserver.DataValidators.RemoveAll(x => x is DataAnnotationsValidationPlugin);
             desktop.MainWindow = new MainWindow { DataContext = new MainWindowViewModel() };
         }
 
