@@ -9,6 +9,7 @@ using AvaloniaEdit.Document;
 using AvaloniaEdit.Editing;
 using AvaloniaEdit.Rendering;
 using AvaloniaEdit.Utils;
+using DynamicData;
 using TAS.Avalonia.Models;
 using LogicalDirection = AvaloniaEdit.Document.LogicalDirection;
 
@@ -157,6 +158,14 @@ internal static class TASCaretNavigationCommandHandler {
         };
     }
 
+    internal static int GetColumnOfAction(TASActionLine actionLine, TASAction action) {
+        int index = actionLine.Actions.Sorted().IndexOf(action);
+        if (index < 0) return -1;
+
+        // TODO: Support dash-only/move-only/custom inputs
+        return TASActionLine.MaxFramesDigits + 1 + (index + 1) * 2;
+    }
+
     internal static int SnapColumnToActionLine(TASActionLine actionLine, int column) {
         var lineText = actionLine.ToString();
 
@@ -167,8 +176,14 @@ internal static class TASCaretNavigationCommandHandler {
             // Snap to valid position inside frame counter
             return Math.Clamp(column, leadingSpaces + 1, leadingSpaces + digitCount + 1);
         } else {
+            if (actionLine.Actions.HasFlag(TASAction.FeatherAim) &&
+                column >= GetColumnOfAction(actionLine, TASAction.FeatherAim)) {
+                // Disable snapping inside angle/magnitude
+                return column;
+            }
+
             // Snap to first valid position to the left of caret
-            int currentColumn = TASActionLine.MaxFramesDigits + 1; // starting before first comma
+            int currentColumn = TASActionLine.MaxFramesDigits + 1; // Starting before first comma
             var validColumns = actionLine.Actions
                 .Sorted()
                 .Select((action, idx) => {
@@ -271,15 +286,47 @@ internal static class TASCaretNavigationCommandHandler {
                 };
             } else {
                 // Inside actions
+                var currentAction = GetActionFromColumn(actionLine, position.Column, CaretMovementType.CharLeft);
+                if (currentAction == TASAction.None) {
+                    int leftColumn = position.Column;
+                    while (leftColumn > 1 && lineText[leftColumn - 2] != ',') {
+                        leftColumn--;
+                    }
+                    int rightColumn = position.Column;
+                    while (rightColumn <= lineText.Length && lineText[rightColumn - 1] != ',') {
+                        rightColumn++;
+                    }
+
+                    newPosition = direction switch {
+                        CaretMovementType.CharLeft => new TextViewPosition(position.Line, position.Column - 1),
+                        CaretMovementType.CharRight => new TextViewPosition(position.Line, position.Column + 1),
+                        CaretMovementType.WordLeft => new TextViewPosition(position.Line, leftColumn),
+                        CaretMovementType.WordRight => new TextViewPosition(position.Line, rightColumn),
+                        _ => newPosition,
+                    };
+                } else if (currentAction == TASAction.FeatherAim) {
+                    newPosition = direction switch {
+                        CaretMovementType.CharLeft => new TextViewPosition(position.Line, position.Column - 2),
+                        CaretMovementType.CharRight or CaretMovementType.WordRight => new TextViewPosition(position.Line, position.Column + 1),
+                        CaretMovementType.WordLeft => new TextViewPosition(position.Line, TASActionLine.MaxFramesDigits + 1),
+                        _ => newPosition,
+                    };
+                } else {
+                    newPosition = direction switch {
+                        CaretMovementType.CharLeft => new TextViewPosition(position.Line, position.Column - 2),
+                        CaretMovementType.CharRight => new TextViewPosition(position.Line, position.Column + 2),
+                        CaretMovementType.WordLeft => new TextViewPosition(position.Line, TASActionLine.MaxFramesDigits + 1),
+                        CaretMovementType.WordRight => new TextViewPosition(position.Line, line.Length + 1),
+                        _ => newPosition,
+                    };
+                }
+
                 newPosition = direction switch {
-                    CaretMovementType.CharLeft => new TextViewPosition(position.Line, position.Column - 2),
-                    CaretMovementType.CharRight => new TextViewPosition(position.Line, position.Column + 2),
-                    CaretMovementType.WordLeft => new TextViewPosition(position.Line, TASActionLine.MaxFramesDigits + 1),
                     CaretMovementType.LineStart => new TextViewPosition(position.Line, leadingSpaces + 1),
-                    CaretMovementType.LineEnd or CaretMovementType.WordRight => new TextViewPosition(position.Line, line.Length + 1),
+                    CaretMovementType.LineEnd => new TextViewPosition(position.Line, line.Length + 1),
                     CaretMovementType.LineUp => new TextViewPosition(position.Line - 1, position.Column),
                     CaretMovementType.LineDown => new TextViewPosition(position.Line + 1, position.Column),
-                    _ => GetNewCaretPosition(textArea.TextView, position, direction, textArea.Selection.EnableVirtualSpace, ref desiredXpos),
+                    _ => newPosition,
                 };
             }
         } else {

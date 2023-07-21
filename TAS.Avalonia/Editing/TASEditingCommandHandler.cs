@@ -275,7 +275,7 @@ internal class TASEditingCommandHandler {
                 var lineEndPosition = new TextViewPosition(position.Line, line.Length + 1);
 
                 textArea.Selection.StartSelectionOrSetEndpoint(lineStartPosition, lineEndPosition)
-                                    .ReplaceSelectionWithText(newLineText);
+                                  .ReplaceSelectionWithText(newLineText);
 
                 if (string.IsNullOrEmpty(newLineText))
                     position = lineStartPosition;
