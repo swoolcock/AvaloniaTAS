@@ -48,4 +48,6 @@ public static class Extensions {
     public static IEnumerable<T> Yield<T>(this T self) => new[] { self };
 
     public static IClassicDesktopStyleApplicationLifetime DesktopLifetime(this Application self) => (IClassicDesktopStyleApplicationLifetime) self.ApplicationLifetime;
+
+    public static string ReplaceRange(this string self, int startIndex, int count, string replacement) => self.Remove(startIndex, count).Insert(startIndex, replacement);
 }

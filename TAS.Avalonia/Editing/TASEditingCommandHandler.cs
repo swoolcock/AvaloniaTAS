@@ -258,15 +258,99 @@ internal class TASEditingCommandHandler {
                     }
                 } else if (insideActions || (betweenFrameCountAndActions && (direction == CaretMovementType.CharRight || direction == CaretMovementType.WordRight))) {
                     // TODO: Support custom, move-only and dash-only binds
-                    var actions = TASCaretNavigationCommandHandler.GetActionFromColumn(actionLine, position.Column, direction);
-                    actionLine.Actions &= ~actions;
+                    var currentAction = TASCaretNavigationCommandHandler.GetActionFromColumn(actionLine, position.Column, CaretMovementType.CharLeft);
+                    if (currentAction == TASAction.None) {
+                        int leftColumn = position.Column;
+                        while (leftColumn > 1 && lineText[leftColumn - 2] != ',') {
+                            leftColumn--;
+                        }
+                        int rightColumn = position.Column;
+                        while (rightColumn <= lineText.Length && lineText[rightColumn - 1] != ',') {
+                            rightColumn++;
+                        }
+                        int dpColumn = leftColumn;
+                        while (dpColumn <= rightColumn && dpColumn <= lineText.Length && lineText[dpColumn - 1] != '.') {
+                            dpColumn++;
+                        }
 
-                    position.Column = direction switch {
-                        CaretMovementType.Backspace => position.Column - 2,
-                        CaretMovementType.CharRight or CaretMovementType.WordRight => position.Column,
-                        CaretMovementType.WordLeft => TASActionLine.MaxFramesDigits + 1,
-                        _ => position.Column,
-                    };
+                        bool isAngle = TASCaretNavigationCommandHandler.GetActionFromColumn(actionLine, leftColumn - 1, CaretMovementType.CharLeft) == TASAction.FeatherAim;
+
+                        if (isAngle && position.Column == leftColumn && direction is CaretMovementType.Backspace or CaretMovementType.WordLeft) {
+                            var actions = TASCaretNavigationCommandHandler.GetActionFromColumn(actionLine, position.Column - 1, direction);
+                            actionLine.Actions &= ~actions;
+                            actionLine.FeatherAngle = null;
+                            actionLine.FeatherMagnitude = null;
+                            actionLine.HasMagnitudeCommand = false;
+
+                            position.Column = direction switch {
+                                CaretMovementType.Backspace => position.Column - 2,
+                                CaretMovementType.WordLeft => TASActionLine.MaxFramesDigits + 1,
+                                _ => position.Column,
+                            };
+                        } else if (isAngle && position.Column == rightColumn && direction is CaretMovementType.CharRight or CaretMovementType.WordRight ||
+                                   !isAngle && position.Column == leftColumn && direction == CaretMovementType.WordRight ||
+                                   !isAngle && position.Column == rightColumn && direction == CaretMovementType.WordLeft) {
+                            actionLine.FeatherMagnitude = null;
+                            actionLine.HasMagnitudeCommand = false;
+                        } else if (isAngle && position.Column == leftColumn && direction == CaretMovementType.WordRight ||
+                                   isAngle && position.Column == rightColumn && direction == CaretMovementType.WordLeft ||
+                                   !isAngle && position.Column == leftColumn && direction is CaretMovementType.Backspace or CaretMovementType.WordLeft) {
+                            actionLine.FeatherAngle = actionLine.FeatherMagnitude;
+                            actionLine.FeatherMagnitude = null;
+                            actionLine.HasMagnitudeCommand = false;
+                            position.Column = TASCaretNavigationCommandHandler.GetColumnOfAction(actionLine, TASAction.FeatherAim) + 1;
+                        } else {
+                            string leftOfCursor = lineText[(leftColumn - 1)..(position.Column - 1)];
+                            string rightOfCursor = lineText[(position.Column - 1)..(rightColumn - 1)];
+                            string newNumberString = string.Empty;
+
+                            if (direction == CaretMovementType.WordLeft) {
+                                newNumberString = rightOfCursor;
+                                position.Column = leftColumn;
+                            } else if (direction == CaretMovementType.WordRight) {
+                                newNumberString = leftOfCursor;
+                            } else if (direction == CaretMovementType.Backspace) {
+                                newNumberString = $"{leftOfCursor[..^1]}{rightOfCursor}";
+                                position.Column--;
+                            } else if (direction == CaretMovementType.CharRight) {
+                                newNumberString = $"{leftOfCursor}{rightOfCursor[1..]}";
+                            }
+
+                            lineText = lineText.ReplaceRange(leftColumn - 1, (rightColumn - leftColumn), newNumberString);
+                            if (TASActionLine.TryParse(lineText, out var newActionLine)) {
+                                actionLine = newActionLine;
+                            }
+                        }
+                    } else if (currentAction == TASAction.FeatherAim) {
+                        if (direction is CaretMovementType.Backspace or CaretMovementType.WordLeft) {
+                            var actions = TASCaretNavigationCommandHandler.GetActionFromColumn(actionLine, position.Column, direction);
+                            actionLine.Actions &= ~actions;
+                            actionLine.FeatherAngle = null;
+                            actionLine.FeatherMagnitude = null;
+                            actionLine.HasMagnitudeCommand = false;
+
+                            position.Column = direction switch {
+                                CaretMovementType.Backspace => position.Column - 2,
+                                CaretMovementType.WordLeft => TASActionLine.MaxFramesDigits + 1,
+                                _ => position.Column,
+                            };
+                        } else {
+                            actionLine.FeatherAngle = null;
+                            actionLine.FeatherMagnitude = null;
+                            actionLine.HasMagnitudeCommand = false;
+                            position.Column += TASCaretNavigationCommandHandler.GetColumnOfAction(actionLine, TASAction.FeatherAim) + 1;
+                        }
+                    } else {
+                        var actions = TASCaretNavigationCommandHandler.GetActionFromColumn(actionLine, position.Column, direction);
+                        actionLine.Actions &= ~actions;
+
+                        position.Column = direction switch {
+                            CaretMovementType.Backspace => position.Column - 2,
+                            CaretMovementType.CharRight or CaretMovementType.WordRight => position.Column,
+                            CaretMovementType.WordLeft => TASActionLine.MaxFramesDigits + 1,
+                            _ => position.Column,
+                        };
+                    }
 
                     newLineText = actionLine.ToString();
                 }

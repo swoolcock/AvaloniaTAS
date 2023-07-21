@@ -9,6 +9,7 @@ public struct TASActionLine {
 
     public float? FeatherAngle;
     public float? FeatherMagnitude;
+    public bool HasMagnitudeCommand;
 
     public static bool TryParse(string line, out TASActionLine value) {
         value = default;
