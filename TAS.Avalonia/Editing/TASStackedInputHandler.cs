@@ -67,10 +67,15 @@ public class TASStackedInputHandler : TextAreaStackedInputHandler {
                 // toggle it
                 actionLine.Actions = actionLine.Actions.ToggleAction(typedAction);
                 // warp the cursor after the number
-                if (typedAction == TASAction.FeatherAim && actionLine.Actions.HasFlag(TASAction.FeatherAim))
+                if (typedAction == TASAction.FeatherAim && actionLine.Actions.HasFlag(TASAction.FeatherAim)) {
                     caretPosition.Column = 9999; // Jump to end, gets clamped anyway
-                else
+                } else if (typedAction == TASAction.FeatherAim && !actionLine.Actions.HasFlag(TASAction.FeatherAim)) {
+                    actionLine.FeatherAngle = null;
+                    actionLine.FeatherMagnitude = null;
                     caretPosition.Column = TASActionLine.MaxFramesDigits + 1;
+                } else {
+                    caretPosition.Column = TASActionLine.MaxFramesDigits + 1;
+                }
             }
             // if the key we entered is a number
             else if (numberForKey >= 0) {
