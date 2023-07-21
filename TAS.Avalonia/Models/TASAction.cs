@@ -78,10 +78,10 @@ public static class TASActionExtensions {
 
     public static char CharForAction(this TASAction self) =>
         self switch {
-            TASAction.Right => 'R',
-            TASAction.Left => 'L',
-            TASAction.Up => 'U',
-            TASAction.Down => 'D',
+            TASAction.Right or TASAction.RightDashOnly or TASAction.RightMoveOnly => 'R',
+            TASAction.Left or TASAction.LeftDashOnly or TASAction.LeftMoveOnly => 'L',
+            TASAction.Up or TASAction.UpDashOnly or TASAction.UpMoveOnly => 'U',
+            TASAction.Down or TASAction.DownDashOnly or TASAction.DownMoveOnly => 'D',
             TASAction.JumpConfirm => 'J',
             TASAction.Jump2 => 'K',
             TASAction.DashTalkCancel => 'X',
@@ -116,6 +116,24 @@ public static class TASActionExtensions {
         };
     }
 
+    public static TASAction ToDashOnlyDirection(this TASAction self) =>
+        self switch {
+            TASAction.Left => TASAction.LeftDashOnly,
+            TASAction.Right => TASAction.RightDashOnly,
+            TASAction.Up => TASAction.UpDashOnly,
+            TASAction.Down => TASAction.DownDashOnly,
+            _ => self
+        };
+
+    public static TASAction ToMoveOnlyDirection(this TASAction self) =>
+        self switch {
+            TASAction.Left => TASAction.LeftMoveOnly,
+            TASAction.Right => TASAction.RightMoveOnly,
+            TASAction.Up => TASAction.UpMoveOnly,
+            TASAction.Down => TASAction.DownMoveOnly,
+            _ => self
+        };
+
     public static IEnumerable<TASAction> Sorted(this TASAction self) => new[] {
         TASAction.Left,
         TASAction.Right,
@@ -136,5 +154,19 @@ public static class TASActionExtensions {
         TASAction.MoveOnly,
         TASAction.CustomBinding,
         TASAction.FeatherAim,
+    }.Where(e => self.HasFlag(e));
+
+    public static IEnumerable<TASAction> GetDashOnly(this TASAction self) => new[] {
+        TASAction.LeftDashOnly,
+        TASAction.RightDashOnly,
+        TASAction.UpDashOnly,
+        TASAction.DownDashOnly,
+    }.Where(e => self.HasFlag(e));
+
+    public static IEnumerable<TASAction> GetMoveOnly(this TASAction self) => new[] {
+        TASAction.LeftMoveOnly,
+        TASAction.RightMoveOnly,
+        TASAction.UpMoveOnly,
+        TASAction.DownMoveOnly,
     }.Where(e => self.HasFlag(e));
 }

@@ -14,6 +14,8 @@ public struct TASActionLine {
     public string? FeatherAngle;
     public string? FeatherMagnitude;
 
+    public char[] CustomBindings;
+
     public static bool TryParse(string line, out TASActionLine value, bool ignoreInvalidFloats = true) {
         value = default;
         string[] tokens = line.Trim().Split(",", StringSplitOptions.TrimEntries);
@@ -28,8 +30,21 @@ public struct TASActionLine {
             value.Actions |= action;
 
             // Parse dash-only/move-only/custom bindings
-            if (action is TASAction.DashOnly or TASAction.MoveOnly) {
-
+            if (action is TASAction.DashOnly) {
+                for (int j = 1; j < tokens[i].Length; j++) {
+                    value.Actions |= TASActionExtensions.ActionForChar(tokens[i][j]).ToDashOnlyDirection();
+                }
+                continue;
+            }
+            if (action is TASAction.MoveOnly) {
+                for (int j = 1; j < tokens[i].Length; j++) {
+                    value.Actions |= TASActionExtensions.ActionForChar(tokens[i][j]).ToMoveOnlyDirection();
+                }
+                continue;
+            }
+            if (action is TASAction.CustomBinding) {
+                value.CustomBindings = tokens[i][1..].ToArray();
+                continue;
             }
 
             // Parse feather angle/magnitude
@@ -55,8 +70,16 @@ public struct TASActionLine {
     }
 
     public override string ToString() {
+        var tasActions = Actions;
+        var customBindings = CustomBindings;
+
         string frames = Frames.ToString().PadLeft(MaxFramesDigits);
-        string actions = Actions.Sorted().Aggregate("", (s, a) => $"{s},{a.CharForAction()}");
+        string actions = Actions.Sorted().Aggregate("", (s, a) => $"{s},{a switch {
+            TASAction.DashOnly => tasActions.GetDashOnly().Aggregate(TASAction.DashOnly.CharForAction().ToString(), (s, a) => $"{s}{a.CharForAction()}"),
+            TASAction.MoveOnly => tasActions.GetMoveOnly().Aggregate(TASAction.MoveOnly.CharForAction().ToString(), (s, a) => $"{s}{a.CharForAction()}"),
+            TASAction.CustomBinding => $"{TASAction.CustomBinding.CharForAction()}{string.Join("", customBindings)}",
+            _ => a.CharForAction().ToString(),
+        }}");
         string featherAngle = $"{(Actions.HasFlag(TASAction.FeatherAim) ? "," : "")}{FeatherAngle ?? ""}";
         string featherMagnitude = FeatherMagnitude != null ? $",{FeatherMagnitude}" : string.Empty;
 

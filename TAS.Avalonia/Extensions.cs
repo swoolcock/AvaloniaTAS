@@ -26,7 +26,7 @@ public static class Extensions {
             Key.Q => TASAction.QuickRestart,
             Key.N => TASAction.JournalTalk2,
             Key.O => TASAction.Confirm2,
-            Key.A => TASAction.DashOnlyDirection,
+            Key.A => TASAction.DashOnly,
             Key.F => TASAction.FeatherAim,
             _ => TASAction.None,
         };
