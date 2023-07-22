@@ -333,10 +333,14 @@ public class MainWindowViewModel : ViewModelBase {
 
         if (results?.FirstOrDefault() is not { } filepath) return;
 
+        _celesteService.WriteWait();
+
         if (TASDocument.Load(filepath) is not { } doc) {
             await _dialogService.ShowDialogAsync($"Error loading file: {filepath}");
             return;
         }
+
+        if (filepath != null) _celesteService.SendPath(filepath);
 
         Document = doc;
     }
