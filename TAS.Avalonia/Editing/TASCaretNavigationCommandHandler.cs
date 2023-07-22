@@ -330,10 +330,15 @@ internal static class TASCaretNavigationCommandHandler {
                 CaretMovementType.WordRight => new TextViewPosition(position.Line, GetHardSnapColumns(actionLine).FirstOrDefault(c => c > position.Column, position.Column)),
                 CaretMovementType.LineStart => new TextViewPosition(position.Line, leadingSpaces + 1),
                 CaretMovementType.LineEnd => new TextViewPosition(position.Line, line.Length + 1),
-                CaretMovementType.LineUp => new TextViewPosition(position.Line - 1, position.Column),
-                CaretMovementType.LineDown => new TextViewPosition(position.Line + 1, position.Column),
-                _ => newPosition,
+                _ => GetNewCaretPosition(textArea.TextView, position, direction, textArea.Selection.EnableVirtualSpace, ref desiredXpos),
             };
+
+            if (direction is CaretMovementType.CharLeft or CaretMovementType.CharRight
+                or CaretMovementType.WordLeft or CaretMovementType.WordRight
+                or CaretMovementType.LineStart or CaretMovementType.LineEnd) {
+                desiredXpos = double.NaN;
+            }
+
         } else {
             // Standart text behaviour
             newPosition = GetNewCaretPosition(textArea.TextView, position, direction, textArea.Selection.EnableVirtualSpace, ref desiredXpos);
