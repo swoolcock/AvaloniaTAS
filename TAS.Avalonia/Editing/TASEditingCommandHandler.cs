@@ -221,139 +221,59 @@ internal class TASEditingCommandHandler {
                 TASActionLine.TryParse(lineText, out var actionLine)) {
                 position.Column = TASCaretNavigationCommandHandler.SnapColumnToActionLine(actionLine, position.Column);
 
-                string newLineText = string.Empty;
+                int newColumn = position.Column;
 
-                bool insideFrameCount = position.Column < TASActionLine.MaxFramesDigits + 1; //  1|5,R,X
-                bool insideActions = position.Column > TASActionLine.MaxFramesDigits + 1;    //  15,R|,X
-                bool betweenFrameCountAndActions = !insideFrameCount && !insideActions;      //  15|,R,X
-
-                if (insideFrameCount || (betweenFrameCountAndActions && (direction == CaretMovementType.Backspace || direction == CaretMovementType.WordLeft))) {
-                    int leadingSpaces = lineText.Length - lineText.TrimStart().Length;
-                    int cursorIndex = Math.Clamp(position.Column - leadingSpaces - 1, 0, actionLine.Frames.Digits());
-
-                    string framesString = actionLine.Frames.ToString();
-                    string leftOfCursor = framesString[..cursorIndex];
-                    string rightOfCursor = framesString[cursorIndex..];
-
-                    // Simply delete the line if the frame count is 0
-                    if (actionLine.Frames != 0) {
-                        string newFramesString = string.Empty;
-                        if (direction == CaretMovementType.WordLeft) {
-                            newFramesString = rightOfCursor;
-                            cursorIndex = 0;
-                        } else if (direction == CaretMovementType.WordRight) {
-                            newFramesString = leftOfCursor;
-                        } else if (direction == CaretMovementType.Backspace) {
-                            newFramesString = $"{leftOfCursor[..^1]}{rightOfCursor}";
-                            cursorIndex--;
-                        } else if (direction == CaretMovementType.CharRight) {
-                            newFramesString = $"{leftOfCursor}{rightOfCursor[1..]}";
-                        }
-
-                        actionLine.Frames = Math.Clamp(int.TryParse(newFramesString, out int value) ? value : 0, 0, TASActionLine.MaxFrames);
-                        newLineText = actionLine.ToString();
-                        position.Column = actionLine.Frames == 0
-                            ? TASActionLine.MaxFramesDigits + 1
-                            : TASActionLine.MaxFramesDigits - actionLine.Frames.Digits() + cursorIndex + 1;
+                // Speical cases
+                int featherColumn = TASCaretNavigationCommandHandler.GetColumnOfAction(actionLine, TASAction.FeatherAim);
+                if (featherColumn != -1 && position.Column >= featherColumn) {
+                    int angleMagnitudeCommaColumn = featherColumn + 2;
+                    while (angleMagnitudeCommaColumn <= lineText.Length + 1 && lineText[angleMagnitudeCommaColumn - 2] != ',') {
+                        angleMagnitudeCommaColumn++;
                     }
-                } else if (insideActions || (betweenFrameCountAndActions && (direction == CaretMovementType.CharRight || direction == CaretMovementType.WordRight))) {
-                    // TODO: Support custom, move-only and dash-only binds
-                    var currentAction = TASCaretNavigationCommandHandler.GetActionFromColumn(actionLine, position.Column, CaretMovementType.CharLeft);
-                    if (currentAction == TASAction.None) {
-                        int leftColumn = position.Column;
-                        while (leftColumn > 1 && lineText[leftColumn - 2] != ',') {
-                            leftColumn--;
-                        }
-                        int rightColumn = position.Column;
-                        while (rightColumn <= lineText.Length && lineText[rightColumn - 1] != ',') {
-                            rightColumn++;
-                        }
 
-                        bool isAngle = TASCaretNavigationCommandHandler.GetActionFromColumn(actionLine, leftColumn - 1, CaretMovementType.CharLeft) == TASAction.FeatherAim;
-
-                        if (isAngle && position.Column == leftColumn && direction is CaretMovementType.Backspace or CaretMovementType.WordLeft) {
-                            var actions = TASCaretNavigationCommandHandler.GetActionFromColumn(actionLine, position.Column - 1, direction);
-                            actionLine.Actions &= ~actions;
-                            actionLine.FeatherAngle = null;
-                            actionLine.FeatherMagnitude = null;
-
-                            position.Column = direction switch {
-                                CaretMovementType.Backspace => position.Column - 2,
-                                CaretMovementType.WordLeft => TASActionLine.MaxFramesDigits + 1,
-                                _ => position.Column,
-                            };
-                        } else if (isAngle && position.Column == rightColumn && direction is CaretMovementType.CharRight or CaretMovementType.WordRight ||
-                                   !isAngle && position.Column == leftColumn && direction == CaretMovementType.WordRight ||
-                                   !isAngle && position.Column == rightColumn && direction == CaretMovementType.WordLeft) {
-                            actionLine.FeatherMagnitude = null;
-                        } else if (isAngle && position.Column == leftColumn && direction == CaretMovementType.WordRight ||
-                                   isAngle && position.Column == rightColumn && direction == CaretMovementType.WordLeft ||
-                                   !isAngle && position.Column == leftColumn && direction is CaretMovementType.Backspace or CaretMovementType.WordLeft) {
-                            actionLine.FeatherAngle = actionLine.FeatherMagnitude;
-                            actionLine.FeatherMagnitude = null;
-                            position.Column = TASCaretNavigationCommandHandler.GetColumnOfAction(actionLine, TASAction.FeatherAim) + 1;
-                        } else {
-                            string leftOfCursor = lineText[(leftColumn - 1)..(position.Column - 1)];
-                            string rightOfCursor = lineText[(position.Column - 1)..(rightColumn - 1)];
-                            string newNumberString = string.Empty;
-
-                            if (direction == CaretMovementType.WordLeft) {
-                                newNumberString = rightOfCursor;
-                                position.Column = leftColumn;
-                            } else if (direction == CaretMovementType.WordRight) {
-                                newNumberString = leftOfCursor;
-                            } else if (direction == CaretMovementType.Backspace) {
-                                newNumberString = $"{leftOfCursor[..^1]}{rightOfCursor}";
-                                position.Column--;
-                            } else if (direction == CaretMovementType.CharRight) {
-                                newNumberString = $"{leftOfCursor}{rightOfCursor[1..]}";
-                            }
-
-                            lineText = lineText.ReplaceRange(leftColumn - 1, (rightColumn - leftColumn), newNumberString);
-                            if (TASActionLine.TryParse(lineText, out var newActionLine)) {
-                                actionLine = newActionLine;
-                            }
-                        }
-                    } else if (currentAction == TASAction.FeatherAim) {
-                        if (direction is CaretMovementType.Backspace or CaretMovementType.WordLeft) {
-                            var actions = TASCaretNavigationCommandHandler.GetActionFromColumn(actionLine, position.Column, direction);
-                            actionLine.Actions &= ~actions;
-                            actionLine.FeatherAngle = null;
-                            actionLine.FeatherMagnitude = null;
-
-                            position.Column = direction switch {
-                                CaretMovementType.Backspace => position.Column - 2,
-                                CaretMovementType.WordLeft => TASActionLine.MaxFramesDigits + 1,
-                                _ => position.Column,
-                            };
-                        } else {
-                            actionLine.FeatherAngle = null;
-                            actionLine.FeatherMagnitude = null;
-                            position.Column++;
-                        }
-                    } else {
-                        var actions = TASCaretNavigationCommandHandler.GetActionFromColumn(actionLine, position.Column, direction);
+                    if (position.Column == featherColumn + 1 && direction is CaretMovementType.Backspace or CaretMovementType.WordLeft) {
+                        var actions = TASCaretNavigationCommandHandler.GetActionsFromColumn(actionLine, position.Column - 1, direction);
                         actionLine.Actions &= ~actions;
-
-                        position.Column = direction switch {
-                            CaretMovementType.Backspace => position.Column - 2,
-                            CaretMovementType.CharRight or CaretMovementType.WordRight => position.Column,
-                            CaretMovementType.WordLeft => TASActionLine.MaxFramesDigits + 1,
-                            _ => position.Column,
-                        };
+                        lineText = actionLine.ToString();
+                        goto FinishDeletion; // Skip regular deletion behaviour
+                    } else if (position.Column == featherColumn && direction is CaretMovementType.CharRight or CaretMovementType.WordRight ||
+                        position.Column == angleMagnitudeCommaColumn && direction is CaretMovementType.Backspace or CaretMovementType.WordLeft) {
+                        actionLine.FeatherAngle = actionLine.FeatherMagnitude;
+                        actionLine.FeatherMagnitude = null;
+                        newColumn = featherColumn;
+                        lineText = actionLine.ToString();
+                        goto FinishDeletion;
+                    } else if (position.Column == angleMagnitudeCommaColumn - 1 && direction is CaretMovementType.CharRight or CaretMovementType.WordRight) {
+                        actionLine.FeatherMagnitude = null;
+                        lineText = actionLine.ToString();
+                        goto FinishDeletion;
                     }
-
-                    newLineText = actionLine.ToString();
                 }
 
-                var lineStartPosition = new TextViewPosition(position.Line, 1);
-                var lineEndPosition = new TextViewPosition(position.Line, line.Length + 1);
+                newColumn = direction switch {
+                    CaretMovementType.Backspace => TASCaretNavigationCommandHandler.GetSoftSnapColumns(actionLine).Reverse().FirstOrDefault(c => c < position.Column, position.Column),
+                    CaretMovementType.CharRight => TASCaretNavigationCommandHandler.GetSoftSnapColumns(actionLine).FirstOrDefault(c => c > position.Column, position.Column),
+                    CaretMovementType.WordLeft => TASCaretNavigationCommandHandler.GetHardSnapColumns(actionLine).Reverse().FirstOrDefault(c => c < position.Column, position.Column),
+                    CaretMovementType.WordRight => TASCaretNavigationCommandHandler.GetHardSnapColumns(actionLine).FirstOrDefault(c => c > position.Column, position.Column),
+                    _ => position.Column,
+                };
+                lineText = lineText.Remove(Math.Min(newColumn, position.Column) - 1, Math.Abs(newColumn - position.Column));
 
-                textArea.Selection.StartSelectionOrSetEndpoint(lineStartPosition, lineEndPosition)
-                                  .ReplaceSelectionWithText(newLineText);
+                FinishDeletion:
+                if (TASActionLine.TryParse(lineText, out var newActionLine)) {
+                    lineText = newActionLine.ToString();
 
-                if (string.IsNullOrEmpty(newLineText))
-                    position = lineStartPosition;
+                    position.Column = Math.Min(newColumn, position.Column);
+
+                    var lineStartPosition = new TextViewPosition(position.Line, 1);
+                    var lineEndPosition = new TextViewPosition(position.Line, line.Length + 1);
+
+                    textArea.Selection.StartSelectionOrSetEndpoint(lineStartPosition, lineEndPosition)
+                                      .ReplaceSelectionWithText(lineText);
+
+                    if (string.IsNullOrEmpty(lineText))
+                        position = lineStartPosition;
+                }
 
                 if (textArea.Caret.Position.Column != position.Column)
                     position.VisualColumn = position.Column - 1;

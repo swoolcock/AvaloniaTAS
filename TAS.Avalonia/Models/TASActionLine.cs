@@ -61,6 +61,10 @@ public struct TASActionLine {
                 } else if (!validMagnitude && !ignoreInvalidFloats) {
                     return false;
                 }
+            } else if (!validAngle && i + 2 < tokens.Length && string.IsNullOrEmpty(tokens[i + 1]) && (validAngle = float.TryParse(tokens[i + 2], out var _))) {
+                // Empty angle, treat magnitude as angle
+                value.FeatherAngle = tokens[i + 2];
+                i += 2;
             } else if (!validAngle && !ignoreInvalidFloats) {
                 return false;
             }
@@ -75,13 +79,13 @@ public struct TASActionLine {
 
         string frames = Frames.ToString().PadLeft(MaxFramesDigits);
         string actions = Actions.Sorted().Aggregate("", (s, a) => $"{s},{a switch {
-            TASAction.DashOnly => tasActions.GetDashOnly().Aggregate(TASAction.DashOnly.CharForAction().ToString(), (s, a) => $"{s}{a.CharForAction()}"),
-            TASAction.MoveOnly => tasActions.GetMoveOnly().Aggregate(TASAction.MoveOnly.CharForAction().ToString(), (s, a) => $"{s}{a.CharForAction()}"),
+            TASAction.DashOnly => string.Join("", tasActions.GetDashOnly().Select(TASActionExtensions.CharForAction)),
+            TASAction.MoveOnly => string.Join("", tasActions.GetMoveOnly().Select(TASActionExtensions.CharForAction)),
             TASAction.CustomBinding => $"{TASAction.CustomBinding.CharForAction()}{string.Join("", customBindings)}",
             _ => a.CharForAction().ToString(),
         }}");
-        string featherAngle = $"{(Actions.HasFlag(TASAction.FeatherAim) ? "," : "")}{FeatherAngle ?? ""}";
-        string featherMagnitude = FeatherMagnitude != null ? $",{FeatherMagnitude}" : string.Empty;
+        string featherAngle = Actions.HasFlag(TASAction.FeatherAim) ? $",{FeatherAngle ?? ""}" : string.Empty;
+        string featherMagnitude = Actions.HasFlag(TASAction.FeatherAim) && FeatherMagnitude != null ? $",{FeatherMagnitude}" : string.Empty;
 
         return $"{frames}{actions}{featherAngle}{featherMagnitude}";
     }

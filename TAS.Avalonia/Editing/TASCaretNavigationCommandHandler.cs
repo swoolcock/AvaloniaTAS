@@ -196,7 +196,7 @@ internal static class TASCaretNavigationCommandHandler {
             leadingSpaces + 1,
             TASActionLine.MaxFramesDigits + 1,
             // Actions
-            GetColumnOfAction(actionLine, actionLine.Actions.Sorted().Last()) + actionLine.CustomBindings.Length
+            GetColumnOfAction(actionLine, actionLine.Actions.Sorted().Last()) + (actionLine.CustomBindings?.Length ?? 0)
         };
 
         // Feather angle/magnitude
@@ -273,7 +273,7 @@ internal static class TASCaretNavigationCommandHandler {
         return nextRight;
     }
 
-    internal static TASAction GetActionFromColumn(TASActionLine actionLine, int column, CaretMovementType direction) {
+    internal static TASAction GetActionsFromColumn(TASActionLine actionLine, int column, CaretMovementType direction) {
         var lineText = actionLine.ToString();
 
         if ((column <= TASActionLine.MaxFramesDigits + 1) &&
