@@ -1,4 +1,4 @@
-// #define AUTOMATIC_CURSOR
+#define AUTOMATIC_CURSOR
 
 using Avalonia;
 using Avalonia.Controls;

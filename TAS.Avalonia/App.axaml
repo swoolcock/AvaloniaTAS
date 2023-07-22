@@ -3,16 +3,17 @@
              xmlns:local="using:TAS.Avalonia"
              xmlns:converters="clr-namespace:TAS.Avalonia.Converters"
              Name="TAS Studio"
-             x:Class="TAS.Avalonia.App">
+             x:Class="TAS.Avalonia.App"
+             RequestedThemeVariant="Dark">
     <Application.DataTemplates>
         <local:ViewLocator/>
     </Application.DataTemplates>
 
     <Application.Styles>
-        <FluentTheme Mode="Dark"/>
-        <StyleInclude Source="avares://AvaloniaEdit/AvaloniaEdit.xaml" />
+        <FluentTheme />
+        <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml" />
     </Application.Styles>
-    
+
     <Application.Resources>
         <FontFamily x:Key="CodeFontFamily">Cascadia Code,Consolas,Menlo,Monospace</FontFamily>
         <converters:NativeMenuConverter x:Key="NativeMenuConverter" />

@@ -3,6 +3,7 @@ using System.Reactive.Linq;
 using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Input;
+using Avalonia.Platform.Storage;
 using AvaloniaEdit;
 using ReactiveUI;
 using TAS.Avalonia.Models;
@@ -65,15 +66,21 @@ public class MainWindowViewModel : ViewModelBase {
 
     public bool MenuVisible => true; //!RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
 
-    private readonly ICelesteService _celesteService;
-    private readonly IDialogService _dialogService;
+    private readonly CelesteService _celesteService;
+    private readonly DialogService _dialogService;
 
     private MenuModel[] MainMenu { get; }
     private MenuModel[] EditorContextMenu { get; }
 
+    private FilePickerFileType _tasFileType = new FilePickerFileType("CelesteTAS") {
+        Patterns = new[] { "*.tas" },
+        MimeTypes = new[] { "text/plain" }, // ? Maybe add a CelesteTAS MIME-Type
+        AppleUniformTypeIdentifiers = new[] { "public.item" }, // TODO: replace this with custom
+    };
+
     public MainWindowViewModel() {
-        _celesteService = AvaloniaLocator.Current.GetService<ICelesteService>()!;
-        _dialogService = AvaloniaLocator.Current.GetService<IDialogService>()!;
+        _celesteService = (Application.Current as App).CelesteService;
+        _dialogService = (Application.Current as App).DialogService;
 
         // File
         NewFileCommand = ReactiveCommand.Create(NewFile);
@@ -282,25 +289,25 @@ public class MainWindowViewModel : ViewModelBase {
     private const float MaxSlowForwardSpeed = 0.9f;
 
     private async Task SetPositionDecimals() => _celesteService.SetPositionDecimals(
-        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetPositionDecimals(), MinDecimals, MaxDecimals));
+        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetPositionDecimals(), MinDecimals, MaxDecimals, "Set position decimals"));
 
     private async Task SetSpeedDecimals() => _celesteService.SetSpeedDecimals(
-        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetSpeedDecimals(), MinDecimals, MaxDecimals));
+        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetSpeedDecimals(), MinDecimals, MaxDecimals, "Set speed decimals"));
 
     private async Task SetVelocityDecimals() => _celesteService.SetVelocityDecimals(
-        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetVelocityDecimals(), MinDecimals, MaxDecimals));
+        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetVelocityDecimals(), MinDecimals, MaxDecimals, "Set velocity decimals"));
 
     private async Task SetCustomInfoDecimals() => _celesteService.SetCustomInfoDecimals(
-        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetCustomInfoDecimals(), MinDecimals, MaxDecimals));
+        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetCustomInfoDecimals(), MinDecimals, MaxDecimals, "Set custom info decimals"));
 
     private async Task SetSubpixelIndicatorDecimals() => _celesteService.SetSubpixelIndicatorDecimals(
-        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetSubpixelIndicatorDecimals(), MinDecimals, MaxDecimals));
+        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetSubpixelIndicatorDecimals(), MinDecimals, MaxDecimals, "Set subpixel indicator decimals"));
 
     private async Task SetFastForwardSpeed() => _celesteService.SetFastForwardSpeed(
-        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetFastForwardSpeed(), MinFastForwardSpeed, MaxFastForwardSpeed));
+        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetFastForwardSpeed(), MinFastForwardSpeed, MaxFastForwardSpeed, "Set fast forward speed"));
 
     private async Task SetSlowForwardSpeed() => _celesteService.SetSlowForwardSpeed(
-        await _dialogService.ShowFloatInputDialogAsync(_celesteService.GetSlowForwardSpeed(), MinSlowForwardSpeed, MaxSlowForwardSpeed));
+        await _dialogService.ShowFloatInputDialogAsync(_celesteService.GetSlowForwardSpeed(), MinSlowForwardSpeed, MaxSlowForwardSpeed, "Set slow forward speed"));
 
     private async Task<bool> ConfirmDiscardChangesAsync() {
         if (!Document.Dirty) return true;
@@ -322,7 +329,7 @@ public class MainWindowViewModel : ViewModelBase {
         await Task.Delay(TimeSpan.FromSeconds(0.1f));
 
         if (!await ConfirmDiscardChangesAsync()) return;
-        string[] results = await _dialogService.ShowOpenFileDialogAsync("Celeste TAS", "tas");
+        string[] results = await _dialogService.ShowOpenFileDialogAsync("Select a CeleseTAS file", _tasFileType);
 
         if (results?.FirstOrDefault() is not { } filepath) return;
 
@@ -360,12 +367,7 @@ public class MainWindowViewModel : ViewModelBase {
     private async Task<string> SaveFileAsAsync(bool force) {
         string filename = Document.Filename;
         if (force || filename == null) {
-            filename = await _dialogService.ShowSaveFileDialogAsync("Celeste TAS", "tas");
-            if (filename != null && File.Exists(filename) && !RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
-                // we don't need to confirm on macOS since the finder file dialog does it for us
-                bool confirm = await _dialogService.ShowConfirmDialogAsync("This file already exists. Are you sure you want to overwrite it?", "Celeste TAS");
-                if (!confirm) return null;
-            }
+            filename = await _dialogService.ShowSaveFileDialogAsync("Select a save location", "tas", _tasFileType);
         }
 
         if (filename == null) return null;

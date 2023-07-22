@@ -58,7 +58,8 @@ public class MenuModel : IEnumerable<MenuModel> {
             IsVisible = IsVisible,
         };
 
-        if (Items.Any()) menuItem.Items = Items.ToMenu();
+        if (Items.Any())
+            menuItem.ItemsSource = Items.ToMenu();
 
         return menuItem;
     }
@@ -83,6 +84,6 @@ public static class MenuModelExtensions {
 
     public static ContextMenu ToContextMenu(this IEnumerable<MenuModel> self) =>
         new ContextMenu {
-            Items = self.ToMenu()
+            ItemsSource = self.ToMenu()
         };
 }

@@ -1,10 +1,10 @@
 using System.Reflection;
 using Avalonia;
+using Avalonia.Media.TextFormatting;
 using AvaloniaEdit;
 using AvaloniaEdit.Document;
 using AvaloniaEdit.Editing;
 using AvaloniaEdit.Rendering;
-using AvaloniaEdit.Text;
 using TAS.Avalonia.Models;
 
 // ReSharper disable InconsistentNaming
@@ -46,8 +46,8 @@ public static class ExposeExtensions {
         int visualColumn = self.GetVisualColumn(byVisualYposition, point.X, allowVirtualSpace);
 
         // handle tas action lines
-        var textRuns = byVisualYposition.GetTextRuns();
-        if (textRuns.FirstOrDefault()?.StringRange.String is { } text &&
+        var textRuns = byVisualYposition.TextRuns;
+        if (textRuns.FirstOrDefault()?.Text.ToString() is { } text &&
             TASActionLine.TryParse(text, out var actionLine)) {
             visualColumn = Math.Clamp(visualColumn, TASActionLine.MaxFramesDigits - actionLine.Frames.Digits(), TASActionLine.MaxFramesDigits);
             isAtEndOfLine = visualColumn == TASActionLine.MaxFramesDigits;
