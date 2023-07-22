@@ -260,20 +260,23 @@ internal class TASEditingCommandHandler {
                 lineText = lineText.Remove(Math.Min(newColumn, position.Column) - 1, Math.Abs(newColumn - position.Column));
 
                 FinishDeletion:
+                var lineStartPosition = new TextViewPosition(position.Line, 1);
+                var lineEndPosition = new TextViewPosition(position.Line, line.Length + 1);
+
+                if (Math.Max(newColumn, position.Column) > TASActionLine.MaxFramesDigits + 1)
+                    position.Column = Math.Min(newColumn, position.Column);
+                else
+                    position.Column = Math.Max(newColumn, position.Column);
+
                 if (TASActionLine.TryParse(lineText, out var newActionLine)) {
                     lineText = newActionLine.ToString();
-
-                    position.Column = Math.Min(newColumn, position.Column);
-
-                    var lineStartPosition = new TextViewPosition(position.Line, 1);
-                    var lineEndPosition = new TextViewPosition(position.Line, line.Length + 1);
-
-                    textArea.Selection.StartSelectionOrSetEndpoint(lineStartPosition, lineEndPosition)
-                                      .ReplaceSelectionWithText(lineText);
-
-                    if (string.IsNullOrEmpty(lineText))
-                        position = lineStartPosition;
+                } else if (string.IsNullOrWhiteSpace(lineText)) {
+                    lineText = string.Empty;
+                    position = lineStartPosition;
                 }
+
+                textArea.Selection.StartSelectionOrSetEndpoint(lineStartPosition, lineEndPosition)
+                                  .ReplaceSelectionWithText(lineText);
 
                 if (textArea.Caret.Position.Column != position.Column)
                     position.VisualColumn = position.Column - 1;
