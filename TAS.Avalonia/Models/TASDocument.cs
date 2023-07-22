@@ -29,12 +29,10 @@ public class TASDocument {
         return null;
     }
 
-    public void Save(string path = null) {
-        path ??= Filename;
-
-        if (path != null) {
+    public void Save() {
+        if (Filename != null) {
             try {
-                File.WriteAllText(path, Document.Text);
+                File.WriteAllText(Filename, Document.Text);
                 Dirty = false;
             } catch (Exception e) {
                 Console.WriteLine(e);

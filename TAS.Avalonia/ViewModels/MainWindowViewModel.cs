@@ -351,9 +351,9 @@ public class MainWindowViewModel : ViewModelBase {
 
         _celesteService.WriteWait();
 
-        string filename = await SaveFileAsAsync(false);
+        await SaveFileAsAsync(false);
 
-        if (filename != null) _celesteService.SendPath(filename);
+        if (Document.Filename != null) _celesteService.SendPath(Document.Filename);
     }
 
     private async void SaveFileAs() {
@@ -362,23 +362,18 @@ public class MainWindowViewModel : ViewModelBase {
 
         _celesteService.WriteWait();
 
-        string filename = await SaveFileAsAsync(true);
+        await SaveFileAsAsync(true);
 
-        if (filename != null)
-            _celesteService.SendPath(filename);
+        if (Document.Filename != null) _celesteService.SendPath(Document.Filename);
     }
 
-    private async Task<string> SaveFileAsAsync(bool force) {
-        string filename = Document.Filename;
-        if (force || filename == null) {
-            filename = await _dialogService.ShowSaveFileDialogAsync("Select a save location", "tas", _tasFileType);
+    private async Task SaveFileAsAsync(bool force) {
+        if (force || Document.Filename == null) {
+            Document.Filename = await _dialogService.ShowSaveFileDialogAsync("Select a save location", "tas", _tasFileType);
         }
+        if (Document.Filename == null) return;
 
-        if (filename == null) return null;
-
-        Document.Save(filename);
-
-        return filename;
+        Document.Save();
     }
 
     private void Exit() => Application.Current?.DesktopLifetime().Shutdown();
