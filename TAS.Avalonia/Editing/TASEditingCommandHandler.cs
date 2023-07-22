@@ -221,9 +221,48 @@ internal class TASEditingCommandHandler {
                 TASActionLine.TryParse(lineText, out var actionLine)) {
                 position.Column = TASCaretNavigationCommandHandler.SnapColumnToActionLine(actionLine, position.Column);
 
-                int newColumn = position.Column;
+                var lineStartPosition = new TextViewPosition(position.Line, 1);
+                var lineEndPosition = new TextViewPosition(position.Line, line.Length + 1);
 
-                // Speical cases
+                // Handle frame count
+                if (position.Column == TASActionLine.MaxFramesDigits + 1 && direction is CaretMovementType.WordLeft or CaretMovementType.Backspace ||
+                    position.Column < TASActionLine.MaxFramesDigits + 1) {
+                    int leadingSpaces = lineText.Length - lineText.TrimStart().Length;
+                    int cursorIndex = Math.Clamp(position.Column - leadingSpaces - 1, 0, actionLine.Frames.Digits());
+
+                    string framesString = actionLine.Frames.ToString();
+                    string leftOfCursor = framesString[..cursorIndex];
+                    string rightOfCursor = framesString[cursorIndex..];
+
+                    if (actionLine.Frames == 0) {
+                        lineText = string.Empty;
+                    } else if (leftOfCursor.Length == 0 && direction is CaretMovementType.WordLeft or CaretMovementType.Backspace ||
+                        rightOfCursor.Length == 0 && direction is CaretMovementType.WordRight or CaretMovementType.CharRight) {
+                        lineText = string.Empty;
+                    } else {
+                        string newFramesString = string.Empty;
+                        if (direction == CaretMovementType.WordLeft) {
+                            newFramesString = rightOfCursor;
+                            cursorIndex = 0;
+                        } else if (direction == CaretMovementType.WordRight) {
+                            newFramesString = leftOfCursor;
+                        } else if (direction == CaretMovementType.Backspace) {
+                            newFramesString = $"{leftOfCursor[..^1]}{rightOfCursor}";
+                            cursorIndex--;
+                        } else if (direction == CaretMovementType.CharRight) {
+                            newFramesString = $"{leftOfCursor}{rightOfCursor[1..]}";
+                        }
+
+                        actionLine.Frames = Math.Clamp(int.TryParse(newFramesString, out int value) ? value : 0, 0, TASActionLine.MaxFrames);
+                        lineText = actionLine.ToString();
+                        position.Column = actionLine.Frames == 0
+                            ? TASActionLine.MaxFramesDigits + 1
+                            : TASActionLine.MaxFramesDigits - actionLine.Frames.Digits() + cursorIndex + 1;
+                    }
+                    goto FinishDeletion; // Skip regular deletion behaviour
+                }
+
+                // Handle feather angle/magnitude
                 int featherColumn = TASCaretNavigationCommandHandler.GetColumnOfAction(actionLine, TASAction.FeatherAim);
                 if (featherColumn != -1 && position.Column >= featherColumn) {
                     int angleMagnitudeCommaColumn = featherColumn + 2;
@@ -235,12 +274,12 @@ internal class TASEditingCommandHandler {
                         var actions = TASCaretNavigationCommandHandler.GetActionsFromColumn(actionLine, position.Column - 1, direction);
                         actionLine.Actions &= ~actions;
                         lineText = actionLine.ToString();
-                        goto FinishDeletion; // Skip regular deletion behaviour
+                        goto FinishDeletion;
                     } else if (position.Column == featherColumn && direction is CaretMovementType.CharRight or CaretMovementType.WordRight ||
                         position.Column == angleMagnitudeCommaColumn && direction is CaretMovementType.Backspace or CaretMovementType.WordLeft) {
                         actionLine.FeatherAngle = actionLine.FeatherMagnitude;
                         actionLine.FeatherMagnitude = null;
-                        newColumn = featherColumn;
+                        position.Column = featherColumn;
                         lineText = actionLine.ToString();
                         goto FinishDeletion;
                     } else if (position.Column == angleMagnitudeCommaColumn - 1 && direction is CaretMovementType.CharRight or CaretMovementType.WordRight) {
@@ -250,7 +289,7 @@ internal class TASEditingCommandHandler {
                     }
                 }
 
-                newColumn = direction switch {
+                int newColumn = direction switch {
                     CaretMovementType.Backspace => TASCaretNavigationCommandHandler.GetSoftSnapColumns(actionLine).Reverse().FirstOrDefault(c => c < position.Column, position.Column),
                     CaretMovementType.CharRight => TASCaretNavigationCommandHandler.GetSoftSnapColumns(actionLine).FirstOrDefault(c => c > position.Column, position.Column),
                     CaretMovementType.WordLeft => TASCaretNavigationCommandHandler.GetHardSnapColumns(actionLine).Reverse().FirstOrDefault(c => c < position.Column, position.Column),
@@ -258,16 +297,9 @@ internal class TASEditingCommandHandler {
                     _ => position.Column,
                 };
                 lineText = lineText.Remove(Math.Min(newColumn, position.Column) - 1, Math.Abs(newColumn - position.Column));
+                position.Column = Math.Min(newColumn, position.Column);
 
                 FinishDeletion:
-                var lineStartPosition = new TextViewPosition(position.Line, 1);
-                var lineEndPosition = new TextViewPosition(position.Line, line.Length + 1);
-
-                if (Math.Max(newColumn, position.Column) > TASActionLine.MaxFramesDigits + 1)
-                    position.Column = Math.Min(newColumn, position.Column);
-                else
-                    position.Column = Math.Max(newColumn, position.Column);
-
                 if (TASActionLine.TryParse(lineText, out var newActionLine)) {
                     lineText = newActionLine.ToString();
                 } else if (string.IsNullOrWhiteSpace(lineText)) {
