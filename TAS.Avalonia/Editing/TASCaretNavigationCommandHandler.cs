@@ -163,7 +163,7 @@ internal static class TASCaretNavigationCommandHandler {
     internal static ImmutableHashSet<int> GetSoftSnapColumns(TASActionLine actionLine) {
         int leadingSpaces = TASActionLine.MaxFramesDigits - actionLine.Frames.Digits();
 
-        HashSet<int> softSnapColumns = new HashSet<int>();
+        HashSet<int> softSnapColumns = new();
         // Frame count
         softSnapColumns.AddRange(Enumerable.Range(leadingSpaces + 1, actionLine.Frames.Digits() + 1));
         // Actions
@@ -176,7 +176,7 @@ internal static class TASCaretNavigationCommandHandler {
             if (action == TASAction.MoveOnly)
                 softSnapColumns.AddRange(Enumerable.Range(column, actionLine.Actions.GetMoveOnly().Count() + 1));
             if (action == TASAction.CustomBinding)
-                softSnapColumns.AddRange(Enumerable.Range(column, actionLine.CustomBindings.Count() + 1));
+                softSnapColumns.AddRange(Enumerable.Range(column, actionLine.CustomBindings.Length + 1));
         }
         // Feather angle/magnitude
         if (actionLine.Actions.HasFlag(TASAction.FeatherAim)) {
@@ -191,12 +191,14 @@ internal static class TASCaretNavigationCommandHandler {
     internal static ImmutableHashSet<int> GetHardSnapColumns(TASActionLine actionLine) {
         int leadingSpaces = TASActionLine.MaxFramesDigits - actionLine.Frames.Digits();
 
-        HashSet<int> hardSnapColumns = new HashSet<int>();
-        // Frame count
-        hardSnapColumns.Add(leadingSpaces + 1);
-        hardSnapColumns.Add(TASActionLine.MaxFramesDigits + 1);
-        // Actions
-        hardSnapColumns.Add(GetColumnOfAction(actionLine, actionLine.Actions.Sorted().Last()));
+        HashSet<int> hardSnapColumns = new() {
+            // Frame count
+            leadingSpaces + 1,
+            TASActionLine.MaxFramesDigits + 1,
+            // Actions
+            GetColumnOfAction(actionLine, actionLine.Actions.Sorted().Last()) + actionLine.CustomBindings.Length
+        };
+
         // Feather angle/magnitude
         if (actionLine.Actions.HasFlag(TASAction.FeatherAim)) {
             int featherColumn = GetColumnOfAction(actionLine, TASAction.FeatherAim);
@@ -246,7 +248,7 @@ internal static class TASCaretNavigationCommandHandler {
         if (moveOnlyIndex != -1 && index > moveOnlyIndex)
             additionalOffset += actionLine.Actions.GetMoveOnly().Count();
         if (customBindingIndex != -1 && index > customBindingIndex)
-            additionalOffset += actionLine.CustomBindings.Count();
+            additionalOffset += actionLine.CustomBindings.Length;
 
         return TASActionLine.MaxFramesDigits + 1 + (index + 1) * 2 + additionalOffset;
     }
