@@ -52,6 +52,10 @@ public class MainWindowViewModel : ViewModelBase {
     // Context
     public ReactiveCommand<Unit, Unit> ToggleCommentsCommand { get; }
 
+    // Don't show document info in title on MacOS
+    private readonly ObservableAsPropertyHelper<string> _windowTitle;
+    public string WindowTitle => RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? "TAS Studio" : _windowTitle.Value;
+
     private TASDocument _document;
     public TASDocument Document {
         get => _document;
@@ -81,6 +85,10 @@ public class MainWindowViewModel : ViewModelBase {
     public MainWindowViewModel() {
         _celesteService = (Application.Current as App).CelesteService;
         _dialogService = (Application.Current as App).DialogService;
+
+        _windowTitle = this.WhenAnyValue(x => x.Document.FileName, x => x.Document.Dirty, (path, dirty) => Tuple.Create(path, dirty))
+                           .Select(t => $"TAS Studio{(t.Item1 != null ? $" - {(t.Item2 ? "*" : "")}{t.Item1}" : "")}")
+                           .ToProperty(this, nameof(WindowTitle));
 
         // File
         NewFileCommand = ReactiveCommand.Create(NewFile);
@@ -353,7 +361,7 @@ public class MainWindowViewModel : ViewModelBase {
 
         await SaveFileAsAsync(false);
 
-        if (Document.Filename != null) _celesteService.SendPath(Document.Filename);
+        if (Document.FilePath != null) _celesteService.SendPath(Document.FilePath);
     }
 
     private async void SaveFileAs() {
@@ -364,14 +372,14 @@ public class MainWindowViewModel : ViewModelBase {
 
         await SaveFileAsAsync(true);
 
-        if (Document.Filename != null) _celesteService.SendPath(Document.Filename);
+        if (Document.FilePath != null) _celesteService.SendPath(Document.FilePath);
     }
 
     private async Task SaveFileAsAsync(bool force) {
-        if (force || Document.Filename == null) {
-            Document.Filename = await _dialogService.ShowSaveFileDialogAsync("Select a save location", "tas", _tasFileType);
+        if (force || Document.FilePath == null) {
+            Document.FilePath = await _dialogService.ShowSaveFileDialogAsync("Select a save location", "tas", _tasFileType);
         }
-        if (Document.Filename == null) return;
+        if (Document.FilePath == null) return;
 
         Document.Save();
     }
