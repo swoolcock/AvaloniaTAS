@@ -45,9 +45,9 @@ jobs:
           security import Certificates.p12 -k build.keychain -P $APPLE_CERTIFICATE_PWD -T /usr/bin/codesign
           rm Certificates.p12
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k $KEYCHAIN_PWD build.keychain
-          /usr/bin/codesign --force --deep -s $APPLE_IDENTITY ./TAS.Avalonia/bin/Release/net6.0/osx-x64/publish/AvaloniaTAS.app -v
+          /usr/bin/codesign --force --deep -s $APPLE_IDENTITY ./TAS.Avalonia/bin/Release/net7.0/osx-x64/publish/AvaloniaTAS.app -v
           mkdir output
-          mv ./TAS.Avalonia/bin/Release/net6.0/osx-x64/publish/AvaloniaTAS.app output/
+          mv ./TAS.Avalonia/bin/Release/net7.0/osx-x64/publish/AvaloniaTAS.app output/
       - name: Install create-dmg
         uses: ConorMacBride/install-package@v1
         with:

@@ -75,7 +75,7 @@ public class MainWindowViewModel : ViewModelBase {
     private FilePickerFileType _tasFileType = new FilePickerFileType("CelesteTAS") {
         Patterns = new[] { "*.tas" },
         MimeTypes = new[] { "text/plain" }, // ? Maybe add a CelesteTAS MIME-Type
-        // TODO: AppleUniformTypeIdentifiers implementation
+        AppleUniformTypeIdentifiers = new[] { "public.item" }, // TODO: replace this with custom
     };
 
     public MainWindowViewModel() {
