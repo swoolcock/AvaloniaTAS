@@ -46,7 +46,13 @@
     <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
     <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.0.0" />
 
-    <PackageReference Include="Avalonia.AvaloniaEdit" Version="11.0.0" />
+    <!--Hack-fix for https://github.com/AvaloniaUI/AvaloniaEdit/issues/350-->
+    <!--Can be reverted once the fix is in a public release-->
+    <Reference Include="libs/AvaloniaEdit.dll" Publicize="true">
+        <Private>false</Private>
+    </Reference>
+    <!--PackageReference Include="Avalonia.AvaloniaEdit" Version="11.0.0" /-->
+
     <PackageReference Include="AvaloniaEdit.TextMate" Version="11.0.0" />
     <PackageReference Include="AvaloniaEdit.TextMate.Grammars" Version="0.10.12" />
 
