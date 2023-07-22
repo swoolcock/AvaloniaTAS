@@ -38,7 +38,7 @@ public class DialogService {
             FileTypeFilter = fileTypes,
         }).ConfigureAwait(true);
 
-        return files?.Select(file => file.Path.AbsolutePath)?.ToArray();
+        return files?.Select(file => Uri.UnescapeDataString(file.Path.AbsolutePath))?.ToArray();
     }
 
     public async Task<string> ShowSaveFileDialogAsync(string title, string defaultExtension, params FilePickerFileType[] fileTypes) {
@@ -49,7 +49,7 @@ public class DialogService {
             FileTypeChoices = fileTypes
         }).ConfigureAwait(true);
 
-        return file?.Path.AbsolutePath;
+        return file == null ? null : Uri.UnescapeDataString(file.Path.AbsolutePath);
     }
 
     public async Task<int> ShowIntInputDialogAsync(int currentValue, int minValue, int maxValue, string title = null) {
