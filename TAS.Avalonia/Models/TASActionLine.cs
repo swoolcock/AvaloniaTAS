@@ -1,5 +1,3 @@
-using Avalonia.Data;
-
 namespace TAS.Avalonia.Models;
 
 #nullable enable
