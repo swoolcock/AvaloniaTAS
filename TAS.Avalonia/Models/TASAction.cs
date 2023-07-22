@@ -112,7 +112,7 @@ public static class TASActionExtensions {
             TASAction.UpDashOnly or TASAction.DownDashOnly => (self & ~TASAction.DashOnlyUD) | other,
             TASAction.LeftMoveOnly or TASAction.RightMoveOnly => (self & ~TASAction.MoveOnlyLR) | other,
             TASAction.UpMoveOnly or TASAction.DownMoveOnly => (self & ~TASAction.MoveOnlyUD) | other,
-            _ => self,
+            _ => self | other,
         };
     }
 

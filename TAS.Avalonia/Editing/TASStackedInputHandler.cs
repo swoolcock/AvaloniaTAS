@@ -42,6 +42,21 @@ public class TASStackedInputHandler : TextAreaStackedInputHandler {
                 return;
             }
 
+            int customBindStart = TASCaretNavigationCommandHandler.GetColumnOfAction(actionLine, TASAction.CustomBinding);
+            int customBindEnd = customBindStart + actionLine.CustomBindings.Count;
+            char typedCharacter = e.Key.CharacterForKey();
+            if (customBindStart != -1 && caretPosition.Column >= customBindStart && caretPosition.Column <= customBindEnd && typedCharacter != '\0') {
+                if (actionLine.CustomBindings.Contains(typedCharacter)) {
+                    actionLine.CustomBindings.Remove(typedCharacter);
+                    caretPosition.Column = customBindEnd - 1;
+                } else {
+                    actionLine.CustomBindings.Add(typedCharacter);
+                    caretPosition.Column = customBindEnd + 1;
+                }
+
+                goto FinishEdit; // Skip regular logic
+            }
+
             // break if it's not a valid key
             if (!validForAction) return;
 
@@ -61,24 +76,41 @@ public class TASStackedInputHandler : TextAreaStackedInputHandler {
                     actionLine = newActionLine;
                     caretPosition.Column++;
                 }
+            } else if (typedAction is TASAction.DashOnly or TASAction.MoveOnly or TASAction.CustomBinding) {
+                actionLine.Actions = actionLine.Actions.ToggleAction(typedAction);
+                caretPosition.Column = TASCaretNavigationCommandHandler.GetColumnOfAction(actionLine, typedAction);
             }
             // if we entered an action
             else if (typedAction != TASAction.None) {
+                int dashOnlyStart = TASCaretNavigationCommandHandler.GetColumnOfAction(actionLine, TASAction.DashOnly);
+                int dashOnlyEnd = dashOnlyStart + actionLine.Actions.GetDashOnly().Count();
+                if (dashOnlyStart != -1 && caretPosition.Column >= dashOnlyStart && caretPosition.Column <= dashOnlyEnd)
+                    typedAction = typedAction.ToDashOnlyDirection();
+
+                int moveOnlyStart = TASCaretNavigationCommandHandler.GetColumnOfAction(actionLine, TASAction.MoveOnly);
+                int moveOnlyEnd = moveOnlyStart + actionLine.Actions.GetMoveOnly().Count();
+                if (moveOnlyStart != -1 && caretPosition.Column >= moveOnlyStart && caretPosition.Column <= moveOnlyEnd)
+                    typedAction = typedAction.ToMoveOnlyDirection();
+
                 // toggle it
                 actionLine.Actions = actionLine.Actions.ToggleAction(typedAction);
                 // warp the cursor after the number
                 if (typedAction == TASAction.FeatherAim && actionLine.Actions.HasFlag(TASAction.FeatherAim)) {
-                    caretPosition.Column = 9999; // Jump to end, gets clamped anyway
+                    caretPosition.Column = TASCaretNavigationCommandHandler.GetColumnOfAction(actionLine, TASAction.FeatherAim) + 1;
                 } else if (typedAction == TASAction.FeatherAim && !actionLine.Actions.HasFlag(TASAction.FeatherAim)) {
                     actionLine.FeatherAngle = null;
                     actionLine.FeatherMagnitude = null;
                     caretPosition.Column = TASActionLine.MaxFramesDigits + 1;
+                } else if (typedAction is TASAction.LeftDashOnly or TASAction.RightDashOnly or TASAction.UpDashOnly or TASAction.DownDashOnly) {
+                    caretPosition.Column = TASCaretNavigationCommandHandler.GetColumnOfAction(actionLine, TASAction.DashOnly) + actionLine.Actions.GetDashOnly().Count();
+                } else if (typedAction is TASAction.LeftMoveOnly or TASAction.RightMoveOnly or TASAction.UpMoveOnly or TASAction.DownMoveOnly) {
+                    caretPosition.Column = TASCaretNavigationCommandHandler.GetColumnOfAction(actionLine, TASAction.MoveOnly) + actionLine.Actions.GetMoveOnly().Count();
                 } else {
                     caretPosition.Column = TASActionLine.MaxFramesDigits + 1;
                 }
             }
-            // if the key we entered is a number
-            else if (numberForKey >= 0) {
+              // if the key we entered is a number
+              else if (numberForKey >= 0) {
                 int cursorPosition = caretPosition.Column - leadingSpaces - 1;
 
                 // entering a zero at the start should do nothing but format
@@ -107,6 +139,7 @@ public class TASStackedInputHandler : TextAreaStackedInputHandler {
                 }
             }
 
+            FinishEdit:
             document.Replace(line, actionLine.ToString());
         }
         // start a TAS action line if we should

@@ -27,6 +27,8 @@ public static class Extensions {
             Key.N => TASAction.JournalTalk2,
             Key.O => TASAction.Confirm2,
             Key.A => TASAction.DashOnly,
+            Key.M => TASAction.MoveOnly,
+            Key.P => TASAction.CustomBinding,
             Key.F => TASAction.FeatherAim,
             _ => TASAction.None,
         };
@@ -41,6 +43,12 @@ public static class Extensions {
             >= Key.D0 and <= Key.D9 => self - Key.D0,
             >= Key.NumPad0 and < Key.NumPad9 => self - Key.NumPad0,
             _ => -1,
+        };
+
+    public static char CharacterForKey(this Key self) =>
+        self switch {
+            >= Key.A and <= Key.Z => (char) (self - Key.A + 'A'),
+            _ => '\0',
         };
 
     public static int Digits(this int self) => Math.Abs(self).ToString().Length;

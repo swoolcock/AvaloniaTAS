@@ -176,7 +176,7 @@ internal static class TASCaretNavigationCommandHandler {
             if (action == TASAction.MoveOnly)
                 softSnapColumns.AddRange(Enumerable.Range(column, actionLine.Actions.GetMoveOnly().Count() + 1));
             if (action == TASAction.CustomBinding)
-                softSnapColumns.AddRange(Enumerable.Range(column, actionLine.CustomBindings.Length + 1));
+                softSnapColumns.AddRange(Enumerable.Range(column, actionLine.CustomBindings.Count + 1));
         }
         // Feather angle/magnitude
         if (actionLine.Actions.HasFlag(TASAction.FeatherAim)) {
@@ -196,7 +196,7 @@ internal static class TASCaretNavigationCommandHandler {
             leadingSpaces + 1,
             TASActionLine.MaxFramesDigits + 1,
             // Actions
-            GetColumnOfAction(actionLine, actionLine.Actions.Sorted().Last()) + (actionLine.CustomBindings?.Length ?? 0)
+            GetColumnOfAction(actionLine, actionLine.Actions.Sorted().Last()) + actionLine.CustomBindings.Count
         };
 
         // Feather angle/magnitude
@@ -248,7 +248,7 @@ internal static class TASCaretNavigationCommandHandler {
         if (moveOnlyIndex != -1 && index > moveOnlyIndex)
             additionalOffset += actionLine.Actions.GetMoveOnly().Count();
         if (customBindingIndex != -1 && index > customBindingIndex)
-            additionalOffset += actionLine.CustomBindings.Length;
+            additionalOffset += actionLine.CustomBindings.Count;
 
         return TASActionLine.MaxFramesDigits + 1 + (index + 1) * 2 + additionalOffset;
     }

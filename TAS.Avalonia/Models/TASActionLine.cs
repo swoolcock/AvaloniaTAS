@@ -14,10 +14,12 @@ public struct TASActionLine {
     public string? FeatherAngle;
     public string? FeatherMagnitude;
 
-    public char[] CustomBindings;
+    public HashSet<char> CustomBindings;
 
     public static bool TryParse(string line, out TASActionLine value, bool ignoreInvalidFloats = true) {
         value = default;
+        value.CustomBindings = new HashSet<char>();
+
         string[] tokens = line.Trim().Split(",", StringSplitOptions.TrimEntries);
         if (tokens.Length == 0) return false;
 
@@ -43,7 +45,7 @@ public struct TASActionLine {
                 continue;
             }
             if (action is TASAction.CustomBinding) {
-                value.CustomBindings = tokens[i][1..].ToArray();
+                value.CustomBindings = tokens[i][1..].ToHashSet();
                 continue;
             }
 
@@ -75,12 +77,13 @@ public struct TASActionLine {
 
     public override string ToString() {
         var tasActions = Actions;
-        var customBindings = CustomBindings;
+        var customBindings = CustomBindings.ToList();
+        customBindings.Sort();
 
         string frames = Frames.ToString().PadLeft(MaxFramesDigits);
         string actions = Actions.Sorted().Aggregate("", (s, a) => $"{s},{a switch {
-            TASAction.DashOnly => string.Join("", tasActions.GetDashOnly().Select(TASActionExtensions.CharForAction)),
-            TASAction.MoveOnly => string.Join("", tasActions.GetMoveOnly().Select(TASActionExtensions.CharForAction)),
+            TASAction.DashOnly => $"{TASAction.DashOnly.CharForAction()}{string.Join("", tasActions.GetDashOnly().Select(TASActionExtensions.CharForAction))}",
+            TASAction.MoveOnly => $"{TASAction.MoveOnly.CharForAction()}{string.Join("", tasActions.GetMoveOnly().Select(TASActionExtensions.CharForAction))}",
             TASAction.CustomBinding => $"{TASAction.CustomBinding.CharForAction()}{string.Join("", customBindings)}",
             _ => a.CharForAction().ToString(),
         }}");
