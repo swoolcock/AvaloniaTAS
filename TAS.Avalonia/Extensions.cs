@@ -26,14 +26,18 @@ public static class Extensions {
             Key.Q => TASAction.QuickRestart,
             Key.N => TASAction.JournalTalk2,
             Key.O => TASAction.Confirm2,
-            Key.A => TASAction.DashOnlyDirection,
+            Key.A => TASAction.DashOnly,
+            Key.M => TASAction.MoveOnly,
+            Key.P => TASAction.CustomBinding,
             Key.F => TASAction.FeatherAim,
             _ => TASAction.None,
         };
 
     public static bool ValidForAction(this KeyGesture self) =>
         self.KeyModifiers == KeyModifiers.None && self.Key.NumberForKey() >= 0 ||
-        self.KeyModifiers is KeyModifiers.None or KeyModifiers.Shift && self.Key.ActionForKey() != TASAction.None;
+        self.KeyModifiers is KeyModifiers.None or KeyModifiers.Shift && self.Key.ActionForKey() != TASAction.None ||
+        self.KeyModifiers is KeyModifiers.None && self.Key is Key.OemPeriod or Key.OemComma ||
+        self.KeyModifiers is KeyModifiers.None or KeyModifiers.Shift && self.Key is >= Key.A and <= Key.Z;
 
     public static int NumberForKey(this Key self) =>
         self switch {
@@ -42,10 +46,18 @@ public static class Extensions {
             _ => -1,
         };
 
+    public static char CharacterForKey(this Key self) =>
+        self switch {
+            >= Key.A and <= Key.Z => (char) (self - Key.A + 'A'),
+            _ => '\0',
+        };
+
     public static int Digits(this int self) => Math.Abs(self).ToString().Length;
 
     public static IObservable<T> AsObservable<T>(this T self) => Observable.Return(self);
     public static IEnumerable<T> Yield<T>(this T self) => new[] { self };
 
     public static IClassicDesktopStyleApplicationLifetime DesktopLifetime(this Application self) => (IClassicDesktopStyleApplicationLifetime) self.ApplicationLifetime;
+
+    public static string ReplaceRange(this string self, int startIndex, int count, string replacement) => self.Remove(startIndex, count).Insert(startIndex, replacement);
 }

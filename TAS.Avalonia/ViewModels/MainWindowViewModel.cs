@@ -3,6 +3,7 @@ using System.Reactive.Linq;
 using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Input;
+using Avalonia.Platform.Storage;
 using AvaloniaEdit;
 using ReactiveUI;
 using TAS.Avalonia.Models;
@@ -65,15 +66,21 @@ public class MainWindowViewModel : ViewModelBase {
 
     public bool MenuVisible => true; //!RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
 
-    private readonly ICelesteService _celesteService;
-    private readonly IDialogService _dialogService;
+    private readonly CelesteService _celesteService;
+    private readonly DialogService _dialogService;
 
     private MenuModel[] MainMenu { get; }
     private MenuModel[] EditorContextMenu { get; }
 
+    private FilePickerFileType _tasFileType = new FilePickerFileType("CelesteTAS") {
+        Patterns = new[] { "*.tas" },
+        MimeTypes = new[] { "text/plain" }, // ? Maybe add a CelesteTAS MIME-Type
+        AppleUniformTypeIdentifiers = new[] { "public.item" }, // TODO: replace this with custom
+    };
+
     public MainWindowViewModel() {
-        _celesteService = AvaloniaLocator.Current.GetService<ICelesteService>()!;
-        _dialogService = AvaloniaLocator.Current.GetService<IDialogService>()!;
+        _celesteService = (Application.Current as App).CelesteService;
+        _dialogService = (Application.Current as App).DialogService;
 
         // File
         NewFileCommand = ReactiveCommand.Create(NewFile);
@@ -120,72 +127,79 @@ public class MainWindowViewModel : ViewModelBase {
         EditorContextMenu = CreateContextMenu();
     }
 
-    private MenuModel[] CreateMenu(bool includeExit) => new[] {
-        new MenuModel("_File", isEnabled: true) {
-            new MenuModel("New File", NewFileCommand, gesture: new KeyGesture(Key.N, KeyModifiers.Meta)),
-            MenuModel.Separator,
-            new MenuModel("Open File...", OpenFileCommand, gesture: new KeyGesture(Key.O, KeyModifiers.Meta)),
-            new MenuModel("Open Previous File"),
-            new MenuModel("Open Recent") {
-                new MenuModel("Celeste.tas"),
+    private MenuModel[] CreateMenu(bool includeExit) {
+        var commandModifier = KeyModifiers.Control;
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
+            commandModifier = KeyModifiers.Meta;
+        }
+
+        return new[] {
+            new MenuModel("_File", isEnabled: true) {
+                new MenuModel("New File", NewFileCommand, gesture: new KeyGesture(Key.N, commandModifier)),
+                MenuModel.Separator,
+                new MenuModel("Open File...", OpenFileCommand, gesture: new KeyGesture(Key.O, commandModifier)),
+                new MenuModel("Open Previous File"),
+                new MenuModel("Open Recent") {
+                    new MenuModel("Celeste.tas"),
+                },
+                new MenuModel("Open Backup") {
+                    new MenuModel("Celeste.tas"),
+                },
+                MenuModel.Separator,
+                new MenuModel("Save", SaveFileCommand, gesture: new KeyGesture(Key.S, commandModifier)),
+                new MenuModel("Save As...", SaveFileAsCommand, gesture: new KeyGesture(Key.S, commandModifier | KeyModifiers.Shift)),
+                new MenuModel("Convert to LibTAS Inputs..."),
+                new MenuModel(string.Empty, isVisible: includeExit),
+                new MenuModel("Exit", ExitCommand, isVisible: includeExit),
             },
-            new MenuModel("Open Backup") {
-                new MenuModel("Celeste.tas"),
+            new MenuModel("Settings") {
+                new MenuModel("Send Inputs to Celeste"),
+                new MenuModel("Auto Remove Mutually Exclusive Actions"),
+                new MenuModel("Show Game Info"),
+                new MenuModel("Automatic Backup") {
+                    new MenuModel("Enabled"),
+                    new MenuModel("Backup Rate (minutes): 1"),
+                    new MenuModel("Backup File Count: 100"),
+                },
+                new MenuModel("Font..."),
+                new MenuModel("Themes") {
+                    new MenuModel("Light"),
+                    new MenuModel("Dark"),
+                    new MenuModel("Custom"),
+                },
             },
-            MenuModel.Separator,
-            new MenuModel("Save", SaveFileCommand, gesture: new KeyGesture(Key.S, KeyModifiers.Meta)),
-            new MenuModel("Save As...", SaveFileAsCommand, gesture: new KeyGesture(Key.S, KeyModifiers.Meta | KeyModifiers.Shift)),
-            new MenuModel("Convert to LibTAS Inputs..."),
-            new MenuModel(string.Empty, isVisible: includeExit),
-            new MenuModel("Exit", ExitCommand, isVisible: includeExit),
-        },
-        new MenuModel("Settings") {
-            new MenuModel("Send Inputs to Celeste"),
-            new MenuModel("Auto Remove Mutually Exclusive Actions"),
-            new MenuModel("Show Game Info"),
-            new MenuModel("Automatic Backup") {
-                new MenuModel("Enabled"),
-                new MenuModel("Backup Rate (minutes): 1"),
-                new MenuModel("Backup File Count: 100"),
+            new MenuModel("Toggles") {
+                new MenuModel("Hitboxes", command: ToggleHitboxesCommand),
+                new MenuModel("Trigger Hitboxes", command: ToggleTriggerHitboxesCommand),
+                new MenuModel("Unloaded Rooms Hitboxes", command: ToggleUnloadedRoomsHitboxesCommand),
+                new MenuModel("Camera Hitboxes", command: ToggleCameraHitboxesCommand),
+                new MenuModel("Simplified Hitboxes", command: ToggleSimplifiedHitboxesCommand),
+                new MenuModel("Actual Collide Hitboxes", command: ToggleActualCollideHitboxesCommand),
+                MenuModel.Separator,
+                new MenuModel("Simplified Graphics", command: ToggleSimplifiedGraphicsCommand),
+                new MenuModel("Gameplay", command: ToggleGameplayCommand),
+                MenuModel.Separator,
+                new MenuModel("Center Camera", command: ToggleCenterCameraCommand),
+                MenuModel.Separator,
+                new MenuModel("Info HUD", command: ToggleInfoHudCommand),
+                new MenuModel("TAS Input Info", command: ToggleInfoTasInputCommand),
+                new MenuModel("Game Info", command: ToggleInfoGameCommand),
+                new MenuModel("Watch Entity Info", command: ToggleInfoWatchEntityCommand),
+                new MenuModel("Custom Info", command: ToggleInfoCustomCommand),
+                new MenuModel("Subpixel Indicator", command: ToggleInfoSubpixelIndicatorCommand),
+                new MenuModel("Unit of Speed", command: ToggleUnitOfSpeedCommand),
+                MenuModel.Separator,
+                new MenuModel("Position Decimals", command: SetPositionDecimalsCommand),
+                new MenuModel("Speed Decimals", command: SetSpeedDecimalsCommand),
+                new MenuModel("Velocity Decimals", command: SetVelocityDecimalsCommand),
+                new MenuModel("Custom Info Decimals", command: SetCustomInfoDecimalsCommand),
+                new MenuModel("Subpixel Indicator Decimals", command: SetSubpixelIndicatorDecimalsCommand),
+                MenuModel.Separator,
+                new MenuModel("Fast Forward Speed", command: SetFastForwardSpeedCommand),
+                new MenuModel("Slow Forward Speed", command: SetSlowForwardSpeedCommand),
             },
-            new MenuModel("Font..."),
-            new MenuModel("Themes") {
-                new MenuModel("Light"),
-                new MenuModel("Dark"),
-                new MenuModel("Custom"),
-            },
-        },
-        new MenuModel("Toggles") {
-            new MenuModel("Hitboxes", command: ToggleHitboxesCommand),
-            new MenuModel("Trigger Hitboxes", command: ToggleTriggerHitboxesCommand),
-            new MenuModel("Unloaded Rooms Hitboxes", command: ToggleUnloadedRoomsHitboxesCommand),
-            new MenuModel("Camera Hitboxes", command: ToggleCameraHitboxesCommand),
-            new MenuModel("Simplified Hitboxes", command: ToggleSimplifiedHitboxesCommand),
-            new MenuModel("Actual Collide Hitboxes", command: ToggleActualCollideHitboxesCommand),
-            MenuModel.Separator,
-            new MenuModel("Simplified Graphics", command: ToggleSimplifiedGraphicsCommand),
-            new MenuModel("Gameplay", command: ToggleGameplayCommand),
-            MenuModel.Separator,
-            new MenuModel("Center Camera", command: ToggleCenterCameraCommand),
-            MenuModel.Separator,
-            new MenuModel("Info HUD", command: ToggleInfoHudCommand),
-            new MenuModel("TAS Input Info", command: ToggleInfoTasInputCommand),
-            new MenuModel("Game Info", command: ToggleInfoGameCommand),
-            new MenuModel("Watch Entity Info", command: ToggleInfoWatchEntityCommand),
-            new MenuModel("Custom Info", command: ToggleInfoCustomCommand),
-            new MenuModel("Subpixel Indicator", command: ToggleInfoSubpixelIndicatorCommand),
-            new MenuModel("Unit of Speed", command: ToggleUnitOfSpeedCommand),
-            MenuModel.Separator,
-            new MenuModel("Position Decimals", command: SetPositionDecimalsCommand),
-            new MenuModel("Speed Decimals", command: SetSpeedDecimalsCommand),
-            new MenuModel("Velocity Decimals", command: SetVelocityDecimalsCommand),
-            new MenuModel("Custom Info Decimals", command: SetCustomInfoDecimalsCommand),
-            new MenuModel("Subpixel Indicator Decimals", command: SetSubpixelIndicatorDecimalsCommand),
-            MenuModel.Separator,
-            new MenuModel("Fast Forward Speed", command: SetFastForwardSpeedCommand),
-            new MenuModel("Slow Forward Speed", command: SetSlowForwardSpeedCommand),
-        },
-    };
+        };
+    }
 
     private MenuModel[] CreateContextMenu() => new[] {
         new MenuModel("Cut"),
@@ -275,25 +289,25 @@ public class MainWindowViewModel : ViewModelBase {
     private const float MaxSlowForwardSpeed = 0.9f;
 
     private async Task SetPositionDecimals() => _celesteService.SetPositionDecimals(
-        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetPositionDecimals(), MinDecimals, MaxDecimals));
+        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetPositionDecimals(), MinDecimals, MaxDecimals, "Set position decimals"));
 
     private async Task SetSpeedDecimals() => _celesteService.SetSpeedDecimals(
-        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetSpeedDecimals(), MinDecimals, MaxDecimals));
+        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetSpeedDecimals(), MinDecimals, MaxDecimals, "Set speed decimals"));
 
     private async Task SetVelocityDecimals() => _celesteService.SetVelocityDecimals(
-        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetVelocityDecimals(), MinDecimals, MaxDecimals));
+        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetVelocityDecimals(), MinDecimals, MaxDecimals, "Set velocity decimals"));
 
     private async Task SetCustomInfoDecimals() => _celesteService.SetCustomInfoDecimals(
-        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetCustomInfoDecimals(), MinDecimals, MaxDecimals));
+        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetCustomInfoDecimals(), MinDecimals, MaxDecimals, "Set custom info decimals"));
 
     private async Task SetSubpixelIndicatorDecimals() => _celesteService.SetSubpixelIndicatorDecimals(
-        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetSubpixelIndicatorDecimals(), MinDecimals, MaxDecimals));
+        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetSubpixelIndicatorDecimals(), MinDecimals, MaxDecimals, "Set subpixel indicator decimals"));
 
     private async Task SetFastForwardSpeed() => _celesteService.SetFastForwardSpeed(
-        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetFastForwardSpeed(), MinFastForwardSpeed, MaxFastForwardSpeed));
+        await _dialogService.ShowIntInputDialogAsync(_celesteService.GetFastForwardSpeed(), MinFastForwardSpeed, MaxFastForwardSpeed, "Set fast forward speed"));
 
     private async Task SetSlowForwardSpeed() => _celesteService.SetSlowForwardSpeed(
-        await _dialogService.ShowFloatInputDialogAsync(_celesteService.GetSlowForwardSpeed(), MinSlowForwardSpeed, MaxSlowForwardSpeed));
+        await _dialogService.ShowFloatInputDialogAsync(_celesteService.GetSlowForwardSpeed(), MinSlowForwardSpeed, MaxSlowForwardSpeed, "Set slow forward speed"));
 
     private async Task<bool> ConfirmDiscardChangesAsync() {
         if (!Document.Dirty) return true;
@@ -315,7 +329,7 @@ public class MainWindowViewModel : ViewModelBase {
         await Task.Delay(TimeSpan.FromSeconds(0.1f));
 
         if (!await ConfirmDiscardChangesAsync()) return;
-        string[] results = await _dialogService.ShowOpenFileDialogAsync("Celeste TAS", "tas");
+        string[] results = await _dialogService.ShowOpenFileDialogAsync("Select a CeleseTAS file", _tasFileType);
 
         if (results?.FirstOrDefault() is not { } filepath) return;
 
@@ -353,12 +367,7 @@ public class MainWindowViewModel : ViewModelBase {
     private async Task<string> SaveFileAsAsync(bool force) {
         string filename = Document.Filename;
         if (force || filename == null) {
-            filename = await _dialogService.ShowSaveFileDialogAsync("Celeste TAS", "tas");
-            if (filename != null && File.Exists(filename) && !RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
-                // we don't need to confirm on macOS since the finder file dialog does it for us
-                bool confirm = await _dialogService.ShowConfirmDialogAsync("This file already exists. Are you sure you want to overwrite it?", "Celeste TAS");
-                if (!confirm) return null;
-            }
+            filename = await _dialogService.ShowSaveFileDialogAsync("Select a save location", "tas", _tasFileType);
         }
 
         if (filename == null) return null;

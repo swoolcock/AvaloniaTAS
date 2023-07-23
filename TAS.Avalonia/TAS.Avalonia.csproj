@@ -1,13 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <Nullable>disable</Nullable>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>TAS.Avalonia</RootNamespace>
     <UseAppHost>true</UseAppHost>
+    <EnableUnsafeBinaryFormatterSerialization>true</EnableUnsafeBinaryFormatterSerialization>
   </PropertyGroup>
 
   <!-- Info.plist settings -->
@@ -22,7 +23,7 @@
     <NSPrincipalClass>NSApplication</NSPrincipalClass>
     <NSHighResolutionCapable>true</NSHighResolutionCapable>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <Compile Update="**\*.axaml.cs">
       <DependentUpon>%(Filename)</DependentUpon>
@@ -37,19 +38,24 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="0.10.18" />
-    <PackageReference Include="Avalonia.AvaloniaEdit" Version="0.10.12.2" />
-    <PackageReference Include="Avalonia.Desktop" Version="0.10.18" />
+    <PackageReference Include="Avalonia" Version="11.0.0" />
+    <PackageReference Include="Avalonia.ReactiveUI" Version="11.0.0" />
+    <PackageReference Include="Avalonia.Xaml.Interactions" Version="11.0.0" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.0.0" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.0.0" />
     <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="0.10.18" />
-    <PackageReference Include="Avalonia.ReactiveUI" Version="0.10.18" />
-    <PackageReference Include="Avalonia.Xaml.Interactions" Version="0.10.18" />
-    <PackageReference Include="AvaloniaEdit.TextMate" Version="0.10.12.2" />
-    <PackageReference Include="AvaloniaEdit.TextMate.Grammars" Version="0.10.12" />
-    <PackageReference Include="Dialogs.Avalonia" Version="0.1.29" />
-    <PackageReference Include="XamlNameReferenceGenerator" Version="1.5.1" />
+    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.0.0" />
+
+    <!--Hack-fix for https://github.com/AvaloniaUI/AvaloniaEdit/issues/350-->
+    <!--Can be reverted once the fix is in a public release-->
+    <Reference Include="libs/AvaloniaEdit.dll" />
+    <Reference Include="libs/AvaloniaEdit.TextMate.dll" />
+<!--    <PackageReference Include="Avalonia.AvaloniaEdit" Version="11.0.0" />-->
+<!--    <PackageReference Include="AvaloniaEdit.TextMate" Version="11.0.0" />-->
+    
+    <PackageReference Include="TextMateSharp.Grammars" Version="1.0.55" />
+    <PackageReference Include="ReactiveUI" Version="18.3.1" />
     <PackageReference Include="JetBrains.Annotations" Version="2022.3.1" />
-    <PackageReference Include="ReactiveUI" Version="13.2.10" />
     <PackageReference Include="Dotnet.Bundle" Version="0.9.13" />
   </ItemGroup>
 

@@ -1,6 +1,7 @@
 using System.Globalization;
 using Avalonia;
 using Avalonia.Input;
+using Avalonia.Controls;
 using AvaloniaEdit;
 using AvaloniaEdit.Document;
 using AvaloniaEdit.Editing;
@@ -60,6 +61,22 @@ internal class TASEditingCommandHandler {
     }
 
     private static TextArea GetTextArea(object target) => target as TextArea;
+
+    internal static void AutoFormatActionLines(TextArea textArea, int lineStart, int lineEnd) {
+        for (int i = lineStart; i <= lineEnd; i++) {
+            var line = textArea.Document.GetLineByNumber(i);
+            var lineText = textArea.Document.GetText(line);
+            if (TASActionLine.TryParse(lineText, out var actionLine)) {
+                // We don't want that auto-formatting messes with undo/redo
+                var oldUndoStack = textArea.Document._undoStack;
+                textArea.Document._undoStack = new UndoStack();
+
+                textArea.Document.Replace(line, actionLine.ToString());
+
+                textArea.Document._undoStack = oldUndoStack;
+            }
+        }
+    }
 
     private static void TransformSelectedLines(Action<TextArea, DocumentLine> transformLine, object target, ExecutedRoutedEventArgs args, DefaultSegmentType defaultSegmentType) {
         TextArea textArea = GetTextArea(target);
@@ -134,7 +151,22 @@ internal class TASEditingCommandHandler {
     private static void OnEnter(object target, ExecutedRoutedEventArgs args) {
         TextArea textArea = GetTextArea(target);
         if (textArea == null || !textArea.IsFocused) return;
-        textArea.PerformTextInput("\n");
+
+        var caretPosition = textArea.Caret.Position;
+        if (textArea.Document is not { } document ||
+            document.GetLineByNumber(caretPosition.Line) is not { } line ||
+            document.GetText(line) is not { } lineText) {
+            textArea.PerformTextInput(Environment.NewLine);
+            args.Handled = true;
+            return;
+        }
+
+        // don't split frame count and action
+        document.Insert(line.EndOffset, Environment.NewLine);
+
+        caretPosition.Line++;
+        textArea.Caret.Position = caretPosition;
+
         args.Handled = true;
     }
 
@@ -174,73 +206,134 @@ internal class TASEditingCommandHandler {
         if (segment != null && segment.Length > 0) textArea.Document.Remove(segment.Offset, segment.Length);
     }, target, args, DefaultSegmentType.CurrentLine);
 
-    private static EventHandler<ExecutedRoutedEventArgs> OnDelete(CaretMovementType caretMovement) {
-        return (target, args) => {
-            TextArea textArea = GetTextArea(target);
-            if (textArea?.Document == null) return;
-            if (textArea.Selection.IsEmpty) {
-                TextViewPosition position = textArea.Caret.Position;
-                if (textArea.Document.GetLineByNumber(position.Line) is { } line &&
-                    textArea.Document.GetText(line) is { } lineText &&
-                    TASActionLine.TryParse(lineText, out var actionLine)) {
+    private static EventHandler<ExecutedRoutedEventArgs> OnDelete(CaretMovementType direction) => (target, args) => {
+        var textArea = GetTextArea(target);
+        if (textArea?.Document == null) return;
+
+        if (textArea.Selection.IsEmpty) {
+            double desiredXpos = textArea.Caret.DesiredXPos;
+
+            var position = textArea.Caret.Position;
+            var newPosition = position;
+
+            if (textArea.Document.GetLineByNumber(position.Line) is { } line &&
+                textArea.Document.GetText(line) is { } lineText &&
+                TASActionLine.TryParse(lineText, out var actionLine)) {
+                position.Column = TASCaretNavigationCommandHandler.SnapColumnToActionLine(actionLine, position.Column);
+
+                var lineStartPosition = new TextViewPosition(position.Line, 1);
+                var lineEndPosition = new TextViewPosition(position.Line, line.Length + 1);
+
+                // Handle frame count
+                if (position.Column == TASActionLine.MaxFramesDigits + 1 && direction is CaretMovementType.WordLeft or CaretMovementType.Backspace ||
+                    position.Column < TASActionLine.MaxFramesDigits + 1) {
                     int leadingSpaces = lineText.Length - lineText.TrimStart().Length;
-                    var lineStartPosition = new TextViewPosition(position.Line, 1);
-                    var lineEndPosition = new TextViewPosition(position.Line, line.Length + 1);
                     int cursorIndex = Math.Clamp(position.Column - leadingSpaces - 1, 0, actionLine.Frames.Digits());
-                    string newLineText = string.Empty;
 
                     string framesString = actionLine.Frames.ToString();
                     string leftOfCursor = framesString[..cursorIndex];
                     string rightOfCursor = framesString[cursorIndex..];
 
-                    if (actionLine.Frames == 0)
-                        newLineText = string.Empty;
-                    else if (leftOfCursor.Length == 0 && caretMovement is CaretMovementType.WordLeft or CaretMovementType.Backspace ||
-                        rightOfCursor.Length == 0 && caretMovement is CaretMovementType.WordRight or CaretMovementType.CharRight)
-                        newLineText = string.Empty;
-                    else {
+                    if (actionLine.Frames == 0) {
+                        lineText = string.Empty;
+                    } else if (leftOfCursor.Length == 0 && direction is CaretMovementType.WordLeft or CaretMovementType.Backspace ||
+                        rightOfCursor.Length == 0 && direction is CaretMovementType.WordRight or CaretMovementType.CharRight) {
+                        lineText = string.Empty;
+                    } else {
                         string newFramesString = string.Empty;
-                        if (caretMovement == CaretMovementType.WordLeft) {
+                        if (direction == CaretMovementType.WordLeft) {
                             newFramesString = rightOfCursor;
                             cursorIndex = 0;
-                        } else if (caretMovement == CaretMovementType.WordRight)
+                        } else if (direction == CaretMovementType.WordRight) {
                             newFramesString = leftOfCursor;
-                        else if (caretMovement == CaretMovementType.Backspace) {
+                        } else if (direction == CaretMovementType.Backspace) {
                             newFramesString = $"{leftOfCursor[..^1]}{rightOfCursor}";
                             cursorIndex--;
-                        } else if (caretMovement == CaretMovementType.CharRight)
+                        } else if (direction == CaretMovementType.CharRight) {
                             newFramesString = $"{leftOfCursor}{rightOfCursor[1..]}";
+                        }
 
                         actionLine.Frames = Math.Clamp(int.TryParse(newFramesString, out int value) ? value : 0, 0, TASActionLine.MaxFrames);
-                        newLineText = actionLine.ToString();
+                        lineText = actionLine.ToString();
                         position.Column = actionLine.Frames == 0
                             ? TASActionLine.MaxFramesDigits + 1
                             : TASActionLine.MaxFramesDigits - actionLine.Frames.Digits() + cursorIndex + 1;
                     }
-
-                    textArea.Selection.StartSelectionOrSetEndpoint(lineStartPosition, lineEndPosition).ReplaceSelectionWithText(newLineText);
-                    if (string.IsNullOrEmpty(newLineText)) position = lineStartPosition;
-
-                    if (textArea.Caret.Position.Column != position.Column)
-                        position.VisualColumn = position.Column - 1;
-
-                    textArea.Caret.Position = position;
-                } else {
-                    bool enableVirtualSpace = textArea.Options.EnableVirtualSpace;
-                    if (caretMovement == CaretMovementType.CharRight) enableVirtualSpace = false;
-                    double desiredXpos = textArea.Caret.DesiredXPos;
-                    TextViewPosition endPosition = TASCaretNavigationCommandHandler.GetNewCaretPosition(textArea.TextView, position, caretMovement, enableVirtualSpace, ref desiredXpos);
-                    if (endPosition.Line < 1 || endPosition.Column < 1) endPosition = new TextViewPosition(Math.Max(endPosition.Line, 1), Math.Max(endPosition.Column, 1));
-                    if (textArea.Selection is RectangleSelection && position.Line != endPosition.Line) return;
-                    textArea.Selection.StartSelectionOrSetEndpoint(position, endPosition).ReplaceSelectionWithText(string.Empty);
+                    goto FinishDeletion; // Skip regular deletion behaviour
                 }
-            } else
-                textArea.RemoveSelectedText();
 
-            textArea.Caret.BringCaretToView();
-            args.Handled = true;
-        };
-    }
+                // Handle feather angle/magnitude
+                int featherColumn = TASCaretNavigationCommandHandler.GetColumnOfAction(actionLine, TASAction.FeatherAim);
+                if (featherColumn != -1 && position.Column >= featherColumn) {
+                    int angleMagnitudeCommaColumn = featherColumn + 2;
+                    while (angleMagnitudeCommaColumn <= lineText.Length + 1 && lineText[angleMagnitudeCommaColumn - 2] != ',') {
+                        angleMagnitudeCommaColumn++;
+                    }
+
+                    if (position.Column == featherColumn + 1 && direction is CaretMovementType.Backspace or CaretMovementType.WordLeft) {
+                        var actions = TASCaretNavigationCommandHandler.GetActionsFromColumn(actionLine, position.Column - 1, direction);
+                        actionLine.Actions &= ~actions;
+                        lineText = actionLine.ToString();
+                        goto FinishDeletion;
+                    } else if (position.Column == featherColumn && direction is CaretMovementType.CharRight or CaretMovementType.WordRight ||
+                        position.Column == angleMagnitudeCommaColumn && direction is CaretMovementType.Backspace or CaretMovementType.WordLeft) {
+                        actionLine.FeatherAngle = actionLine.FeatherMagnitude;
+                        actionLine.FeatherMagnitude = null;
+                        position.Column = featherColumn;
+                        lineText = actionLine.ToString();
+                        goto FinishDeletion;
+                    } else if (position.Column == angleMagnitudeCommaColumn - 1 && direction is CaretMovementType.CharRight or CaretMovementType.WordRight) {
+                        actionLine.FeatherMagnitude = null;
+                        lineText = actionLine.ToString();
+                        goto FinishDeletion;
+                    }
+                }
+
+                int newColumn = direction switch {
+                    CaretMovementType.Backspace => TASCaretNavigationCommandHandler.GetSoftSnapColumns(actionLine).Reverse().FirstOrDefault(c => c < position.Column, position.Column),
+                    CaretMovementType.CharRight => TASCaretNavigationCommandHandler.GetSoftSnapColumns(actionLine).FirstOrDefault(c => c > position.Column, position.Column),
+                    CaretMovementType.WordLeft => TASCaretNavigationCommandHandler.GetHardSnapColumns(actionLine).Reverse().FirstOrDefault(c => c < position.Column, position.Column),
+                    CaretMovementType.WordRight => TASCaretNavigationCommandHandler.GetHardSnapColumns(actionLine).FirstOrDefault(c => c > position.Column, position.Column),
+                    _ => position.Column,
+                };
+                lineText = lineText.Remove(Math.Min(newColumn, position.Column) - 1, Math.Abs(newColumn - position.Column));
+                position.Column = Math.Min(newColumn, position.Column);
+
+                FinishDeletion:
+                if (TASActionLine.TryParse(lineText, out var newActionLine)) {
+                    lineText = newActionLine.ToString();
+                } else if (string.IsNullOrWhiteSpace(lineText)) {
+                    lineText = string.Empty;
+                    position = lineStartPosition;
+                }
+
+                textArea.Selection.StartSelectionOrSetEndpoint(lineStartPosition, lineEndPosition)
+                                  .ReplaceSelectionWithText(lineText);
+
+                if (textArea.Caret.Position.Column != position.Column)
+                    position.VisualColumn = position.Column - 1;
+
+                textArea.Caret.Position = position;
+            } else {
+                bool enableVirtualSpace = textArea.Options.EnableVirtualSpace;
+                if (direction == CaretMovementType.CharRight)
+                    enableVirtualSpace = false;
+
+                var endPosition = TASCaretNavigationCommandHandler.GetNewCaretPosition(textArea.TextView, position, direction, enableVirtualSpace, ref desiredXpos);
+
+                if (endPosition.Line < 1 || endPosition.Column < 1)
+                    endPosition = new TextViewPosition(Math.Max(endPosition.Line, 1), Math.Max(endPosition.Column, 1));
+                if (textArea.Selection is RectangleSelection && position.Line != endPosition.Line)
+                    return;
+                textArea.Selection.StartSelectionOrSetEndpoint(position, endPosition).ReplaceSelectionWithText(string.Empty);
+            }
+        } else {
+            textArea.RemoveSelectedText();
+        }
+
+        textArea.Caret.BringCaretToView();
+        args.Handled = true;
+    };
 
     private static void CanDelete(object target, CanExecuteRoutedEventArgs args) {
         if (GetTextArea(target)?.Document == null) return;
@@ -261,8 +354,9 @@ internal class TASEditingCommandHandler {
         if (textArea.Selection.IsEmpty && textArea.Options.CutCopyWholeLine) {
             DocumentLine lineByNumber = textArea.Document.GetLineByNumber(textArea.Caret.Line);
             CopyWholeLine(textArea, lineByNumber);
-        } else
+        } else {
             CopySelectedText(textArea);
+        }
 
         args.Handled = true;
     }
@@ -284,25 +378,30 @@ internal class TASEditingCommandHandler {
 
     private static bool CopySelectedText(TextArea textArea) {
         string text = TextUtilities.NormalizeNewLines(textArea.Selection.GetText(), Environment.NewLine);
-        SetClipboardText(text);
+        SetClipboardText(text, textArea);
         textArea.OnTextCopied(new TextEventArgs(text));
         return true;
     }
 
-    private static void SetClipboardText(string text) {
+    private static void SetClipboardText(string text, Visual visual) {
         try {
-            Application.Current.Clipboard.SetTextAsync(text).GetAwaiter().GetResult();
+            TopLevel.GetTopLevel(visual)?.Clipboard?.SetTextAsync(text).GetAwaiter().GetResult();
         } catch (Exception) {
+            // Apparently this exception sometimes happens randomly.
+            // The MS controls just ignore it, so we'll do the same.
         }
     }
 
     private static bool CopyWholeLine(TextArea textArea, DocumentLine line) {
-        ISegment segment = new SimpleSegment(line.Offset, line.TotalLength);
-        string text1 = textArea.Document.GetText(segment);
-        if (string.IsNullOrEmpty(text1)) return false;
-        string text2 = TextUtilities.NormalizeNewLines(text1, Environment.NewLine);
-        SetClipboardText(text2);
-        textArea.OnTextCopied(new TextEventArgs(text2));
+        ISegment wholeLine = new SimpleSegment(line.Offset, line.TotalLength);
+        var text = textArea.Document.GetText(wholeLine);
+        // Ignore empty line copy
+        if (string.IsNullOrEmpty(text)) return false;
+        // Ensure we use the appropriate newline sequence for the OS
+        text = TextUtilities.NormalizeNewLines(text, Environment.NewLine);
+
+        SetClipboardText(text, textArea);
+        textArea.OnTextCopied(new TextEventArgs(text));
         return true;
     }
 
@@ -314,32 +413,36 @@ internal class TASEditingCommandHandler {
     }
 
     private static async void OnPaste(object target, ExecutedRoutedEventArgs args) {
-        TextArea textArea = GetTextArea(target);
-        if (textArea?.Document == null) {
-            textArea = null;
-        } else {
-            textArea.Document.BeginUpdate();
-            string text = null;
-            try {
-                text = await Application.Current.Clipboard.GetTextAsync();
-            } catch (Exception) {
-                textArea.Document.EndUpdate();
-                textArea = null;
-                return;
-            }
+        var textArea = GetTextArea(target);
+        if (textArea?.Document == null) return;
 
-            if (text == null) {
-                textArea = null;
-            } else {
-                text = GetTextToPaste(text, textArea);
-                if (!string.IsNullOrEmpty(text)) textArea.ReplaceSelectionWithText(text);
-                textArea.Caret.BringCaretToView();
-                args.Handled = true;
-                textArea.Document.EndUpdate();
-                text = null;
-                textArea = null;
-            }
+        textArea.Document.BeginUpdate();
+
+        string text = null;
+        try {
+            text = await TopLevel.GetTopLevel(textArea)?.Clipboard?.GetTextAsync();
+        } catch (Exception) {
+            textArea.Document.EndUpdate();
+            return;
         }
+
+        if (text == null)
+            return;
+
+        text = GetTextToPaste(text, textArea);
+
+        int lineStart = textArea.Caret.Position.Line;
+        if (!string.IsNullOrEmpty(text)) {
+            textArea.ReplaceSelectionWithText(text);
+        }
+        int lineEnd = textArea.Caret.Position.Line;
+
+        AutoFormatActionLines(textArea, lineStart, lineEnd);
+
+        textArea.Caret.BringCaretToView();
+        args.Handled = true;
+
+        textArea.Document.EndUpdate();
     }
 
     internal static string GetTextToPaste(string text, TextArea textArea) {
@@ -386,13 +489,17 @@ internal class TASEditingCommandHandler {
         args.Handled = true;
     }
 
-    private static void OnRemoveLeadingWhitespace(object target, ExecutedRoutedEventArgs args) => TransformSelectedLines((textArea, line) => textArea.Document.Remove(TextUtilities.GetLeadingWhitespace(textArea.Document, line)), target, args, DefaultSegmentType.WholeDocument);
+    private static void OnRemoveLeadingWhitespace(object target, ExecutedRoutedEventArgs args) => TransformSelectedLines((textArea, line) =>
+        textArea.Document.Remove(TextUtilities.GetLeadingWhitespace(textArea.Document, line)), target, args, DefaultSegmentType.WholeDocument);
 
-    private static void OnRemoveTrailingWhitespace(object target, ExecutedRoutedEventArgs args) => TransformSelectedLines((textArea, line) => textArea.Document.Remove(TextUtilities.GetTrailingWhitespace(textArea.Document, line)), target, args, DefaultSegmentType.WholeDocument);
+    private static void OnRemoveTrailingWhitespace(object target, ExecutedRoutedEventArgs args) => TransformSelectedLines((textArea, line) =>
+        textArea.Document.Remove(TextUtilities.GetTrailingWhitespace(textArea.Document, line)), target, args, DefaultSegmentType.WholeDocument);
 
-    private static void OnConvertTabsToSpaces(object target, ExecutedRoutedEventArgs args) => TransformSelectedSegments(ConvertTabsToSpaces, target, args, DefaultSegmentType.WholeDocument);
+    private static void OnConvertTabsToSpaces(object target, ExecutedRoutedEventArgs args) =>
+        TransformSelectedSegments(ConvertTabsToSpaces, target, args, DefaultSegmentType.WholeDocument);
 
-    private static void OnConvertLeadingTabsToSpaces(object target, ExecutedRoutedEventArgs args) => TransformSelectedLines((textArea, line) => ConvertTabsToSpaces(textArea, TextUtilities.GetLeadingWhitespace(textArea.Document, line)), target, args, DefaultSegmentType.WholeDocument);
+    private static void OnConvertLeadingTabsToSpaces(object target, ExecutedRoutedEventArgs args) =>
+        TransformSelectedLines((textArea, line) => ConvertTabsToSpaces(textArea, TextUtilities.GetLeadingWhitespace(textArea.Document, line)), target, args, DefaultSegmentType.WholeDocument);
 
     private static void ConvertTabsToSpaces(TextArea textArea, ISegment segment) {
         TextDocument document = textArea.Document;
@@ -406,9 +513,11 @@ internal class TASEditingCommandHandler {
         }
     }
 
-    private static void OnConvertSpacesToTabs(object target, ExecutedRoutedEventArgs args) => TransformSelectedSegments(ConvertSpacesToTabs, target, args, DefaultSegmentType.WholeDocument);
+    private static void OnConvertSpacesToTabs(object target, ExecutedRoutedEventArgs args) =>
+        TransformSelectedSegments(ConvertSpacesToTabs, target, args, DefaultSegmentType.WholeDocument);
 
-    private static void OnConvertLeadingSpacesToTabs(object target, ExecutedRoutedEventArgs args) => TransformSelectedLines((textArea, line) => ConvertSpacesToTabs(textArea, TextUtilities.GetLeadingWhitespace(textArea.Document, line)), target, args, DefaultSegmentType.WholeDocument);
+    private static void OnConvertLeadingSpacesToTabs(object target, ExecutedRoutedEventArgs args) =>
+        TransformSelectedLines((textArea, line) => ConvertSpacesToTabs(textArea, TextUtilities.GetLeadingWhitespace(textArea.Document, line)), target, args, DefaultSegmentType.WholeDocument);
 
     private static void ConvertSpacesToTabs(TextArea textArea, ISegment segment) {
         TextDocument document = textArea.Document;
