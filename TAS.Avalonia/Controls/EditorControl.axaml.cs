@@ -50,6 +50,17 @@ public partial class EditorControl : UserControl {
         editor.TextArea.ActiveInputHandler = new TASInputHandler(editor.TextArea);
         editor.TextArea.PushStackedInputHandler(new TASStackedInputHandler(editor.TextArea));
         editor.TextArea.Caret.PositionChanged += (_, _) => CaretPosition = editor.TextArea.Caret.Position;
+        editor.TextArea.TextEntering += (_, e) => {
+            if (e.Text.Length != 1 || e.Text[0] is not >= 'a' and <= 'z' or >= 'A' and <= 'Z') return;
+
+            var key = e.Text[0] switch {
+                >= 'a' and <= 'z' => e.Text[0] - 'a' + Key.A,
+                >= 'A' and <= 'Z' => e.Text[0] - 'A' + Key.A,
+                _ => Key.None,
+            };
+
+            e.Handled = TASStackedInputHandler.HandleActionInput(editor.TextArea, key);
+        };
         PropertyChanged += (_, e) => {
             if (e.Property == CaretPositionProperty) {
                 editor.TextArea.Caret.Position = (TextViewPosition) e.NewValue!;
