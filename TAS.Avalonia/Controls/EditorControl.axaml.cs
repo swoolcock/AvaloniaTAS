@@ -7,6 +7,7 @@ using AvaloniaEdit.Document;
 using AvaloniaEdit.TextMate;
 using TAS.Avalonia.Editing;
 using TAS.Avalonia.Models;
+using TAS.Avalonia.Rendering;
 using TextMateSharp.Grammars;
 using TextMateSharp.Model;
 
@@ -61,6 +62,8 @@ public partial class EditorControl : UserControl {
 
             e.Handled = TASStackedInputHandler.HandleActionInput(editor.TextArea, key);
         };
+        editor.TextArea.TextView.BackgroundRenderers.Add(new TASLineRenderer(editor.TextArea));
+
         PropertyChanged += (_, e) => {
             if (e.Property == CaretPositionProperty) {
                 editor.TextArea.Caret.Position = (TextViewPosition) e.NewValue!;
