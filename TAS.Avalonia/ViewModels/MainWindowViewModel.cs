@@ -52,9 +52,8 @@ public class MainWindowViewModel : ViewModelBase {
     // Context
     public ReactiveCommand<Unit, Unit> ToggleCommentsCommand { get; }
 
-    // Don't show document info in title on MacOS
     private readonly ObservableAsPropertyHelper<string> _windowTitle;
-    public string WindowTitle => RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? "TAS Studio" : _windowTitle.Value;
+    public string WindowTitle => _windowTitle.Value;
 
     private TASDocument _document;
     public TASDocument Document {
