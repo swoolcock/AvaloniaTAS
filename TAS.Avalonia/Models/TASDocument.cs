@@ -1,13 +1,25 @@
 using AvaloniaEdit.Document;
+using ReactiveUI;
 
 namespace TAS.Avalonia.Models;
 
-public class TASDocument {
+public class TASDocument : ReactiveObject {
     private const string EmptyDocument = "RecordCount: 1\n\n#Start\n";
 
     public TextDocument Document { get; }
-    public string Filename { get; set; }
-    public bool Dirty { get; private set; }
+
+    public string _filePath;
+    public string FilePath {
+        get => _filePath;
+        set => this.RaiseAndSetIfChanged(ref _filePath, value);
+    }
+    public string FileName => FilePath == null ? null : Path.GetFileName(FilePath);
+
+    private bool _dirty;
+    public bool Dirty {
+        get => _dirty;
+        private set => this.RaiseAndSetIfChanged(ref _dirty, value);
+    }
 
     private TASDocument(string contents) {
         Document = new TextDocument(contents);
@@ -20,7 +32,7 @@ public class TASDocument {
         try {
             string text = File.ReadAllText(path);
             return new TASDocument(text) {
-                Filename = path,
+                FilePath = path,
             };
         } catch (Exception e) {
             Console.WriteLine(e);
@@ -29,12 +41,10 @@ public class TASDocument {
         return null;
     }
 
-    public void Save(string path = null) {
-        path ??= Filename;
-
-        if (path != null) {
+    public void Save() {
+        if (FilePath != null) {
             try {
-                File.WriteAllText(path, Document.Text);
+                File.WriteAllText(FilePath, Document.Text);
                 Dirty = false;
             } catch (Exception e) {
                 Console.WriteLine(e);
