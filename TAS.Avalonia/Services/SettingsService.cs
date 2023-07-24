@@ -50,7 +50,7 @@ public class SettingsService : ReactiveObject {
             Directory.CreateDirectory(directory);
         }
 
-        using (var fs = new FileStream(filePath, FileMode.OpenOrCreate))
+        using (var fs = new FileStream(filePath, FileMode.Truncate))
         using (var sw = new StreamWriter(fs)) {
             sw.Write(output);
         }
