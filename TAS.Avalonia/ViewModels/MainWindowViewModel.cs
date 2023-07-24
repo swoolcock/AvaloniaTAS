@@ -134,10 +134,7 @@ public class MainWindowViewModel : ViewModelBase {
         if (Path.Exists(lastOpenFilePath)) {
             Document = TASDocument.Load(lastOpenFilePath);
         }
-
         Document ??= TASDocument.CreateBlank();
-
-        this.RaisePropertyChanged(nameof(WindowTitle));
 
         MainMenu = CreateMenu(MenuVisible);
         EditorContextMenu = CreateContextMenu();

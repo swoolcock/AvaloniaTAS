@@ -11,7 +11,10 @@ public class TASDocument : ReactiveObject {
     public string _filePath;
     public string FilePath {
         get => _filePath;
-        set => this.RaiseAndSetIfChanged(ref _filePath, value);
+        set {
+            this.RaiseAndSetIfChanged(ref _filePath, value);
+            this.RaisePropertyChanged(nameof(FileName));
+        }
     }
     public string FileName => FilePath == null ? null : Path.GetFileName(FilePath);
 
