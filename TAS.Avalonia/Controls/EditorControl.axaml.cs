@@ -1,15 +1,16 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Shapes;
+using Avalonia.Data;
 using Avalonia.Input;
-using Avalonia.Media.TextFormatting;
 using AvaloniaEdit;
 using AvaloniaEdit.Document;
+using AvaloniaEdit.Editing;
 using AvaloniaEdit.TextMate;
 using TAS.Avalonia.Editing;
 using TAS.Avalonia.Models;
 using TAS.Avalonia.Rendering;
 using TextMateSharp.Grammars;
-using TextMateSharp.Model;
 
 namespace TAS.Avalonia.Controls;
 
@@ -64,11 +65,34 @@ public partial class EditorControl : UserControl {
         };
         editor.TextArea.TextView.BackgroundRenderers.Add(new TASLineRenderer(editor.TextArea));
 
+        ApplyTASLineNumbers();
+
         PropertyChanged += (_, e) => {
             if (e.Property == CaretPositionProperty) {
                 editor.TextArea.Caret.Position = (TextViewPosition) e.NewValue!;
             }
         };
+    }
+
+    private void ApplyTASLineNumbers() {
+        var leftMargins = editor.TextArea.LeftMargins;
+        for (int i = 0; i < leftMargins.Count; i++) {
+            if (leftMargins[i] is LineNumberMargin) {
+                leftMargins.RemoveAt(i);
+                if (i < leftMargins.Count && DottedLineMargin.IsDottedLineMargin(leftMargins[i])) {
+                    leftMargins.RemoveAt(i);
+                }
+                break;
+            }
+        }
+
+        var lineNumbers = new TASLineNumberMargin();
+        var line = (Line) DottedLineMargin.Create();
+        leftMargins.Insert(0, lineNumbers);
+        leftMargins.Insert(1, line);
+        var lineNumbersForeground = new Binding("LineNumbersForeground") { Source = editor };
+        line.Bind(Shape.StrokeProperty, lineNumbersForeground);
+        lineNumbers.Bind(ForegroundProperty, lineNumbersForeground);
     }
 
     private bool _discardUpdateEvents = false; // Avoid infinite loops

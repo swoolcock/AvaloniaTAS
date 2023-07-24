@@ -24,6 +24,16 @@ public class CelesteService {
     public void Play() {
     }
 
+    public int CurrentLine => _state.CurrentLine;
+    public string CurrentLineSuffix => _state.CurrentLineSuffix;
+    public int CurrentFrameInTas => _state.CurrentFrameInTas;
+    public int TotalFrames => _state.TotalFrames;
+    public int SaveStateLine => _state.SaveStateLine;
+    public States TasStates => (States) _state.tasStates;
+    public string GameInfo => _state.GameInfo;
+    public string LevelName => _state.LevelName;
+    public string ChapterTime => _state.ChapterTime;
+
     public void ToggleHitboxes() => Server.ToggleGameSetting("ShowHitboxes", null);
     public void ToggleTriggerHitboxes() => Server.ToggleGameSetting("ShowTriggerHitboxes", null);
     public void ToggleUnloadedRoomsHitboxes() => Server.ToggleGameSetting("ShowUnloadedRoomsHitboxes", null);
