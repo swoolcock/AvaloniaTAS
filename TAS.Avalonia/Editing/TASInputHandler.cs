@@ -19,6 +19,8 @@ public class TASInputHandler : TextAreaInputHandler {
 
     public IEnumerable<KeyBinding> AllKeyBindings =>
         KeyBindings.Concat(CaretNavigation.KeyBindings).Concat(Editing.KeyBindings);
+    public IEnumerable<RoutedCommandBinding> AllCommandBindings =>
+        CommandBindings.Concat(CaretNavigation.CommandBindings).Concat(Editing.CommandBindings);
 
     public TASInputHandler(TextArea textArea) : base(textArea) {
         NestedInputHandlers.Add(CaretNavigation = TASCaretNavigationCommandHandler.Create(textArea));
@@ -28,17 +30,11 @@ public class TASInputHandler : TextAreaInputHandler {
         AddBinding(ApplicationCommands.Redo, ExecuteRedo, CanExecuteRedo);
     }
 
-    private void AddBinding(
-        RoutedCommand command,
-        EventHandler<ExecutedRoutedEventArgs> handler,
-        EventHandler<CanExecuteRoutedEventArgs> canExecuteHandler = null) {
+    private void AddBinding(RoutedCommand command, EventHandler<ExecutedRoutedEventArgs> handler, EventHandler<CanExecuteRoutedEventArgs> canExecuteHandler = null) {
         CommandBindings.Add(new RoutedCommandBinding(command, handler, canExecuteHandler));
     }
 
-    internal static KeyBinding CreateKeyBinding(
-        ICommand command,
-        KeyModifiers modifiers,
-        Key key) {
+    internal static KeyBinding CreateKeyBinding(ICommand command, KeyModifiers modifiers, Key key) {
         return CreateKeyBinding(command, new KeyGesture(key, modifiers));
     }
 
