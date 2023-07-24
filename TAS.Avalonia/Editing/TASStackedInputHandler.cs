@@ -9,42 +9,35 @@ public class TASStackedInputHandler : TextAreaStackedInputHandler {
     }
 
     public override void OnPreviewKeyDown(KeyEventArgs e) {
-        // let bindings handle it first
-        var inputHandler = (TASInputHandler) TextArea.ActiveInputHandler;
-        if (inputHandler.AllKeyBindings.FirstOrDefault(b => b.Gesture.Matches(e)) is { } _ ||
-            inputHandler.AllCommandBindings.FirstOrDefault(b => b.Command.Gesture?.Matches(e) ?? false) is { } _) {
-            // matched, skip for now
-            return;
-        }
+        var gesture = new KeyGesture(e.Key, e.KeyModifiers);
+        if (gesture.ValidForAction())
+            e.Handled = HandleActionInput(TextArea, e.Key);
+    }
 
+    public static bool HandleActionInput(TextArea textArea, Key key) {
         // get the text if possible
-        var caretPosition = TextArea.Caret.Position;
-        if (TextArea.Document is not { } document ||
+        var caretPosition = textArea.Caret.Position;
+        if (textArea.Document is not { } document ||
             document.GetLineByNumber(caretPosition.Line) is not { } line ||
             document.GetText(line) is not { } lineText) {
             // something exploded
-            return;
+            return false;
         }
 
         int leadingSpaces = lineText.Length - lineText.TrimStart().Length;
-        var gesture = new KeyGesture(e.Key, e.KeyModifiers);
-        int numberForKey = e.Key.NumberForKey();
-        bool validForAction = gesture.ValidForAction();
+
+        int numberForKey = key.NumberForKey();
         bool startOfLine = caretPosition.Column <= leadingSpaces + 1;
+
+        bool handled = false;
 
         // if it's a TAS action line, handle it ourselves
         if (TASActionLine.TryParse(lineText, out var actionLine)) {
-            e.Handled = true;
-
-            // allow comments anywhere (hardcoded to shift+3 for now, we'll move to TextEntering later)
-            if (e.KeyModifiers == KeyModifiers.Shift && e.Key == Key.D3) {
-                document.Insert(line.Offset, "#");
-                return;
-            }
+            handled = true;
 
             int customBindStart = TASCaretNavigationCommandHandler.GetColumnOfAction(actionLine, TASAction.CustomBinding);
             int customBindEnd = customBindStart + actionLine.CustomBindings.Count;
-            char typedCharacter = e.Key.CharacterForKey();
+            char typedCharacter = key.CharacterForKey();
             if (customBindStart != -1 && caretPosition.Column >= customBindStart && caretPosition.Column <= customBindEnd && typedCharacter != '\0') {
                 if (actionLine.CustomBindings.Contains(typedCharacter)) {
                     actionLine.CustomBindings.Remove(typedCharacter);
@@ -57,15 +50,12 @@ public class TASStackedInputHandler : TextAreaStackedInputHandler {
                 goto FinishEdit; // Skip regular logic
             }
 
-            // break if it's not a valid key
-            if (!validForAction) return;
-
-            var typedAction = e.Key.ActionForKey();
+            var typedAction = key.ActionForKey();
 
             // Handle feather inputs
             var featherStartColumn = TASCaretNavigationCommandHandler.GetColumnOfAction(actionLine, TASAction.FeatherAim);
-            if (featherStartColumn >= 1 && caretPosition.Column > featherStartColumn && (e.Key is Key.OemPeriod or Key.OemComma || numberForKey != -1)) {
-                string text = e.Key switch {
+            if (featherStartColumn >= 1 && caretPosition.Column > featherStartColumn && (key is Key.OemPeriod or Key.OemComma || numberForKey != -1)) {
+                string text = key switch {
                     Key.OemPeriod => ".",
                     Key.OemComma => ",",
                     _ => numberForKey.ToString(),
@@ -143,8 +133,8 @@ public class TASStackedInputHandler : TextAreaStackedInputHandler {
             document.Replace(line, actionLine.ToString());
         }
         // start a TAS action line if we should
-        else if (startOfLine && validForAction && numberForKey >= 0) {
-            e.Handled = true;
+        else if (startOfLine && numberForKey >= 0) {
+            handled = true;
             string newLine = numberForKey.ToString().PadLeft(TASActionLine.MaxFramesDigits);
             if (lineText.Trim().Length == 0)
                 document.Replace(line, newLine);
@@ -156,6 +146,8 @@ public class TASStackedInputHandler : TextAreaStackedInputHandler {
         line = document.GetLineByNumber(caretPosition.Line);
         caretPosition.Column = Math.Clamp(caretPosition.Column, 1, line.Length + 1);
         caretPosition.VisualColumn = caretPosition.Column - 1;
-        TextArea.Caret.Position = caretPosition;
+        textArea.Caret.Position = caretPosition;
+
+        return handled;
     }
 }

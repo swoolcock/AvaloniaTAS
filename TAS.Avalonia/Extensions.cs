@@ -36,7 +36,8 @@ public static class Extensions {
     public static bool ValidForAction(this KeyGesture self) =>
         self.KeyModifiers == KeyModifiers.None && self.Key.NumberForKey() >= 0 ||
         self.KeyModifiers is KeyModifiers.None or KeyModifiers.Shift && self.Key.ActionForKey() != TASAction.None ||
-        self.KeyModifiers is KeyModifiers.None && self.Key is Key.OemPeriod or Key.OemComma;
+        self.KeyModifiers is KeyModifiers.None && self.Key is Key.OemPeriod or Key.OemComma ||
+        self.KeyModifiers is KeyModifiers.None or KeyModifiers.Shift && self.Key is >= Key.A and <= Key.Z;
 
     public static int NumberForKey(this Key self) =>
         self switch {
