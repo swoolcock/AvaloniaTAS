@@ -128,7 +128,6 @@ public class MainWindowViewModel : ViewModelBase {
 
         // Context
         ToggleCommentsCommand = ReactiveCommand.Create(ToggleComments);
-
         Document = TASDocument.Load("/Users/shane/Celeste/Celeste.tas") ?? TASDocument.CreateBlank();
         MainMenu = CreateMenu(MenuVisible);
         EditorContextMenu = CreateContextMenu();

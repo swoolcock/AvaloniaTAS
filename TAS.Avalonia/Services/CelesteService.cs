@@ -24,15 +24,17 @@ public class CelesteService {
     public void Play() {
     }
 
-    public int CurrentLine => _state.CurrentLine;
-    public string CurrentLineSuffix => _state.CurrentLineSuffix;
-    public int CurrentFrameInTas => _state.CurrentFrameInTas;
-    public int TotalFrames => _state.TotalFrames;
-    public int SaveStateLine => _state.SaveStateLine;
-    public States TasStates => (States) _state.tasStates;
-    public string GameInfo => _state.GameInfo;
-    public string LevelName => _state.LevelName;
-    public string ChapterTime => _state.ChapterTime;
+    public bool Connected => StudioCommunicationBase.Initialized;
+
+    public int CurrentLine => Connected ? _state.CurrentLine : -1;
+    public string CurrentLineSuffix => Connected ? _state.CurrentLineSuffix : string.Empty;
+    public int CurrentFrameInTas => Connected ? _state.CurrentFrameInTas : -1;
+    public int TotalFrames => Connected ? _state.TotalFrames : -1;
+    public int SaveStateLine => Connected ? _state.SaveStateLine : -1;
+    public States TasStates => Connected ? (States) _state.tasStates : States.None;
+    public string GameInfo => Connected ? _state.GameInfo : string.Empty;
+    public string LevelName => Connected ? _state.LevelName : string.Empty;
+    public string ChapterTime => Connected ? _state.ChapterTime : string.Empty;
 
     public void ToggleHitboxes() => Server.ToggleGameSetting("ShowHitboxes", null);
     public void ToggleTriggerHitboxes() => Server.ToggleGameSetting("ShowTriggerHitboxes", null);
