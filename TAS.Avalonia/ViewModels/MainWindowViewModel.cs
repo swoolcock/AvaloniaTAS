@@ -129,7 +129,16 @@ public class MainWindowViewModel : ViewModelBase {
         // Context
         ToggleCommentsCommand = ReactiveCommand.Create(ToggleComments);
 
-        Document = TASDocument.Load("/Users/shane/Celeste/Celeste.tas") ?? TASDocument.CreateBlank();
+        var lastOpenFilePath = (Application.Current as App).SettingsService.LastOpenFilePath;
+
+        if (Path.Exists(lastOpenFilePath)) {
+            Document = TASDocument.Load(lastOpenFilePath);
+        }
+
+        Document ??= TASDocument.CreateBlank();
+
+        this.RaisePropertyChanged(nameof(WindowTitle));
+
         MainMenu = CreateMenu(MenuVisible);
         EditorContextMenu = CreateContextMenu();
     }
@@ -347,6 +356,8 @@ public class MainWindowViewModel : ViewModelBase {
             return;
         }
 
+        (Application.Current as App).SettingsService.LastOpenFilePath = filepath;
+
         if (filepath != null) _celesteService.SendPath(filepath);
 
         Document = doc;
@@ -381,6 +392,8 @@ public class MainWindowViewModel : ViewModelBase {
         if (Document.FilePath == null) return;
 
         Document.Save();
+
+        (Application.Current as App).SettingsService.LastOpenFilePath = Document.FilePath;
     }
 
     private void Exit() => Application.Current?.DesktopLifetime().Shutdown();
