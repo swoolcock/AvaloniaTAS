@@ -131,10 +131,12 @@ public class MainWindowViewModel : ViewModelBase {
 
         var lastOpenFilePath = (Application.Current as App).SettingsService.LastOpenFilePath;
 
+        _celesteService.WriteWait();
         if (Path.Exists(lastOpenFilePath)) {
             Document = TASDocument.Load(lastOpenFilePath);
         }
         Document ??= TASDocument.CreateBlank();
+        if (Document.FilePath != null) _celesteService.SendPath(Document.FilePath);
 
         MainMenu = CreateMenu(MenuVisible);
         EditorContextMenu = CreateContextMenu();

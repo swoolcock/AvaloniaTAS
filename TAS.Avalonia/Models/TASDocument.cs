@@ -8,7 +8,7 @@ public class TASDocument : ReactiveObject {
 
     public TextDocument Document { get; }
 
-    public string _filePath;
+    private string _filePath;
     public string FilePath {
         get => _filePath;
         set {
