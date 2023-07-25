@@ -11,12 +11,12 @@
         Width="400" Height="600"
         GotFocus="Window_GotFocus"
         Closed="Window_Closed"
-        Title="TAS Studio">
+        Title="{Binding WindowTitle}">
 
     <Design.DataContext>
         <viewModels:MainWindowViewModel/>
     </Design.DataContext>
-    
+
     <DockPanel>
         <Menu DockPanel.Dock="Top"
               IsVisible="{Binding MenuVisible}"

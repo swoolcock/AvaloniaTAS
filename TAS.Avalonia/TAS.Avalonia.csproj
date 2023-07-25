@@ -45,6 +45,7 @@
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.0.0" />
     <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
     <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.0.0" />
+    <PackageReference Include="YamlDotNet" Version="13.1.1" />
 
     <!--Hack-fix for https://github.com/AvaloniaUI/AvaloniaEdit/issues/350-->
     <!--Can be reverted once the fix is in a public release-->

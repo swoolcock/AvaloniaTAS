@@ -8,7 +8,7 @@ using TAS.Avalonia.Controls;
 namespace TAS.Avalonia.Services;
 
 public class DialogService {
-    private static MainWindow _mainWindow => (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow as MainWindow;
+    private static MainWindow MainWindow => (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow as MainWindow;
 
     public async Task ShowDialogAsync(string message, string title = null) {
         var dialog = new DialogWindowViewModel {
@@ -32,24 +32,24 @@ public class DialogService {
     }
 
     public async Task<string[]> ShowOpenFileDialogAsync(string title, params FilePickerFileType[] fileTypes) {
-        var files = await _mainWindow.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions {
+        var files = await MainWindow.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions {
             Title = title,
             AllowMultiple = false,
             FileTypeFilter = fileTypes,
         }).ConfigureAwait(true);
 
-        return files.Select(file => file.Path.AbsolutePath).ToArray();
+        return files?.Select(file => Uri.UnescapeDataString(file.Path.AbsolutePath))?.ToArray();
     }
 
     public async Task<string> ShowSaveFileDialogAsync(string title, string defaultExtension, params FilePickerFileType[] fileTypes) {
-        var file = await _mainWindow.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions {
+        var file = await MainWindow.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions {
             Title = title,
             ShowOverwritePrompt = true,
             DefaultExtension = defaultExtension,
             FileTypeChoices = fileTypes
         }).ConfigureAwait(true);
 
-        return file.Path.AbsolutePath;
+        return file == null ? null : Uri.UnescapeDataString(file.Path.AbsolutePath);
     }
 
     public async Task<int> ShowIntInputDialogAsync(int currentValue, int minValue, int maxValue, string title = null) {
