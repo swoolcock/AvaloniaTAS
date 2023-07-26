@@ -13,6 +13,7 @@ public partial class App : Application {
 
     public CelesteService CelesteService = new CelesteService();
     public DialogService DialogService = new DialogService();
+    public SettingsService SettingsService = new SettingsService();
 
     public override void Initialize() {
         AvaloniaXamlLoader.Load(this);
