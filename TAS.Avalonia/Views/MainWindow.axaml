@@ -22,7 +22,7 @@
               IsVisible="{Binding MenuVisible}"
               ItemsSource="{Binding MainMenu, Converter={StaticResource MenuConverter}}" />
 
-        <StackPanel Name="StatusBar" Background="{DynamicResource Background2Brush}" DockPanel.Dock="Bottom" Orientation="Horizontal">
+        <StackPanel IsVisible="{Binding GameInfoVisible}" Name="StatusBar" Background="{DynamicResource Background2Brush}" DockPanel.Dock="Bottom" Orientation="Horizontal">
             <TextBlock Foreground="White" Text="{Binding StatusText}"
                        FontSize="12" FontFamily="Jetbrains Mono"
                        Margin="5 5 5 0" VerticalAlignment="Center" />

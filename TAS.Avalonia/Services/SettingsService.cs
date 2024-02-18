@@ -17,6 +17,11 @@ public class SettingsService : ReactiveObject {
     }
     public string LastOpenFileName => LastOpenFilePath == null ? null : Path.GetFileName(LastOpenFilePath);
 
+    public bool GameInfoVisible {
+        get => _settings.GameInfoVisible;
+        set => this.RaiseAndSetIfChanged(ref _settings.GameInfoVisible, value);
+    }
+
     public SettingsService() {
         var dataDir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         _settingsFilePath = Path.Combine(dataDir, AppDataDirectory, DefaultSettingsFileName);
@@ -62,5 +67,7 @@ public class SettingsService : ReactiveObject {
     [Serializable]
     public class Settings {
         public string LastOpenFilePath = "";
+
+        public bool GameInfoVisible = true;
     }
 }

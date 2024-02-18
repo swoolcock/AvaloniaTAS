@@ -19,6 +19,9 @@ public class MainWindowViewModel : ViewModelBase {
     public ReactiveCommand<Unit, Unit> SaveFileAsCommand { get; }
     public ReactiveCommand<Unit, Unit> ExitCommand { get; }
 
+    // Settings
+    public ReactiveCommand<Unit, Unit> ToggleGameInfoCommand { get; }
+
     // Toggles
     public ReactiveCommand<Unit, Unit> ToggleHitboxesCommand { get; }
     public ReactiveCommand<Unit, Unit> ToggleTriggerHitboxesCommand { get; }
@@ -73,10 +76,19 @@ public class MainWindowViewModel : ViewModelBase {
         set => this.RaiseAndSetIfChanged(ref _caretPosition, value);
     }
 
+    public bool GameInfoVisible {
+        get => _settingsService.GameInfoVisible;
+        set {
+            _settingsService.GameInfoVisible = value;
+            this.RaisePropertyChanged();
+        }
+    }
+
     public bool MenuVisible => true; //!RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
 
     private readonly CelesteService _celesteService;
     private readonly DialogService _dialogService;
+    private readonly SettingsService _settingsService;
 
     private MenuModel[] MainMenu { get; }
     private MenuModel[] EditorContextMenu { get; }
@@ -88,14 +100,14 @@ public class MainWindowViewModel : ViewModelBase {
     };
 
     public MainWindowViewModel() {
-        _celesteService = (Application.Current as App).CelesteService;
-        _dialogService = (Application.Current as App).DialogService;
+        _celesteService = (Application.Current as App)!.CelesteService;
+        _dialogService = (Application.Current as App)!.DialogService;
+        _settingsService = (Application.Current as App)!.SettingsService;
 
         _windowTitle = this.WhenAnyValue(x => x.Document.FileName, x => x.Document.Dirty, (path, dirty) => Tuple.Create(path, dirty))
                            .Select(t => $"TAS Studio{(t.Item1 != null ? $" - {(t.Item2 ? "*" : "")}{t.Item1}" : "")}")
                            .ToProperty(this, nameof(WindowTitle));
         _celesteService.Server.StateUpdated += state => {
-            Console.WriteLine(state.GameInfo);
             StatusText = state.GameInfo;
         };
 
@@ -105,6 +117,9 @@ public class MainWindowViewModel : ViewModelBase {
         SaveFileCommand = ReactiveCommand.Create(SaveFile);
         SaveFileAsCommand = ReactiveCommand.Create(SaveFileAs);
         ExitCommand = ReactiveCommand.Create(Exit);
+
+        // Settings
+        ToggleGameInfoCommand = ReactiveCommand.Create(ToggleGameInfo);
 
         // Toggles
         ToggleHitboxesCommand = ReactiveCommand.Create(ToggleHitboxes);
@@ -139,7 +154,7 @@ public class MainWindowViewModel : ViewModelBase {
         // Context
         ToggleCommentsCommand = ReactiveCommand.Create(ToggleComments);
 
-        var lastOpenFilePath = (Application.Current as App).SettingsService.LastOpenFilePath;
+        var lastOpenFilePath = _settingsService.LastOpenFilePath;
 
         _celesteService.WriteWait();
         if (Path.Exists(lastOpenFilePath)) {
@@ -180,7 +195,7 @@ public class MainWindowViewModel : ViewModelBase {
             new MenuModel("Settings") {
                 new MenuModel("Send Inputs to Celeste"),
                 new MenuModel("Auto Remove Mutually Exclusive Actions"),
-                new MenuModel("Show Game Info"),
+                new MenuModel("Show Game Info", ToggleGameInfoCommand),
                 new MenuModel("Automatic Backup") {
                     new MenuModel("Enabled"),
                     new MenuModel("Backup Rate (minutes): 1"),
@@ -289,6 +304,8 @@ public class MainWindowViewModel : ViewModelBase {
         new MenuModel("Open Read File / Go to Play Line"),
     };
 
+    private void ToggleGameInfo() => GameInfoVisible = !GameInfoVisible;
+
     private void ToggleHitboxes() => _celesteService.ToggleHitboxes();
     private void ToggleTriggerHitboxes() => _celesteService.ToggleTriggerHitboxes();
     private void ToggleUnloadedRoomsHitboxes() => _celesteService.ToggleUnloadedRoomsHitboxes();
@@ -365,7 +382,7 @@ public class MainWindowViewModel : ViewModelBase {
             return;
         }
 
-        (Application.Current as App).SettingsService.LastOpenFilePath = filepath;
+        _settingsService.LastOpenFilePath = filepath;
 
         if (filepath != null) _celesteService.SendPath(filepath);
 
@@ -402,7 +419,7 @@ public class MainWindowViewModel : ViewModelBase {
 
         Document.Save();
 
-        (Application.Current as App).SettingsService.LastOpenFilePath = Document.FilePath;
+        _settingsService.LastOpenFilePath = Document.FilePath;
     }
 
     private void Exit() => Application.Current?.DesktopLifetime().Shutdown();
