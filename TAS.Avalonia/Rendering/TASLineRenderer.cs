@@ -21,7 +21,7 @@ internal class TASLineRenderer : IBackgroundRenderer {
     public TASLineRenderer(TextArea textArea) {
         _textArea = textArea;
         (Application.Current as App).CelesteService.Server.StateUpdated += _ => {
-            Dispatcher.UIThread.Invoke(() => _textArea.TextView.InvalidateVisual());
+            Dispatcher.UIThread.InvokeAsync(() => _textArea.TextView.InvalidateVisual());
         };
     }
 

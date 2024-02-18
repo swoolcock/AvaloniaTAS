@@ -13,7 +13,7 @@ namespace TAS.Avalonia.Editing;
 public class TASLineNumberMargin : LineNumberMargin {
     public TASLineNumberMargin() {
         (Application.Current as App).CelesteService.Server.StateUpdated += _ => {
-            Dispatcher.UIThread.Invoke(() => InvalidateVisual());
+            Dispatcher.UIThread.InvokeAsync(() => InvalidateVisual());
         };
     }
 
