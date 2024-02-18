@@ -21,13 +21,13 @@ internal class TASLineRenderer : IBackgroundRenderer {
     public TASLineRenderer(TextArea textArea) {
         _textArea = textArea;
         (Application.Current as App).CelesteService.Server.StateUpdated += _ => {
-            Dispatcher.UIThread.InvokeAsync(() => _textArea.TextView.InvalidateVisual());
+            Dispatcher.UIThread.Post(() => _textArea.TextView.InvalidateVisual());
         };
     }
 
     public void Draw(TextView textView, DrawingContext drawingContext) {
         var currentLineBrush = new ImmutableSolidColorBrush(Themeing.CurrentLineColor);
-        var playingFramerush = new ImmutableSolidColorBrush(Themeing.PlayingFrameColor);
+        var playingFrameBrush = new ImmutableSolidColorBrush(Themeing.PlayingFrameColor);
 
         int currentLine = _textArea.Caret.Line - 1;
         int playingLine = (Application.Current as App).CelesteService.CurrentLine;
@@ -43,7 +43,7 @@ internal class TASLineRenderer : IBackgroundRenderer {
         var typeface = textView.CreateTypeface();
         double emSize = TextElement.GetFontSize(textView);
         var text = new FormattedText(suffix, CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
-                                     typeface, emSize, playingFramerush);
+                                     typeface, emSize, playingFrameBrush);
         drawingContext.DrawText(text, new Point(playingLineX, playingLineY));
     }
 }
