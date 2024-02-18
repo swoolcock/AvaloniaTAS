@@ -55,6 +55,12 @@ public class MainWindowViewModel : ViewModelBase {
     private readonly ObservableAsPropertyHelper<string> _windowTitle;
     public string WindowTitle => _windowTitle.Value;
 
+    private string _statusText = "Searching...";
+    public string StatusText {
+        get => _statusText;
+        set => this.RaiseAndSetIfChanged(ref _statusText, value);
+    }
+
     private TASDocument _document;
     public TASDocument Document {
         get => _document;
@@ -88,6 +94,10 @@ public class MainWindowViewModel : ViewModelBase {
         _windowTitle = this.WhenAnyValue(x => x.Document.FileName, x => x.Document.Dirty, (path, dirty) => Tuple.Create(path, dirty))
                            .Select(t => $"TAS Studio{(t.Item1 != null ? $" - {(t.Item2 ? "*" : "")}{t.Item1}" : "")}")
                            .ToProperty(this, nameof(WindowTitle));
+        _celesteService.Server.StateUpdated += state => {
+            Console.WriteLine(state.GameInfo);
+            StatusText = state.GameInfo;
+        };
 
         // File
         NewFileCommand = ReactiveCommand.Create(NewFile);
