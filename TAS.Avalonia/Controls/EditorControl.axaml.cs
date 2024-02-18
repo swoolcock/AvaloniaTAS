@@ -76,17 +76,20 @@ public partial class EditorControl : UserControl {
             }
         };
 
+        int prevLine = 0;
         (Application.Current as App).CelesteService.Server.StateUpdated += state => {
+            if (state.CurrentLine == prevLine) return;
             Dispatcher.UIThread.InvokeAsync(() =>
             {
-                const int LinesBelow = 2;
-                const int LinesAbove = 2;
+                const int LinesBelow = 3;
+                const int LinesAbove = 3;
 
                 var view = editor.TextArea.TextView;
+                editor.TextArea.Caret.Line = state.CurrentLine + 1;
 
                 // Below
                 {
-                    var visualLine = view.GetOrConstructVisualLine(view.Document.GetLineByNumber(state.CurrentLine + LinesBelow));
+                    var visualLine = view.GetOrConstructVisualLine(view.Document.GetLineByNumber(editor.TextArea.Caret.Line + LinesBelow));
                     var textLine = visualLine.GetTextLine(0, false);
 
                     double lineTop = visualLine.GetTextLineVisualYPosition(textLine, VisualYPosition.TextTop);
@@ -97,7 +100,7 @@ public partial class EditorControl : UserControl {
 
                 // Above
                 {
-                    var visualLine = view.GetOrConstructVisualLine(view.Document.GetLineByNumber(state.CurrentLine - LinesAbove));
+                    var visualLine = view.GetOrConstructVisualLine(view.Document.GetLineByNumber(editor.TextArea.Caret.Line - LinesAbove));
                     var textLine = visualLine.GetTextLine(0, false);
 
                     double lineTop = visualLine.GetTextLineVisualYPosition(textLine, VisualYPosition.TextTop);
@@ -106,6 +109,7 @@ public partial class EditorControl : UserControl {
                     view.MakeVisible(new Rect(0, lineTop, 0, lineBottom - lineTop));
                 }
             });
+            prevLine = state.CurrentLine;
         };
     }
 
