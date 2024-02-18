@@ -1,11 +1,14 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Shapes;
 using Avalonia.Data;
 using Avalonia.Input;
+using Avalonia.Threading;
 using AvaloniaEdit;
 using AvaloniaEdit.Document;
 using AvaloniaEdit.Editing;
+using AvaloniaEdit.Rendering;
 using AvaloniaEdit.TextMate;
 using TAS.Avalonia.Editing;
 using TAS.Avalonia.Models;
@@ -71,6 +74,38 @@ public partial class EditorControl : UserControl {
             if (e.Property == CaretPositionProperty) {
                 editor.TextArea.Caret.Position = (TextViewPosition) e.NewValue!;
             }
+        };
+
+        (Application.Current as App).CelesteService.Server.StateUpdated += state => {
+            Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                const int LinesBelow = 2;
+                const int LinesAbove = 2;
+
+                var view = editor.TextArea.TextView;
+
+                // Below
+                {
+                    var visualLine = view.GetOrConstructVisualLine(view.Document.GetLineByNumber(state.CurrentLine + LinesBelow));
+                    var textLine = visualLine.GetTextLine(0, false);
+
+                    double lineTop = visualLine.GetTextLineVisualYPosition(textLine, VisualYPosition.TextTop);
+                    double lineBottom = visualLine.GetTextLineVisualYPosition(textLine, VisualYPosition.TextBottom);
+
+                    view.MakeVisible(new Rect(0, lineTop, 0, lineBottom - lineTop));
+                }
+
+                // Above
+                {
+                    var visualLine = view.GetOrConstructVisualLine(view.Document.GetLineByNumber(state.CurrentLine - LinesAbove));
+                    var textLine = visualLine.GetTextLine(0, false);
+
+                    double lineTop = visualLine.GetTextLineVisualYPosition(textLine, VisualYPosition.TextTop);
+                    double lineBottom = visualLine.GetTextLineVisualYPosition(textLine, VisualYPosition.TextBottom);
+
+                    view.MakeVisible(new Rect(0, lineTop, 0, lineBottom - lineTop));
+                }
+            });
         };
     }
 
