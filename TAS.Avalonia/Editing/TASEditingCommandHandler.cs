@@ -16,6 +16,9 @@ internal class TASEditingCommandHandler {
     private static readonly List<RoutedCommandBinding> CommandBindings = new List<RoutedCommandBinding>();
     private static readonly List<KeyBinding> KeyBindings = new List<KeyBinding>();
 
+    private static RoutedCommand ToggleCommentInputs { get; } = new(nameof(ToggleCommentInputs), new KeyGesture(Key.K, KeyModifiers.Control));
+    private static RoutedCommand ToggleCommentText { get; } = new(nameof(ToggleCommentText), new KeyGesture(Key.K, KeyModifiers.Shift | KeyModifiers.Control));
+
     public static TextAreaInputHandler Create(TextArea textArea) {
         var areaInputHandler = new TextAreaInputHandler(textArea);
         areaInputHandler.CommandBindings.AddRange(CommandBindings);
@@ -33,6 +36,7 @@ internal class TASEditingCommandHandler {
     }
 
     static TASEditingCommandHandler() {
+        // Editing commands
         AddBinding(EditingCommands.Delete, KeyModifiers.None, Key.Delete, OnDelete(CaretMovementType.CharRight));
         AddBinding(EditingCommands.DeleteNextWord, KeyModifiers.Control, Key.Delete, OnDelete(CaretMovementType.WordRight));
         AddBinding(EditingCommands.Backspace, KeyModifiers.None, Key.Back, OnDelete(CaretMovementType.Backspace));
@@ -58,7 +62,92 @@ internal class TASEditingCommandHandler {
         AddBinding(AvaloniaEditCommands.ConvertLeadingTabsToSpaces, OnConvertLeadingTabsToSpaces);
         AddBinding(AvaloniaEditCommands.ConvertLeadingSpacesToTabs, OnConvertLeadingSpacesToTabs);
         AddBinding(AvaloniaEditCommands.IndentSelection, OnIndentSelection);
+
+        // TAS specific commands
+        AddBinding(ToggleCommentInputs, OnToggleCommentInputs);
+        AddBinding(ToggleCommentText, OnToggleCommentText);
     }
+
+    // TAS specific commands
+
+    private static void OnToggleCommentInputs(object target, ExecutedRoutedEventArgs args) {
+        TextArea textArea = GetTextArea(target);
+        if (textArea?.Document == null) return;
+
+        using (textArea.Document.RunUpdate()) {
+            int startLine = textArea.Selection.StartPosition.Line;
+            int endLine = textArea.Selection.EndPosition.Line;
+            if (textArea.Selection.IsEmpty) {
+                startLine = endLine = textArea.Caret.Line;
+            }
+
+            // Make sure that start <= end
+            int tmp = startLine;
+            startLine = Math.Min(startLine, endLine);
+            endLine = Math.Max(tmp, endLine);
+
+            for (int i = startLine; i <= endLine; i++) {
+                var line = textArea.Document.GetLineByNumber(i);
+                string lineText = textArea.Document.GetText(line);
+
+                if (lineText.TrimStart().StartsWith('#')) {
+                    int hashIdx = lineText.IndexOf('#');
+                    textArea.Document.Replace(line, lineText.Remove(hashIdx, 1));
+                } else {
+                    textArea.Document.Replace(line, $"#{lineText}");
+                }
+            }
+        }
+
+        textArea.Caret.BringCaretToView();
+        args.Handled = true;
+    }
+
+    private static void OnToggleCommentText(object target, ExecutedRoutedEventArgs args) {
+        TextArea textArea = GetTextArea(target);
+        if (textArea?.Document == null) return;
+
+        using (textArea.Document.RunUpdate()) {
+            int startLine = textArea.Selection.StartPosition.Line;
+            int endLine = textArea.Selection.EndPosition.Line;
+            if (textArea.Selection.IsEmpty) {
+                startLine = endLine = textArea.Caret.Line;
+            }
+
+            // Make sure that start <= end
+            int tmp = startLine;
+            startLine = Math.Min(startLine, endLine);
+            endLine = Math.Max(tmp, endLine);
+
+            // Only remove # when all lines start with it. Otherwise add another
+            bool allCommented = true;
+            for (int i = startLine; i <= endLine; i++) {
+                var line = textArea.Document.GetLineByNumber(i);
+                string lineText = textArea.Document.GetText(line);
+
+                if (!lineText.TrimStart().StartsWith('#')) {
+                    allCommented = false;
+                    break;
+                }
+            }
+            for (int i = startLine; i <= endLine; i++) {
+                var line = textArea.Document.GetLineByNumber(i);
+                string lineText = textArea.Document.GetText(line);
+
+                if (allCommented) {
+                    int hashIdx = lineText.IndexOf('#');
+                    textArea.Document.Replace(line, lineText.Remove(hashIdx, 1));
+                } else {
+                    textArea.Document.Replace(line, $"#{lineText}");
+                }
+            }
+        }
+
+        textArea.Caret.BringCaretToView();
+        args.Handled = true;
+    }
+
+    // Editing commands
 
     private static TextArea GetTextArea(object target) => target as TextArea;
 
