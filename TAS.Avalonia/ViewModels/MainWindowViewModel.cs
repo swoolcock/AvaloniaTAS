@@ -67,6 +67,8 @@ public class MainWindowViewModel : ViewModelBase {
     public ReactiveCommand<Unit, Unit> ToggleCommentInputsCommand { get; }
     public ReactiveCommand<Unit, Unit> ToggleCommentTextCommand { get; }
 
+    public ReactiveCommand<Unit, Unit> InsertRoomNameCommand { get; }
+
     private readonly ObservableAsPropertyHelper<string> _windowTitle;
     public string WindowTitle => _windowTitle.Value;
 
@@ -178,6 +180,8 @@ public class MainWindowViewModel : ViewModelBase {
         ToggleCommentInputsCommand = ReactiveCommand.Create(ToggleCommentInputs);
         ToggleCommentTextCommand = ReactiveCommand.Create(ToggleCommentText);
 
+        InsertRoomNameCommand = ReactiveCommand.Create(InsertRoomName);
+
         var lastOpenFilePath = _settingsService.LastOpenFilePath;
 
         _celesteService.WriteWait();
@@ -281,7 +285,7 @@ public class MainWindowViewModel : ViewModelBase {
         MenuModel.Separator,
         new MenuModel("Comment/Uncomment Inputs", command: ToggleCommentInputsCommand, gesture: TASEditingCommandHandler.ToggleCommentInputs.Gesture),
         new MenuModel("Comment/Uncomment Text", command: ToggleCommentTextCommand, gesture: TASEditingCommandHandler.ToggleCommentText.Gesture),
-        new MenuModel("Insert Room Name"),
+        new MenuModel("Insert Room Name", command: InsertRoomNameCommand, gesture: TASEditingCommandHandler.InsertRoomName.Gesture),
         new MenuModel("Insert Current In-Game Time"),
         new MenuModel("Insert Mod Info"),
         new MenuModel("Insert Console Load Command"),
@@ -460,4 +464,6 @@ public class MainWindowViewModel : ViewModelBase {
 
     private void ToggleCommentInputs() => TASEditingCommandHandler.ToggleCommentInputs.Execute(null, _editor.editor.TextArea);
     private void ToggleCommentText() => TASEditingCommandHandler.ToggleCommentText.Execute(null, _editor.editor.TextArea);
+
+    private void InsertRoomName() => TASEditingCommandHandler.InsertRoomName.Execute(null, _editor.editor.TextArea);
 }
