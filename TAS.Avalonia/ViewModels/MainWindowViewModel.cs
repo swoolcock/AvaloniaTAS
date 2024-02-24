@@ -2,12 +2,16 @@ using System.Reactive;
 using System.Reactive.Linq;
 using System.Runtime.InteropServices;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Platform.Storage;
 using AvaloniaEdit;
 using ReactiveUI;
+using TAS.Avalonia.Controls;
+using TAS.Avalonia.Editing;
 using TAS.Avalonia.Models;
 using TAS.Avalonia.Services;
+using TAS.Avalonia.Views;
 
 namespace TAS.Avalonia.ViewModels;
 
@@ -86,6 +90,8 @@ public class MainWindowViewModel : ViewModelBase {
 
     public bool MenuVisible => true; //!RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
 
+    private readonly EditorControl _editor;
+
     private readonly CelesteService _celesteService;
     private readonly DialogService _dialogService;
     private readonly SettingsService _settingsService;
@@ -99,7 +105,9 @@ public class MainWindowViewModel : ViewModelBase {
         AppleUniformTypeIdentifiers = new[] { "public.item" }, // TODO: replace this with custom
     };
 
-    public MainWindowViewModel() {
+    public MainWindowViewModel(MainWindow window) {
+        _editor = window.FindControl<EditorControl>("editor");
+
         _celesteService = (Application.Current as App)!.CelesteService;
         _dialogService = (Application.Current as App)!.DialogService;
         _settingsService = (Application.Current as App)!.SettingsService;
@@ -152,7 +160,7 @@ public class MainWindowViewModel : ViewModelBase {
         SetSlowForwardSpeedCommand = ReactiveCommand.CreateFromTask(SetSlowForwardSpeed);
 
         // Context
-        ToggleCommentsCommand = ReactiveCommand.Create(ToggleComments);
+        ToggleCommentsCommand = ReactiveCommand.Create(ToggleComment);
 
         var lastOpenFilePath = _settingsService.LastOpenFilePath;
 
@@ -424,6 +432,7 @@ public class MainWindowViewModel : ViewModelBase {
 
     private void Exit() => Application.Current?.DesktopLifetime().Shutdown();
 
-    private void ToggleComments() {
-    }
+    // Context menu
+
+    private void ToggleComment() => TASEditingCommandHandler.ToggleCommentInputs.Execute(null, _editor.editor.TextArea);
 }
