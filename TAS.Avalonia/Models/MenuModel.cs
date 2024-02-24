@@ -5,7 +5,6 @@ using Avalonia.Input;
 using AvaloniaEdit;
 using AvaloniaEdit.Editing;
 using DynamicData;
-using JetBrains.Annotations;
 using ReactiveUI;
 
 #pragma warning disable CS8601
@@ -26,7 +25,7 @@ public class MenuModel : IEnumerable<MenuModel> {
 
     public MenuModel(string header, RoutedCommand routedCommand, TextArea textArea, object commandParameter = null, bool? isEnabled = null, bool isChecked = false, bool isVisible = true) {
         Header = header;
-        Command = ReactiveCommand.Create(() => routedCommand.Execute(null, textArea));
+        Command = ReactiveCommand.Create<object>(param => routedCommand.Execute(param, textArea));
         CommandParameter = commandParameter;
         Gesture = routedCommand.Gesture;
         IsEnabled = isEnabled;

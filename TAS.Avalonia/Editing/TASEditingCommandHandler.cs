@@ -23,6 +23,7 @@ internal class TASEditingCommandHandler {
 
     internal static RoutedCommand InsertRoomName { get; } = new(nameof(InsertRoomName), new KeyGesture(Key.R, TASInputHandler.PlatformCommandKey));
     internal static RoutedCommand InsertTime { get; } = new(nameof(InsertRoomName), new KeyGesture(Key.T, TASInputHandler.PlatformCommandKey));
+    internal static RoutedCommand InsertCommand { get; } = new(nameof(InsertCommand));
 
     public static TextAreaInputHandler Create(TextArea textArea) {
         var areaInputHandler = new TextAreaInputHandler(textArea);
@@ -71,8 +72,9 @@ internal class TASEditingCommandHandler {
         // TAS specific commands
         AddBinding(ToggleCommentInputs, OnToggleCommentInputs);
         AddBinding(ToggleCommentText, OnToggleCommentText);
-        AddBinding(InsertRoomName, OnInsertTextAbove(static () => $"#lvl_{(Application.Current as App)!.CelesteService.LevelName}"));
-        AddBinding(InsertTime, OnInsertTextAbove(static () => $"#{(Application.Current as App)!.CelesteService.ChapterTime}"));
+        AddBinding(InsertRoomName, OnInsertTextAbove(static _ => $"#lvl_{(Application.Current as App)!.CelesteService.LevelName}"));
+        AddBinding(InsertTime, OnInsertTextAbove(static _ => $"#{(Application.Current as App)!.CelesteService.ChapterTime}"));
+        AddBinding(InsertCommand, OnInsertTextAbove(static command => (string)command));
     }
 
     // TAS specific commands
@@ -154,13 +156,13 @@ internal class TASEditingCommandHandler {
         args.Handled = true;
     }
 
-    private static  EventHandler<ExecutedRoutedEventArgs> OnInsertTextAbove(Func<string> getText) => (target, args) => {
+    private static  EventHandler<ExecutedRoutedEventArgs> OnInsertTextAbove(Func<object,string> getText) => (target, args) => {
         TextArea textArea = GetTextArea(target);
         if (textArea?.Document == null) return;
 
         using (textArea.Document.RunUpdate()) {
             var line = textArea.Document.GetLineByNumber(textArea.Caret.Line);
-            textArea.Document.Insert(line.Offset, $"{getText()}{Environment.NewLine}");
+            textArea.Document.Insert(line.Offset, $"{getText(args.Parameter)}{Environment.NewLine}");
         }
 
         textArea.Caret.BringCaretToView();
