@@ -50,7 +50,7 @@ internal class TASEditingCommandHandler {
         AddBinding(ApplicationCommands.Cut, OnCut, CanCutOrCopy);
         AddBinding(ApplicationCommands.Paste, OnPaste, CanPaste);
         AddBinding(AvaloniaEditCommands.ToggleOverstrike, OnToggleOverstrike);
-        AddBinding(AvaloniaEditCommands.DeleteLine, OnDeleteLine);
+        AddBinding(new RoutedCommand(nameof(AvaloniaEditCommands.DeleteLine), new KeyGesture(Key.Y, TASInputHandler.PlatformCommandKey)), OnDeleteLine);
         AddBinding(AvaloniaEditCommands.RemoveLeadingWhitespace, OnRemoveLeadingWhitespace);
         AddBinding(AvaloniaEditCommands.RemoveTrailingWhitespace, OnRemoveTrailingWhitespace);
         AddBinding(AvaloniaEditCommands.ConvertToUppercase, OnConvertToUpperCase);
