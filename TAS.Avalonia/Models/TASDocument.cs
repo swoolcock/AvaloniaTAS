@@ -1,3 +1,5 @@
+using Avalonia;
+using Avalonia.Threading;
 using AvaloniaEdit.Document;
 using ReactiveUI;
 
@@ -30,6 +32,12 @@ public class TASDocument : ReactiveObject {
     private TASDocument(string contents) {
         Document = new TextDocument(contents);
         Document.TextChanged += Document_TextChanged;
+
+        (Application.Current as App)!.CelesteService.Server.LinesUpdated += OnLinesUpdated;
+    }
+
+    ~TASDocument() {
+        (Application.Current as App)!.CelesteService.Server.LinesUpdated -= OnLinesUpdated;
     }
 
     public static TASDocument CreateBlank() => new TASDocument(EmptyDocument);
@@ -60,5 +68,14 @@ public class TASDocument : ReactiveObject {
 
     private void Document_TextChanged(object sender, EventArgs eventArgs) {
         Dirty = true;
+    }
+
+    private void OnLinesUpdated(Dictionary<int, string> lines) {
+        Dispatcher.UIThread.Post(() => {
+            foreach ((int lineNum, string newText) in lines) {
+                var line = Document.GetLineByNumber(lineNum + 1); // 0-indexed
+                Document.Replace(line, newText);
+            }
+        });
     }
 }
