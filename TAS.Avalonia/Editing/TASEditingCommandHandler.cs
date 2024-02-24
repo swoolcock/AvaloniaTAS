@@ -22,6 +22,7 @@ internal class TASEditingCommandHandler {
     internal static RoutedCommand ToggleCommentText { get; } = new(nameof(ToggleCommentText), new KeyGesture(Key.K, TASInputHandler.PlatformCommandKey | KeyModifiers.Shift));
 
     internal static RoutedCommand InsertRoomName { get; } = new(nameof(InsertRoomName), new KeyGesture(Key.R, TASInputHandler.PlatformCommandKey));
+    internal static RoutedCommand InsertTime { get; } = new(nameof(InsertRoomName), new KeyGesture(Key.T, TASInputHandler.PlatformCommandKey));
 
     public static TextAreaInputHandler Create(TextArea textArea) {
         var areaInputHandler = new TextAreaInputHandler(textArea);
@@ -71,6 +72,7 @@ internal class TASEditingCommandHandler {
         AddBinding(ToggleCommentInputs, OnToggleCommentInputs);
         AddBinding(ToggleCommentText, OnToggleCommentText);
         AddBinding(InsertRoomName, OnInsertRoomName);
+        AddBinding(InsertTime, OnInsertTime);
     }
 
     // TAS specific commands
@@ -159,6 +161,19 @@ internal class TASEditingCommandHandler {
         using (textArea.Document.RunUpdate()) {
             var line = textArea.Document.GetLineByNumber(textArea.Caret.Line);
             textArea.Document.Insert(line.Offset, $"#lvl_{(Application.Current as App)!.CelesteService.LevelName}{Environment.NewLine}");
+        }
+
+        textArea.Caret.BringCaretToView();
+        args.Handled = true;
+    }
+
+    private static void OnInsertTime(object target, ExecutedRoutedEventArgs args) {
+        TextArea textArea = GetTextArea(target);
+        if (textArea?.Document == null) return;
+
+        using (textArea.Document.RunUpdate()) {
+            var line = textArea.Document.GetLineByNumber(textArea.Caret.Line);
+            textArea.Document.Insert(line.Offset, $"#{(Application.Current as App)!.CelesteService.ChapterTime}{Environment.NewLine}");
         }
 
         textArea.Caret.BringCaretToView();

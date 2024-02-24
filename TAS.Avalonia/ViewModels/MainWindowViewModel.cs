@@ -68,6 +68,7 @@ public class MainWindowViewModel : ViewModelBase {
     public ReactiveCommand<Unit, Unit> ToggleCommentTextCommand { get; }
 
     public ReactiveCommand<Unit, Unit> InsertRoomNameCommand { get; }
+    public ReactiveCommand<Unit, Unit> InsertTimeCommand { get; }
 
     private readonly ObservableAsPropertyHelper<string> _windowTitle;
     public string WindowTitle => _windowTitle.Value;
@@ -181,6 +182,7 @@ public class MainWindowViewModel : ViewModelBase {
         ToggleCommentTextCommand = ReactiveCommand.Create(ToggleCommentText);
 
         InsertRoomNameCommand = ReactiveCommand.Create(InsertRoomName);
+        InsertTimeCommand = ReactiveCommand.Create(InsertTime);
 
         var lastOpenFilePath = _settingsService.LastOpenFilePath;
 
@@ -286,7 +288,7 @@ public class MainWindowViewModel : ViewModelBase {
         new MenuModel("Comment/Uncomment Inputs", command: ToggleCommentInputsCommand, gesture: TASEditingCommandHandler.ToggleCommentInputs.Gesture),
         new MenuModel("Comment/Uncomment Text", command: ToggleCommentTextCommand, gesture: TASEditingCommandHandler.ToggleCommentText.Gesture),
         new MenuModel("Insert Room Name", command: InsertRoomNameCommand, gesture: TASEditingCommandHandler.InsertRoomName.Gesture),
-        new MenuModel("Insert Current In-Game Time"),
+        new MenuModel("Insert Current In-Game Time", command: InsertTimeCommand, gesture: TASEditingCommandHandler.InsertTime.Gesture),
         new MenuModel("Insert Mod Info"),
         new MenuModel("Insert Console Load Command"),
         new MenuModel("Insert Simple Console Load Command"),
@@ -466,4 +468,5 @@ public class MainWindowViewModel : ViewModelBase {
     private void ToggleCommentText() => TASEditingCommandHandler.ToggleCommentText.Execute(null, _editor.editor.TextArea);
 
     private void InsertRoomName() => TASEditingCommandHandler.InsertRoomName.Execute(null, _editor.editor.TextArea);
+    private void InsertTime() => TASEditingCommandHandler.InsertTime.Execute(null, _editor.editor.TextArea);
 }
