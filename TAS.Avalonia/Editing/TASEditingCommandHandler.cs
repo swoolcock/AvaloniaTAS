@@ -71,8 +71,8 @@ internal class TASEditingCommandHandler {
         // TAS specific commands
         AddBinding(ToggleCommentInputs, OnToggleCommentInputs);
         AddBinding(ToggleCommentText, OnToggleCommentText);
-        AddBinding(InsertRoomName, OnInsertRoomName);
-        AddBinding(InsertTime, OnInsertTime);
+        AddBinding(InsertRoomName, OnInsertTextAbove(static () => $"#lvl_{(Application.Current as App)!.CelesteService.LevelName}"));
+        AddBinding(InsertTime, OnInsertTextAbove(static () => $"#{(Application.Current as App)!.CelesteService.ChapterTime}"));
     }
 
     // TAS specific commands
@@ -154,31 +154,18 @@ internal class TASEditingCommandHandler {
         args.Handled = true;
     }
 
-    private static void OnInsertRoomName(object target, ExecutedRoutedEventArgs args) {
+    private static  EventHandler<ExecutedRoutedEventArgs> OnInsertTextAbove(Func<string> getText) => (target, args) => {
         TextArea textArea = GetTextArea(target);
         if (textArea?.Document == null) return;
 
         using (textArea.Document.RunUpdate()) {
             var line = textArea.Document.GetLineByNumber(textArea.Caret.Line);
-            textArea.Document.Insert(line.Offset, $"#lvl_{(Application.Current as App)!.CelesteService.LevelName}{Environment.NewLine}");
+            textArea.Document.Insert(line.Offset, $"{getText()}{Environment.NewLine}");
         }
 
         textArea.Caret.BringCaretToView();
         args.Handled = true;
-    }
-
-    private static void OnInsertTime(object target, ExecutedRoutedEventArgs args) {
-        TextArea textArea = GetTextArea(target);
-        if (textArea?.Document == null) return;
-
-        using (textArea.Document.RunUpdate()) {
-            var line = textArea.Document.GetLineByNumber(textArea.Caret.Line);
-            textArea.Document.Insert(line.Offset, $"#{(Application.Current as App)!.CelesteService.ChapterTime}{Environment.NewLine}");
-        }
-
-        textArea.Caret.BringCaretToView();
-        args.Handled = true;
-    }
+    };
 
     // Editing commands
 
