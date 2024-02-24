@@ -17,6 +17,10 @@ public class SettingsService : ReactiveObject {
     }
     public string LastOpenFileName => LastOpenFilePath == null ? null : Path.GetFileName(LastOpenFilePath);
 
+    public bool SendInputs {
+        get => _settings.SendInputs;
+        set => this.RaiseAndSetIfChanged(ref _settings.SendInputs, value);
+    }
     public bool GameInfoVisible {
         get => _settings.GameInfoVisible;
         set => this.RaiseAndSetIfChanged(ref _settings.GameInfoVisible, value);
@@ -68,6 +72,7 @@ public class SettingsService : ReactiveObject {
     public class Settings {
         public string LastOpenFilePath = "";
 
+        public bool SendInputs = true;
         public bool GameInfoVisible = true;
     }
 }

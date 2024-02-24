@@ -20,6 +20,7 @@ public class MainWindowViewModel : ViewModelBase {
     public ReactiveCommand<Unit, Unit> ExitCommand { get; }
 
     // Settings
+    public ReactiveCommand<Unit, Unit> ToggleSendInputsCommand { get; }
     public ReactiveCommand<Unit, Unit> ToggleGameInfoCommand { get; }
 
     // Toggles
@@ -119,6 +120,7 @@ public class MainWindowViewModel : ViewModelBase {
         ExitCommand = ReactiveCommand.Create(Exit);
 
         // Settings
+        ToggleSendInputsCommand = ReactiveCommand.Create(ToggleSendInputs);
         ToggleGameInfoCommand = ReactiveCommand.Create(ToggleGameInfo);
 
         // Toggles
@@ -193,7 +195,7 @@ public class MainWindowViewModel : ViewModelBase {
                 new MenuModel("Exit", ExitCommand, isVisible: includeExit),
             },
             new MenuModel("Settings") {
-                new MenuModel("Send Inputs to Celeste"),
+                new MenuModel("Send Inputs to Celeste", ToggleSendInputsCommand, gesture: new KeyGesture(Key.D, commandModifier)),
                 new MenuModel("Auto Remove Mutually Exclusive Actions"),
                 new MenuModel("Show Game Info", ToggleGameInfoCommand),
                 new MenuModel("Automatic Backup") {
@@ -304,6 +306,7 @@ public class MainWindowViewModel : ViewModelBase {
         new MenuModel("Open Read File / Go to Play Line"),
     };
 
+    private void ToggleSendInputs() => _settingsService.SendInputs = !_settingsService.SendInputs;
     private void ToggleGameInfo() => GameInfoVisible = !GameInfoVisible;
 
     private void ToggleHitboxes() => _celesteService.ToggleHitboxes();
