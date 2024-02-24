@@ -153,6 +153,13 @@ public partial class EditorControl : UserControl {
     }
 
     private static void HandleActionInput(TextArea textArea, TextInputEventArgs e) {
+        // Manually cancel the event, because the hotkey got forwarded to Celeste
+        if (TASStackedInputHandler.CancelNextTextInputEvent.IsRunning && TASStackedInputHandler.CancelNextTextInputEvent.Elapsed < TASStackedInputHandler.CancellationTime) {
+            TASStackedInputHandler.CancelNextTextInputEvent.Stop();
+            e.Handled = true;
+            return;
+        }
+
         // We can only handle single characters
         if (e.Text is not { Length: 1 }) return;
 
