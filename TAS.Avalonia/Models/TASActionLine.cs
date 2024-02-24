@@ -28,19 +28,19 @@ public struct TASActionLine {
         for (int i = 1; i < tokens.Length; i++) {
             if (string.IsNullOrWhiteSpace(tokens[i])) continue;
 
-            var action = TASActionExtensions.ActionForChar(tokens[i][0]);
+            var action = tokens[i][0].ActionForChar();
             value.Actions |= action;
 
             // Parse dash-only/move-only/custom bindings
             if (action is TASAction.DashOnly) {
                 for (int j = 1; j < tokens[i].Length; j++) {
-                    value.Actions |= TASActionExtensions.ActionForChar(tokens[i][j]).ToDashOnlyDirection();
+                    value.Actions |= tokens[i][j].ActionForChar().ToDashOnlyDirection();
                 }
                 continue;
             }
             if (action is TASAction.MoveOnly) {
                 for (int j = 1; j < tokens[i].Length; j++) {
-                    value.Actions |= TASActionExtensions.ActionForChar(tokens[i][j]).ToMoveOnlyDirection();
+                    value.Actions |= tokens[i][j].ActionForChar().ToMoveOnlyDirection();
                 }
                 continue;
             }

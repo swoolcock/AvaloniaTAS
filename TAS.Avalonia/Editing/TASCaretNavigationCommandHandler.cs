@@ -285,15 +285,15 @@ internal static class TASCaretNavigationCommandHandler {
 
         if (direction == CaretMovementType.CharLeft || direction == CaretMovementType.Backspace) {
             //  15,R|,X => R
-            return TASActionExtensions.ActionForChar(lineText[column - 2]);
+            return lineText[column - 2].ActionForChar();
         } else if (direction == CaretMovementType.CharRight) {
             //  15,R|,X => X
-            return TASActionExtensions.ActionForChar(lineText[column]);
+            return lineText[column].ActionForChar();
         } else if (direction == CaretMovementType.WordLeft) {
             //  15,R,D|,X => R,D
             TASAction actions = TASAction.None;
             while (column > TASActionLine.MaxFramesDigits + 1) {
-                actions |= TASActionExtensions.ActionForChar(lineText[column - 2]);
+                actions |= lineText[column - 2].ActionForChar();
                 column -= 2;
             }
             return actions;
@@ -301,7 +301,7 @@ internal static class TASCaretNavigationCommandHandler {
             //  15,R|,D,X => D,X
             TASAction actions = TASAction.None;
             while (column < lineText.Length) {
-                actions |= TASActionExtensions.ActionForChar(lineText[column]);
+                actions |= lineText[column].ActionForChar();
                 column += 2;
             }
             return actions;

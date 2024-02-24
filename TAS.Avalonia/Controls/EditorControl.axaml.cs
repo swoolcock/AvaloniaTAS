@@ -4,6 +4,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Shapes;
 using Avalonia.Data;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Threading;
 using AvaloniaEdit;
 using AvaloniaEdit.Document;
@@ -53,19 +54,8 @@ public partial class EditorControl : UserControl {
         var csharpLanguage = _registryOptions.GetLanguageByExtension(".cs");
         _textMateInstallation.SetGrammar(_registryOptions.GetScopeByLanguageId(csharpLanguage.Id));
         editor.TextArea.ActiveInputHandler = new TASInputHandler(editor.TextArea);
-        editor.TextArea.PushStackedInputHandler(new TASStackedInputHandler(editor.TextArea));
         editor.TextArea.Caret.PositionChanged += (_, _) => CaretPosition = editor.TextArea.Caret.Position;
-        editor.TextArea.TextEntering += (_, e) => {
-            if (e.Text.Length != 1 || e.Text[0] is not >= 'a' and <= 'z' or >= 'A' and <= 'Z') return;
-
-            var key = e.Text[0] switch {
-                >= 'a' and <= 'z' => e.Text[0] - 'a' + Key.A,
-                >= 'A' and <= 'Z' => e.Text[0] - 'A' + Key.A,
-                _ => Key.None,
-            };
-
-            e.Handled = TASStackedInputHandler.HandleActionInput(editor.TextArea, key);
-        };
+        editor.TextArea.AddHandler(TextInputEvent, HandleActionInput, RoutingStrategies.Tunnel);
         editor.TextArea.TextView.BackgroundRenderers.Add(new TASLineRenderer(editor.TextArea));
 
         ApplyTASLineNumbers();
@@ -159,5 +149,140 @@ public partial class EditorControl : UserControl {
 
         _insertionLineStart = _insertionLineEnd = _removalLineStart = _removalLineEnd = 0;
         _discardUpdateEvents = false;
+    }
+
+    private static void HandleActionInput(TextArea textArea, TextInputEventArgs e) {
+        // We can only handle single characters
+        if (e.Text is not { Length: 1 }) return;
+
+        // Get the text if possible
+        var caretPosition = textArea.Caret.Position;
+        if (textArea.Document is not { } document ||
+            document.GetLineByNumber(caretPosition.Line) is not { } line ||
+            document.GetText(line) is not { } lineText)
+        {
+            // Something exploded
+            return;
+        }
+
+        char typedCharacter = char.ToUpper(e.Text[0]);
+        int leadingSpaces = lineText.Length - lineText.TrimStart().Length;
+        bool startOfLine = caretPosition.Column <= leadingSpaces + 1;
+
+        // If it's a TAS action line, handle it ourselves
+        if (TASActionLine.TryParse(lineText, out var actionLine)) {
+            e.Handled = true;
+
+            // Handle custom bindings
+            int customBindStart = TASCaretNavigationCommandHandler.GetColumnOfAction(actionLine, TASAction.CustomBinding);
+            int customBindEnd = customBindStart + actionLine.CustomBindings.Count;
+            if (customBindStart != -1 && caretPosition.Column >= customBindStart && caretPosition.Column <= customBindEnd && typedCharacter is >= 'A' and <= 'Z') {
+                if (actionLine.CustomBindings.Contains(typedCharacter)) {
+                    actionLine.CustomBindings.Remove(typedCharacter);
+                    caretPosition.Column = customBindEnd - 1;
+                } else {
+                    actionLine.CustomBindings.Add(typedCharacter);
+                    caretPosition.Column = customBindEnd + 1;
+                }
+
+                goto FinishEdit; // Skip regular logic
+            }
+
+            var typedAction = typedCharacter.ActionForChar();
+
+            // Handle feather inputs
+            int featherStartColumn = TASCaretNavigationCommandHandler.GetColumnOfAction(actionLine, TASAction.FeatherAim);
+            if (featherStartColumn >= 1 && caretPosition.Column > featherStartColumn && (typedCharacter is '.' or ',' or (>= '0' and <= '9'))) {
+                lineText = lineText.Insert(caretPosition.Column - 1, typedCharacter.ToString());
+                if (TASActionLine.TryParse(lineText, out var newActionLine, ignoreInvalidFloats: false)) {
+                    actionLine = newActionLine;
+                    caretPosition.Column++;
+                }
+            }
+            // Handle dash-only/move-only/custom bindings
+            else if (typedAction is TASAction.DashOnly or TASAction.MoveOnly or TASAction.CustomBinding) {
+                actionLine.Actions = actionLine.Actions.ToggleAction(typedAction);
+                caretPosition.Column = TASCaretNavigationCommandHandler.GetColumnOfAction(actionLine, typedAction);
+            }
+            // Handle regular inputs
+            else if (typedAction != TASAction.None) {
+                int dashOnlyStart = TASCaretNavigationCommandHandler.GetColumnOfAction(actionLine, TASAction.DashOnly);
+                int dashOnlyEnd = dashOnlyStart + actionLine.Actions.GetDashOnly().Count();
+                if (dashOnlyStart != -1 && caretPosition.Column >= dashOnlyStart && caretPosition.Column <= dashOnlyEnd)
+                    typedAction = typedAction.ToDashOnlyDirection();
+
+                int moveOnlyStart = TASCaretNavigationCommandHandler.GetColumnOfAction(actionLine, TASAction.MoveOnly);
+                int moveOnlyEnd = moveOnlyStart + actionLine.Actions.GetMoveOnly().Count();
+                if (moveOnlyStart != -1 && caretPosition.Column >= moveOnlyStart && caretPosition.Column <= moveOnlyEnd)
+                    typedAction = typedAction.ToMoveOnlyDirection();
+
+                // Toggle it
+                actionLine.Actions = actionLine.Actions.ToggleAction(typedAction);
+
+                // Warp the cursor after the number
+                if (typedAction == TASAction.FeatherAim && actionLine.Actions.HasFlag(TASAction.FeatherAim)) {
+                    caretPosition.Column = TASCaretNavigationCommandHandler.GetColumnOfAction(actionLine, TASAction.FeatherAim) + 1;
+                } else if (typedAction == TASAction.FeatherAim && !actionLine.Actions.HasFlag(TASAction.FeatherAim)) {
+                    actionLine.FeatherAngle = null;
+                    actionLine.FeatherMagnitude = null;
+                    caretPosition.Column = TASActionLine.MaxFramesDigits + 1;
+                } else if (typedAction is TASAction.LeftDashOnly or TASAction.RightDashOnly or TASAction.UpDashOnly or TASAction.DownDashOnly) {
+                    caretPosition.Column = TASCaretNavigationCommandHandler.GetColumnOfAction(actionLine, TASAction.DashOnly) + actionLine.Actions.GetDashOnly().Count();
+                } else if (typedAction is TASAction.LeftMoveOnly or TASAction.RightMoveOnly or TASAction.UpMoveOnly or TASAction.DownMoveOnly) {
+                    caretPosition.Column = TASCaretNavigationCommandHandler.GetColumnOfAction(actionLine, TASAction.MoveOnly) + actionLine.Actions.GetMoveOnly().Count();
+                } else {
+                    caretPosition.Column = TASActionLine.MaxFramesDigits + 1;
+                }
+            }
+            // If the key we entered is a number
+            else if (typedCharacter is >= '0' and <= '9') {
+                int cursorPosition = caretPosition.Column - leadingSpaces - 1;
+
+                // Entering a zero at the start should do nothing but format
+                if (cursorPosition == 0 && typedCharacter == '0') {
+                    caretPosition.Column = TASActionLine.MaxFramesDigits - actionLine.Frames.Digits() + 1;
+                }
+                // If we have a 0, just force the new number
+                else if (actionLine.Frames == 0) {
+                    actionLine.Frames = int.Parse(typedCharacter.ToString());
+                    caretPosition.Column = TASActionLine.MaxFramesDigits + 1;
+                } else {
+                    // Jam the number into the current position
+                    string leftOfCursor = lineText[..(caretPosition.Column - 1)];
+                    string rightOfCursor = lineText[(caretPosition.Column - 1)..];
+                    lineText = $"{leftOfCursor}{typedCharacter}{rightOfCursor}";
+
+                    // Reparse
+                    TASActionLine.TryParse(lineText, out actionLine);
+
+                    // Cap at max frames
+                    if (actionLine.Frames > TASActionLine.MaxFrames) {
+                        actionLine.Frames = TASActionLine.MaxFrames;
+                        caretPosition.Column = TASActionLine.MaxFramesDigits + 1;
+                    } else {
+                        caretPosition.Column = TASActionLine.MaxFramesDigits - actionLine.Frames.Digits() + cursorPosition + 2;
+                    }
+                }
+            }
+
+            FinishEdit:
+            document.Replace(line, actionLine.ToString());
+        }
+        // Start a TAS action line if we should
+        else if (startOfLine && typedCharacter is >= '0' and <= '9') {
+            e.Handled = true;
+
+            string newLine = typedCharacter.ToString().PadLeft(TASActionLine.MaxFramesDigits);
+            if (lineText.Trim().Length == 0)
+                document.Replace(line, newLine);
+            else
+                document.Insert(line.Offset, newLine + "\n");
+            caretPosition.Column = TASActionLine.MaxFramesDigits + 1;
+        }
+
+        line = document.GetLineByNumber(caretPosition.Line);
+        caretPosition.Column = Math.Clamp(caretPosition.Column, 1, line.Length + 1);
+        caretPosition.VisualColumn = caretPosition.Column - 1;
+        textArea.Caret.Position = caretPosition;
     }
 }
