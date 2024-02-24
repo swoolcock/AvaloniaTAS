@@ -12,6 +12,12 @@ public class TASStackedInputHandler : TextAreaStackedInputHandler {
     public override void OnPreviewKeyDown(KeyEventArgs e) {
         var app = (Application.Current as App)!;
         if (app.SettingsService.SendInputs)
-            app.CelesteService.SendKeyPress(e.Key, e.KeyModifiers);
+            e.Handled = app.CelesteService.SendKeyEvent(e.Key, e.KeyModifiers, released: false);
+    }
+
+    public override void OnPreviewKeyUp(KeyEventArgs e) {
+        var app = (Application.Current as App)!;
+        if (app.SettingsService.SendInputs)
+            e.Handled = app.CelesteService.SendKeyEvent(e.Key, e.KeyModifiers, released: true);
     }
 }
