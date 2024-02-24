@@ -52,7 +52,7 @@ public enum TASAction {
 }
 
 public static class TASActionExtensions {
-    public static TASAction ActionForChar(char c) =>
+    public static TASAction ActionForChar(this char c) =>
         c.ToString().ToUpper()[0] switch {
             'R' => TASAction.Right,
             'L' => TASAction.Left,
