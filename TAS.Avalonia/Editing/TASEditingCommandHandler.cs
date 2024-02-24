@@ -16,8 +16,10 @@ internal class TASEditingCommandHandler {
     private static readonly List<RoutedCommandBinding> CommandBindings = new List<RoutedCommandBinding>();
     private static readonly List<KeyBinding> KeyBindings = new List<KeyBinding>();
 
-    internal static RoutedCommand ToggleCommentInputs { get; } = new(nameof(ToggleCommentInputs), new KeyGesture(Key.K, KeyModifiers.Control));
-    internal static RoutedCommand ToggleCommentText { get; } = new(nameof(ToggleCommentText), new KeyGesture(Key.K, KeyModifiers.Shift | KeyModifiers.Control));
+    internal static RoutedCommand DeleteLine { get; } = new(nameof(DeleteLine), new KeyGesture(Key.Y, TASInputHandler.PlatformCommandKey));
+
+    internal static RoutedCommand ToggleCommentInputs { get; } = new(nameof(ToggleCommentInputs), new KeyGesture(Key.K, TASInputHandler.PlatformCommandKey));
+    internal static RoutedCommand ToggleCommentText { get; } = new(nameof(ToggleCommentText), new KeyGesture(Key.K, TASInputHandler.PlatformCommandKey | KeyModifiers.Shift));
 
     public static TextAreaInputHandler Create(TextArea textArea) {
         var areaInputHandler = new TextAreaInputHandler(textArea);
@@ -50,7 +52,7 @@ internal class TASEditingCommandHandler {
         AddBinding(ApplicationCommands.Cut, OnCut, CanCutOrCopy);
         AddBinding(ApplicationCommands.Paste, OnPaste, CanPaste);
         AddBinding(AvaloniaEditCommands.ToggleOverstrike, OnToggleOverstrike);
-        AddBinding(new RoutedCommand(nameof(AvaloniaEditCommands.DeleteLine), new KeyGesture(Key.Y, TASInputHandler.PlatformCommandKey)), OnDeleteLine);
+        AddBinding(DeleteLine, OnDeleteLine);
         AddBinding(AvaloniaEditCommands.RemoveLeadingWhitespace, OnRemoveLeadingWhitespace);
         AddBinding(AvaloniaEditCommands.RemoveTrailingWhitespace, OnRemoveTrailingWhitespace);
         AddBinding(AvaloniaEditCommands.ConvertToUppercase, OnConvertToUpperCase);

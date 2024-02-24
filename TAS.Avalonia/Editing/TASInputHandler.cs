@@ -12,6 +12,8 @@ namespace TAS.Avalonia.Editing;
 public class TASInputHandler : TextAreaInputHandler {
     internal static readonly KeyModifiers PlatformCommandKey = RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? KeyModifiers.Meta : KeyModifiers.Control;
 
+    internal static RoutedCommand Redo { get; } = new(nameof(Redo), new KeyGesture(Key.Z, PlatformCommandKey | KeyModifiers.Shift));
+
     public TextAreaInputHandler CaretNavigation { get; }
     public TextAreaInputHandler Editing { get; }
     public ITextAreaInputHandler MouseSelection { get; }
@@ -28,7 +30,7 @@ public class TASInputHandler : TextAreaInputHandler {
         NestedInputHandlers.Add(Editing = TASEditingCommandHandler.Create(textArea));
         NestedInputHandlers.Add(MouseSelection = new TASSelectionMouseHandler(textArea));
         AddBinding(ApplicationCommands.Undo, ExecuteUndo, CanExecuteUndo);
-        AddBinding(new RoutedCommand(nameof(ApplicationCommands.Redo), new KeyGesture(Key.Z, PlatformCommandKey | KeyModifiers.Shift)), ExecuteRedo, CanExecuteRedo);
+        AddBinding(Redo, ExecuteRedo, CanExecuteRedo);
     }
 
     private void AddBinding(RoutedCommand command, EventHandler<ExecutedRoutedEventArgs> handler, EventHandler<CanExecuteRoutedEventArgs> canExecuteHandler = null) {

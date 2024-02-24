@@ -57,6 +57,13 @@ public class MainWindowViewModel : ViewModelBase {
     public ReactiveCommand<Unit, Unit> SetSlowForwardSpeedCommand { get; }
 
     // Context
+    public ReactiveCommand<Unit, Unit> CutCommand { get; }
+    public ReactiveCommand<Unit, Unit> CopyCommand { get; }
+    public ReactiveCommand<Unit, Unit> PasteCommand { get; }
+
+    public ReactiveCommand<Unit, Unit> UndoCommand { get; }
+    public ReactiveCommand<Unit, Unit> RedoCommand { get; }
+
     public ReactiveCommand<Unit, Unit> ToggleCommentInputsCommand { get; }
     public ReactiveCommand<Unit, Unit> ToggleCommentTextCommand { get; }
 
@@ -161,6 +168,13 @@ public class MainWindowViewModel : ViewModelBase {
         SetSlowForwardSpeedCommand = ReactiveCommand.CreateFromTask(SetSlowForwardSpeed);
 
         // Context
+        CutCommand = ReactiveCommand.Create(Cut);
+        CopyCommand = ReactiveCommand.Create(Copy);
+        PasteCommand = ReactiveCommand.Create(Paste);
+
+        UndoCommand = ReactiveCommand.Create(Undo);
+        RedoCommand = ReactiveCommand.Create(Redo);
+
         ToggleCommentInputsCommand = ReactiveCommand.Create(ToggleCommentInputs);
         ToggleCommentTextCommand = ReactiveCommand.Create(ToggleCommentText);
 
@@ -252,12 +266,12 @@ public class MainWindowViewModel : ViewModelBase {
     }
 
     private MenuModel[] CreateContextMenu() => new[] {
-        new MenuModel("Cut"),
-        new MenuModel("Copy"),
-        new MenuModel("Paste"),
+        new MenuModel("Cut", command: CutCommand, gesture: ApplicationCommands.Cut.Gesture),
+        new MenuModel("Copy", command: CopyCommand, gesture: ApplicationCommands.Copy.Gesture),
+        new MenuModel("Paste", command: PasteCommand, gesture: ApplicationCommands.Paste.Gesture),
         MenuModel.Separator,
-        new MenuModel("Undo"),
-        new MenuModel("Redo"),
+        new MenuModel("Undo", command: UndoCommand, gesture: ApplicationCommands.Undo.Gesture),
+        new MenuModel("Redo", command: RedoCommand, gesture: TASInputHandler.Redo.Gesture),
         MenuModel.Separator,
         new MenuModel("Insert/Remove Breakpoint"),
         new MenuModel("Insert/Remove Savestate Breakpoint"),
@@ -436,6 +450,13 @@ public class MainWindowViewModel : ViewModelBase {
     private void Exit() => Application.Current?.DesktopLifetime().Shutdown();
 
     // Context menu
+
+    private void Cut() => ApplicationCommands.Cut.Execute(null, _editor.editor.TextArea);
+    private void Copy() => ApplicationCommands.Copy.Execute(null, _editor.editor.TextArea);
+    private void Paste() => ApplicationCommands.Paste.Execute(null, _editor.editor.TextArea);
+
+    private void Undo() => ApplicationCommands.Undo.Execute(null, _editor.editor.TextArea);
+    private void Redo() => TASInputHandler.Redo.Execute(null, _editor.editor.TextArea);
 
     private void ToggleCommentInputs() => TASEditingCommandHandler.ToggleCommentInputs.Execute(null, _editor.editor.TextArea);
     private void ToggleCommentText() => TASEditingCommandHandler.ToggleCommentText.Execute(null, _editor.editor.TextArea);
