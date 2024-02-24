@@ -21,7 +21,10 @@ public class TASDocument : ReactiveObject {
     private bool _dirty;
     public bool Dirty {
         get => _dirty;
-        private set => this.RaiseAndSetIfChanged(ref _dirty, value);
+        private set {
+            this.RaiseAndSetIfChanged(ref _dirty, value);
+            if (value) Save();
+        }
     }
 
     private TASDocument(string contents) {

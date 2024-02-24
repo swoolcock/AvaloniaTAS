@@ -1,14 +1,19 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Controls.Shapes;
+using Avalonia.Data;
 using Avalonia.Input;
-using Avalonia.Media.TextFormatting;
+using Avalonia.Threading;
 using AvaloniaEdit;
 using AvaloniaEdit.Document;
+using AvaloniaEdit.Editing;
+using AvaloniaEdit.Rendering;
 using AvaloniaEdit.TextMate;
 using TAS.Avalonia.Editing;
 using TAS.Avalonia.Models;
+using TAS.Avalonia.Rendering;
 using TextMateSharp.Grammars;
-using TextMateSharp.Model;
 
 namespace TAS.Avalonia.Controls;
 
@@ -61,11 +66,72 @@ public partial class EditorControl : UserControl {
 
             e.Handled = TASStackedInputHandler.HandleActionInput(editor.TextArea, key);
         };
+        editor.TextArea.TextView.BackgroundRenderers.Add(new TASLineRenderer(editor.TextArea));
+
+        ApplyTASLineNumbers();
+
         PropertyChanged += (_, e) => {
             if (e.Property == CaretPositionProperty) {
                 editor.TextArea.Caret.Position = (TextViewPosition) e.NewValue!;
             }
         };
+
+        int prevLine = 0;
+        (Application.Current as App).CelesteService.Server.StateUpdated += state => {
+            if (state.CurrentLine == prevLine) return;
+            Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                const int LinesBelow = 3;
+                const int LinesAbove = 3;
+
+                var view = editor.TextArea.TextView;
+                editor.TextArea.Caret.Line = state.CurrentLine + 1;
+
+                // Below
+                {
+                    var visualLine = view.GetOrConstructVisualLine(view.Document.GetLineByNumber(editor.TextArea.Caret.Line + LinesBelow));
+                    var textLine = visualLine.GetTextLine(0, false);
+
+                    double lineTop = visualLine.GetTextLineVisualYPosition(textLine, VisualYPosition.TextTop);
+                    double lineBottom = visualLine.GetTextLineVisualYPosition(textLine, VisualYPosition.TextBottom);
+
+                    view.MakeVisible(new Rect(0, lineTop, 0, lineBottom - lineTop));
+                }
+
+                // Above
+                {
+                    var visualLine = view.GetOrConstructVisualLine(view.Document.GetLineByNumber(editor.TextArea.Caret.Line - LinesAbove));
+                    var textLine = visualLine.GetTextLine(0, false);
+
+                    double lineTop = visualLine.GetTextLineVisualYPosition(textLine, VisualYPosition.TextTop);
+                    double lineBottom = visualLine.GetTextLineVisualYPosition(textLine, VisualYPosition.TextBottom);
+
+                    view.MakeVisible(new Rect(0, lineTop, 0, lineBottom - lineTop));
+                }
+            });
+            prevLine = state.CurrentLine;
+        };
+    }
+
+    private void ApplyTASLineNumbers() {
+        var leftMargins = editor.TextArea.LeftMargins;
+        for (int i = 0; i < leftMargins.Count; i++) {
+            if (leftMargins[i] is LineNumberMargin) {
+                leftMargins.RemoveAt(i);
+                if (i < leftMargins.Count && DottedLineMargin.IsDottedLineMargin(leftMargins[i])) {
+                    leftMargins.RemoveAt(i);
+                }
+                break;
+            }
+        }
+
+        var lineNumbers = new TASLineNumberMargin();
+        var line = (Line) DottedLineMargin.Create();
+        leftMargins.Insert(0, lineNumbers);
+        leftMargins.Insert(1, line);
+        var lineNumbersForeground = new Binding("LineNumbersForeground") { Source = editor };
+        line.Bind(Shape.StrokeProperty, lineNumbersForeground);
+        lineNumbers.Bind(ForegroundProperty, lineNumbersForeground);
     }
 
     private bool _discardUpdateEvents = false; // Avoid infinite loops
