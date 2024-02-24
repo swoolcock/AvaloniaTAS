@@ -56,20 +56,6 @@ public class MainWindowViewModel : ViewModelBase {
     public ReactiveCommand<Unit, Unit> SetFastForwardSpeedCommand { get; }
     public ReactiveCommand<Unit, Unit> SetSlowForwardSpeedCommand { get; }
 
-    // Context
-    public ReactiveCommand<Unit, Unit> CutCommand { get; }
-    public ReactiveCommand<Unit, Unit> CopyCommand { get; }
-    public ReactiveCommand<Unit, Unit> PasteCommand { get; }
-
-    public ReactiveCommand<Unit, Unit> UndoCommand { get; }
-    public ReactiveCommand<Unit, Unit> RedoCommand { get; }
-
-    public ReactiveCommand<Unit, Unit> ToggleCommentInputsCommand { get; }
-    public ReactiveCommand<Unit, Unit> ToggleCommentTextCommand { get; }
-
-    public ReactiveCommand<Unit, Unit> InsertRoomNameCommand { get; }
-    public ReactiveCommand<Unit, Unit> InsertTimeCommand { get; }
-
     private readonly ObservableAsPropertyHelper<string> _windowTitle;
     public string WindowTitle => _windowTitle.Value;
 
@@ -170,20 +156,6 @@ public class MainWindowViewModel : ViewModelBase {
         SetFastForwardSpeedCommand = ReactiveCommand.CreateFromTask(SetFastForwardSpeed);
         SetSlowForwardSpeedCommand = ReactiveCommand.CreateFromTask(SetSlowForwardSpeed);
 
-        // Context
-        CutCommand = ReactiveCommand.Create(Cut);
-        CopyCommand = ReactiveCommand.Create(Copy);
-        PasteCommand = ReactiveCommand.Create(Paste);
-
-        UndoCommand = ReactiveCommand.Create(Undo);
-        RedoCommand = ReactiveCommand.Create(Redo);
-
-        ToggleCommentInputsCommand = ReactiveCommand.Create(ToggleCommentInputs);
-        ToggleCommentTextCommand = ReactiveCommand.Create(ToggleCommentText);
-
-        InsertRoomNameCommand = ReactiveCommand.Create(InsertRoomName);
-        InsertTimeCommand = ReactiveCommand.Create(InsertTime);
-
         var lastOpenFilePath = _settingsService.LastOpenFilePath;
 
         _celesteService.WriteWait();
@@ -272,23 +244,26 @@ public class MainWindowViewModel : ViewModelBase {
     }
 
     private MenuModel[] CreateContextMenu() => new[] {
-        new MenuModel("Cut", command: CutCommand, gesture: ApplicationCommands.Cut.Gesture),
-        new MenuModel("Copy", command: CopyCommand, gesture: ApplicationCommands.Copy.Gesture),
-        new MenuModel("Paste", command: PasteCommand, gesture: ApplicationCommands.Paste.Gesture),
+        new MenuModel("Cut", routedCommand: ApplicationCommands.Cut, textArea: _editor.editor.TextArea),
+        new MenuModel("Copy", routedCommand: ApplicationCommands.Copy, textArea: _editor.editor.TextArea),
+        new MenuModel("Paste", routedCommand: ApplicationCommands.Paste, textArea: _editor.editor.TextArea),
         MenuModel.Separator,
-        new MenuModel("Undo", command: UndoCommand, gesture: ApplicationCommands.Undo.Gesture),
-        new MenuModel("Redo", command: RedoCommand, gesture: TASInputHandler.Redo.Gesture),
+        new MenuModel("Undo", routedCommand: ApplicationCommands.Undo, textArea: _editor.editor.TextArea),
+        new MenuModel("Redo", routedCommand: TASInputHandler.Redo, textArea: _editor.editor.TextArea),
+        MenuModel.Separator,
+        new MenuModel("Select All", routedCommand: ApplicationCommands.SelectAll, textArea: _editor.editor.TextArea),
+        new MenuModel("Select Block"),
         MenuModel.Separator,
         new MenuModel("Insert/Remove Breakpoint"),
         new MenuModel("Insert/Remove Savestate Breakpoint"),
         new MenuModel("Remove All Uncommented Breakpoints"),
         new MenuModel("Remove All Breakpoints"),
         new MenuModel("Comment/Uncomment All Breakpoints"),
+        new MenuModel("Comment/Uncomment Inputs", routedCommand: TASEditingCommandHandler.ToggleCommentInputs, textArea: _editor.editor.TextArea),
+        new MenuModel("Comment/Uncomment Text", routedCommand: TASEditingCommandHandler.ToggleCommentText, textArea: _editor.editor.TextArea),
         MenuModel.Separator,
-        new MenuModel("Comment/Uncomment Inputs", command: ToggleCommentInputsCommand, gesture: TASEditingCommandHandler.ToggleCommentInputs.Gesture),
-        new MenuModel("Comment/Uncomment Text", command: ToggleCommentTextCommand, gesture: TASEditingCommandHandler.ToggleCommentText.Gesture),
-        new MenuModel("Insert Room Name", command: InsertRoomNameCommand, gesture: TASEditingCommandHandler.InsertRoomName.Gesture),
-        new MenuModel("Insert Current In-Game Time", command: InsertTimeCommand, gesture: TASEditingCommandHandler.InsertTime.Gesture),
+        new MenuModel("Insert Room Name", routedCommand: TASEditingCommandHandler.InsertRoomName, textArea: _editor.editor.TextArea),
+        new MenuModel("Insert Current In-Game Time", routedCommand: TASEditingCommandHandler.InsertTime, textArea: _editor.editor.TextArea),
         new MenuModel("Insert Mod Info"),
         new MenuModel("Insert Console Load Command"),
         new MenuModel("Insert Simple Console Load Command"),
@@ -454,19 +429,4 @@ public class MainWindowViewModel : ViewModelBase {
     }
 
     private void Exit() => Application.Current?.DesktopLifetime().Shutdown();
-
-    // Context menu
-
-    private void Cut() => ApplicationCommands.Cut.Execute(null, _editor.editor.TextArea);
-    private void Copy() => ApplicationCommands.Copy.Execute(null, _editor.editor.TextArea);
-    private void Paste() => ApplicationCommands.Paste.Execute(null, _editor.editor.TextArea);
-
-    private void Undo() => ApplicationCommands.Undo.Execute(null, _editor.editor.TextArea);
-    private void Redo() => TASInputHandler.Redo.Execute(null, _editor.editor.TextArea);
-
-    private void ToggleCommentInputs() => TASEditingCommandHandler.ToggleCommentInputs.Execute(null, _editor.editor.TextArea);
-    private void ToggleCommentText() => TASEditingCommandHandler.ToggleCommentText.Execute(null, _editor.editor.TextArea);
-
-    private void InsertRoomName() => TASEditingCommandHandler.InsertRoomName.Execute(null, _editor.editor.TextArea);
-    private void InsertTime() => TASEditingCommandHandler.InsertTime.Execute(null, _editor.editor.TextArea);
 }
