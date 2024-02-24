@@ -67,8 +67,10 @@ public partial class EditorControl : UserControl {
         };
 
         int prevLine = 0;
-        (Application.Current as App).CelesteService.Server.StateUpdated += state => {
-            if (state.CurrentLine == prevLine) return;
+        (Application.Current as App)!.CelesteService.Server.StateUpdated += state => {
+            if (state.CurrentLine == -1 || state.CurrentLine == prevLine) return;
+            prevLine = state.CurrentLine;
+
             Dispatcher.UIThread.InvokeAsync(() =>
             {
                 const int LinesBelow = 3;
@@ -99,7 +101,6 @@ public partial class EditorControl : UserControl {
                     view.MakeVisible(new Rect(0, lineTop, 0, lineBottom - lineTop));
                 }
             });
-            prevLine = state.CurrentLine;
         };
     }
 
