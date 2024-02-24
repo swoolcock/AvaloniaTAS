@@ -12,10 +12,27 @@
     <Application.Styles>
         <FluentTheme />
         <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml" />
+
+        <Styles>
+            <Styles.Resources>
+                <ResourceDictionary>
+                    <ResourceDictionary.ThemeDictionaries>
+                        <ResourceDictionary x:Key="Light">
+                            <!-- TODO -->
+                        </ResourceDictionary>
+                        <ResourceDictionary x:Key="Dark">
+                            <SolidColorBrush x:Key="Background1Brush">#000000</SolidColorBrush>
+                            <SolidColorBrush x:Key="Background2Brush">#111111</SolidColorBrush>
+                            <SolidColorBrush x:Key="Background3Brush">#333333</SolidColorBrush>
+                        </ResourceDictionary>
+                    </ResourceDictionary.ThemeDictionaries>
+                </ResourceDictionary>
+            </Styles.Resources>
+        </Styles>
     </Application.Styles>
 
     <Application.Resources>
-        <FontFamily x:Key="CodeFontFamily">Cascadia Code,Consolas,Menlo,Monospace</FontFamily>
+        <FontFamily x:Key="CodeFontFamily">Jetbrinas Mono,Cascadia Code,Consolas,Menlo,Monospace</FontFamily>
         <converters:NativeMenuConverter x:Key="NativeMenuConverter" />
         <converters:MenuConverter x:Key="MenuConverter" />
         <converters:ContextMenuConverter x:Key="ContextMenuConverter" />
