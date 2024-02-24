@@ -57,7 +57,8 @@ public class MainWindowViewModel : ViewModelBase {
     public ReactiveCommand<Unit, Unit> SetSlowForwardSpeedCommand { get; }
 
     // Context
-    public ReactiveCommand<Unit, Unit> ToggleCommentsCommand { get; }
+    public ReactiveCommand<Unit, Unit> ToggleCommentInputsCommand { get; }
+    public ReactiveCommand<Unit, Unit> ToggleCommentTextCommand { get; }
 
     private readonly ObservableAsPropertyHelper<string> _windowTitle;
     public string WindowTitle => _windowTitle.Value;
@@ -160,7 +161,8 @@ public class MainWindowViewModel : ViewModelBase {
         SetSlowForwardSpeedCommand = ReactiveCommand.CreateFromTask(SetSlowForwardSpeed);
 
         // Context
-        ToggleCommentsCommand = ReactiveCommand.Create(ToggleComment);
+        ToggleCommentInputsCommand = ReactiveCommand.Create(ToggleCommentInputs);
+        ToggleCommentTextCommand = ReactiveCommand.Create(ToggleCommentText);
 
         var lastOpenFilePath = _settingsService.LastOpenFilePath;
 
@@ -263,7 +265,8 @@ public class MainWindowViewModel : ViewModelBase {
         new MenuModel("Remove All Breakpoints"),
         new MenuModel("Comment/Uncomment All Breakpoints"),
         MenuModel.Separator,
-        new MenuModel("Comment/Uncomment Text", command: ToggleCommentsCommand),
+        new MenuModel("Comment/Uncomment Inputs", command: ToggleCommentInputsCommand, gesture: TASEditingCommandHandler.ToggleCommentInputs.Gesture),
+        new MenuModel("Comment/Uncomment Text", command: ToggleCommentTextCommand, gesture: TASEditingCommandHandler.ToggleCommentText.Gesture),
         new MenuModel("Insert Room Name"),
         new MenuModel("Insert Current In-Game Time"),
         new MenuModel("Insert Mod Info"),
@@ -434,5 +437,6 @@ public class MainWindowViewModel : ViewModelBase {
 
     // Context menu
 
-    private void ToggleComment() => TASEditingCommandHandler.ToggleCommentInputs.Execute(null, _editor.editor.TextArea);
+    private void ToggleCommentInputs() => TASEditingCommandHandler.ToggleCommentInputs.Execute(null, _editor.editor.TextArea);
+    private void ToggleCommentText() => TASEditingCommandHandler.ToggleCommentText.Execute(null, _editor.editor.TextArea);
 }
