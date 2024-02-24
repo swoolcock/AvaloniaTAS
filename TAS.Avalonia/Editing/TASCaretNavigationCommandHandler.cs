@@ -20,6 +20,8 @@ internal static class TASCaretNavigationCommandHandler {
     private static readonly List<RoutedCommandBinding> CommandBindings = new List<RoutedCommandBinding>();
     private static readonly List<KeyBinding> KeyBindings = new List<KeyBinding>();
 
+    internal static RoutedCommand SelectBlock { get; } = new(nameof(SelectBlock), new KeyGesture(Key.W, TASInputHandler.PlatformCommandKey));
+
     public static TextAreaInputHandler Create(TextArea textArea) {
         var areaInputHandler = new TextAreaInputHandler(textArea);
         areaInputHandler.CommandBindings.AddRange(CommandBindings);
@@ -73,6 +75,7 @@ internal static class TASCaretNavigationCommandHandler {
         AddBinding(RectangleSelection.BoxSelectToLineEnd, KeyModifiers.Alt | keymap.SelectionModifiers, Key.End, OnMoveCaretBoxSelection(CaretMovementType.LineEnd));
 
         AddBinding(ApplicationCommands.SelectAll, OnSelectAll);
+        AddBinding(SelectBlock, OnSelectBlock);
 
         foreach (KeyGesture gesture in keymap.MoveCursorToTheStartOfLine) {
             AddBinding(EditingCommands.MoveToLineStart, gesture, OnMoveCaret(CaretMovementType.LineStart));
@@ -113,6 +116,29 @@ internal static class TASCaretNavigationCommandHandler {
         args.Handled = true;
         textArea.Caret.Offset = textArea.Document.TextLength;
         textArea.Selection = Selection.Create(textArea, 0, textArea.Document.TextLength);
+    }
+
+    private static void OnSelectBlock(object target, ExecutedRoutedEventArgs args) {
+        TextArea textArea = GetTextArea(target);
+        if (textArea?.Document == null) return;
+        args.Handled = true;
+
+        // Search first empty line above/below caret
+        int above = textArea.Caret.Line;
+        DocumentLine aboveLine = null;
+        while (above >= 1 && !string.IsNullOrWhiteSpace(textArea.Document.GetText(aboveLine = textArea.Document.GetLineByNumber(above)))) {
+            above--;
+        }
+        int below = textArea.Caret.Line;
+        DocumentLine belowLine = null;
+        while (below <= textArea.Document.LineCount && !string.IsNullOrWhiteSpace(textArea.Document.GetText(belowLine = textArea.Document.GetLineByNumber(below)))) {
+            below++;
+        }
+
+        if (aboveLine == null || belowLine == null) return;
+
+        textArea.Caret.Offset = aboveLine.Offset + 1;
+        textArea.Selection = Selection.Create(textArea, aboveLine.Offset + 1, belowLine.EndOffset);
     }
 
     private static TextArea GetTextArea(object target) => target as TextArea;

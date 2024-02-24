@@ -252,7 +252,7 @@ public class MainWindowViewModel : ViewModelBase {
         new MenuModel("Redo", routedCommand: TASInputHandler.Redo, textArea: _editor.editor.TextArea),
         MenuModel.Separator,
         new MenuModel("Select All", routedCommand: ApplicationCommands.SelectAll, textArea: _editor.editor.TextArea),
-        new MenuModel("Select Block"),
+        new MenuModel("Select Block", routedCommand: TASCaretNavigationCommandHandler.SelectBlock, textArea: _editor.editor.TextArea),
         MenuModel.Separator,
         new MenuModel("Insert/Remove Breakpoint"),
         new MenuModel("Insert/Remove Savestate Breakpoint"),
