@@ -76,9 +76,6 @@ public class StudioCommunicationServer : StudioCommunicationBase {
         Dictionary<int, List<int>> nativeBindings = BinaryFormatterHelper.FromByteArray<Dictionary<int, List<int>>>(data);
         Dictionary<HotkeyID, List<Keys>> bindings =
             nativeBindings.ToDictionary(pair => (HotkeyID) pair.Key, pair => pair.Value.Cast<Keys>().ToList());
-        foreach (var pair in bindings) {
-            Log(pair.ToString());
-        }
 
         OnBindingsUpdated(bindings);
         //

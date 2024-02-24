@@ -1,5 +1,5 @@
+using Avalonia.Input;
 using System.Globalization;
-using JetBrains.Annotations;
 using StudioCommunication;
 using TAS.Avalonia.Communication;
 
@@ -20,6 +20,52 @@ public class CelesteService {
 
     public void WriteWait() => Server.WriteWait();
     public void SendPath(string path) => Server.SendPath(path);
+
+    public void SendKeyPress(Key key, KeyModifiers modifiers) {
+        var winFormsKey = key.ToWinForms();
+
+        foreach (HotkeyID hotkeyIDs in _bindings.Keys) {
+            List<Keys> keys = _bindings[hotkeyIDs];
+
+            bool pressed = keys.Count > 0 && keys.All(IsKeyDown);
+            if (pressed && keys.Count == 1) {
+                if (!keys.Contains(Keys.LShiftKey) && IsKeyDown(Keys.LShiftKey)) {
+                    pressed = false;
+                }
+
+                if (!keys.Contains(Keys.RShiftKey) && IsKeyDown(Keys.RShiftKey)) {
+                    pressed = false;
+                }
+
+                if (!keys.Contains(Keys.LControlKey) && IsKeyDown(Keys.LControlKey)) {
+                    pressed = false;
+                }
+
+                if (!keys.Contains(Keys.RControlKey) && IsKeyDown(Keys.RControlKey)) {
+                    pressed = false;
+                }
+            }
+
+            if (pressed) {
+                // if (hotkeyIDs == HotkeyID.FastForward) {
+                //     fastForwarding = true;
+                // } else if (hotkeyIDs == HotkeyID.SlowForward) {
+                //     slowForwarding = true;
+                // }
+
+                Server.SendHotkeyPressed(hotkeyIDs);
+            }
+        }
+
+        return;
+
+        bool IsKeyDown(Keys toCheck) {
+            return toCheck == winFormsKey ||
+                   toCheck is Keys.LShiftKey or Keys.RShiftKey && modifiers.HasFlag(KeyModifiers.Shift) ||
+                   toCheck is Keys.LControlKey or Keys.RControlKey && modifiers.HasFlag(KeyModifiers.Control) ||
+                   toCheck is Keys.LMenu or Keys.RMenu && modifiers.HasFlag(KeyModifiers.Alt);
+        }
+    }
 
     public void Play() {
     }
