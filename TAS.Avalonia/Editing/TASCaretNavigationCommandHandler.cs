@@ -138,7 +138,7 @@ internal static class TASCaretNavigationCommandHandler {
         if (aboveLine == null || belowLine == null) return;
 
         textArea.Caret.Offset = aboveLine.Offset + 1;
-        textArea.Selection = Selection.Create(textArea, aboveLine.Offset + 1, belowLine.EndOffset);
+        textArea.Selection = Selection.Create(textArea, aboveLine.Offset + 1, belowLine.EndOffset - 1);
     }
 
     private static TextArea GetTextArea(object target) => target as TextArea;
