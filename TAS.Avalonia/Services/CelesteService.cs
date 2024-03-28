@@ -21,22 +21,23 @@ public class CelesteService {
     public void WriteWait() => Server.WriteWait();
     public void SendPath(string path) => Server.SendPath(path);
 
-    public bool SendKeyEvent(Key key, KeyModifiers modifiers, bool released) {
-        var winFormsKey = key.ToWinForms();
+    public bool SendKeyEvent(IEnumerable<Key> keys, bool released) {
+        var winFormsKeys = keys.Select(key => key.ToWinForms()).ToArray();
         bool pressedAny = false;
 
         foreach (HotkeyID hotkeyIDs in _bindings.Keys) {
-            List<Keys> keys = _bindings[hotkeyIDs];
+            List<Keys> bindingKeys = _bindings[hotkeyIDs];
 
-            bool pressed = keys.Count > 0 && keys.All(IsKeyDown);
-            if (pressed && keys.Count == 1) {
-                if (!keys.Contains(Keys.LShiftKey) && !keys.Contains(Keys.RShiftKey) && modifiers.HasFlag(KeyModifiers.Shift)) {
+            bool pressed = bindingKeys.Count > 0 && bindingKeys.All(key => winFormsKeys.Contains(key));
+            if (pressed && bindingKeys.Count == 1) {
+                // Don't trigger a hotkey without a modifier if a modifier is pressed
+                if (!bindingKeys.Contains(Keys.LShiftKey) && !bindingKeys.Contains(Keys.RShiftKey) && winFormsKeys.Any(key => key is Keys.LShiftKey or Keys.RShiftKey)) {
                     pressed = false;
                 }
-                if (!keys.Contains(Keys.LControlKey) && !keys.Contains(Keys.RControlKey) && modifiers.HasFlag(KeyModifiers.Control)) {
+                if (!bindingKeys.Contains(Keys.LControlKey) && !bindingKeys.Contains(Keys.RControlKey) && winFormsKeys.Any(key => key is Keys.LControlKey or Keys.RControlKey)) {
                     pressed = false;
                 }
-                if (!keys.Contains(Keys.LMenu) && !keys.Contains(Keys.RMenu) && modifiers.HasFlag(KeyModifiers.Alt)) {
+                if (!bindingKeys.Contains(Keys.LMenu) && !bindingKeys.Contains(Keys.RMenu) && winFormsKeys.Any(key => key is Keys.LMenu or Keys.RMenu)) {
                     pressed = false;
                 }
             }
@@ -54,13 +55,6 @@ public class CelesteService {
         }
 
         return pressedAny;
-
-        bool IsKeyDown(Keys toCheck) {
-            return toCheck == winFormsKey ||
-                   toCheck is Keys.LShiftKey or Keys.RShiftKey && modifiers.HasFlag(KeyModifiers.Shift) ||
-                   toCheck is Keys.LControlKey or Keys.RControlKey && modifiers.HasFlag(KeyModifiers.Control) ||
-                   toCheck is Keys.LMenu or Keys.RMenu && modifiers.HasFlag(KeyModifiers.Alt);
-        }
     }
 
     public void Play() {
