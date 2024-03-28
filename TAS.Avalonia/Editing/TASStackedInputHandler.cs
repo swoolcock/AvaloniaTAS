@@ -21,7 +21,8 @@ public class TASStackedInputHandler : TextAreaStackedInputHandler {
         var app = (Application.Current as App)!;
         if (app.SettingsService.SendInputs) {
             e.Handled = app.CelesteService.SendKeyEvent(e.Key, e.KeyModifiers, released: false);
-            CancelNextTextInputEvent.Restart();
+            if (e.Handled)
+                CancelNextTextInputEvent.Restart();
         }
     }
 
@@ -29,7 +30,8 @@ public class TASStackedInputHandler : TextAreaStackedInputHandler {
         var app = (Application.Current as App)!;
         if (app.SettingsService.SendInputs) {
             e.Handled = app.CelesteService.SendKeyEvent(e.Key, e.KeyModifiers, released: true);
-            CancelNextTextInputEvent.Restart();
+            if (e.Handled)
+                CancelNextTextInputEvent.Restart();
         }
     }
 }
