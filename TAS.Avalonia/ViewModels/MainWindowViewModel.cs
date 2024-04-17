@@ -56,6 +56,9 @@ public class MainWindowViewModel : ViewModelBase {
     public ReactiveCommand<Unit, Unit> SetFastForwardSpeedCommand { get; }
     public ReactiveCommand<Unit, Unit> SetSlowForwardSpeedCommand { get; }
 
+    // Other
+    public ReactiveCommand<Unit, Unit> ReloadFileCommand { get; }
+
     private readonly ObservableAsPropertyHelper<string> _windowTitle;
     public string WindowTitle => _windowTitle.Value;
 
@@ -156,6 +159,12 @@ public class MainWindowViewModel : ViewModelBase {
         SetFastForwardSpeedCommand = ReactiveCommand.CreateFromTask(SetFastForwardSpeed);
         SetSlowForwardSpeedCommand = ReactiveCommand.CreateFromTask(SetSlowForwardSpeed);
 
+        // Other
+        ReloadFileCommand = ReactiveCommand.Create(() => {
+            Document = TASDocument.Load(Document.FilePath);
+            Console.WriteLine("haii :3");
+        });
+
         var lastOpenFilePath = _settingsService.LastOpenFilePath;
 
         _celesteService.WriteWait();
@@ -190,6 +199,7 @@ public class MainWindowViewModel : ViewModelBase {
                 MenuModel.Separator,
                 new MenuModel("Save", SaveFileCommand, gesture: new KeyGesture(Key.S, commandModifier)),
                 new MenuModel("Save As...", SaveFileAsCommand, gesture: new KeyGesture(Key.S, commandModifier | KeyModifiers.Shift)),
+                new MenuModel("Reload", ReloadFileCommand, gesture: new KeyGesture(Key.R, KeyModifiers.Alt)),
                 new MenuModel("Convert to LibTAS Inputs..."),
                 new MenuModel(string.Empty, isVisible: includeExit),
                 new MenuModel("Exit", ExitCommand, isVisible: includeExit),
