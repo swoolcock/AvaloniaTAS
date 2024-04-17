@@ -26,7 +26,7 @@ public class TASStackedInputHandler : TextAreaStackedInputHandler {
     public override void OnPreviewKeyDown(KeyEventArgs e) {
         var app = (Application.Current as App)!;
 
-        // If the key was released outside of the window, a KeyUp event wouldn't be raised.
+        // If the key was released outside the window, a KeyUp event wouldn't be raised.
         // So we need to check if the pressed keys
         if (!e.KeyModifiers.HasFlag(KeyModifiers.Shift)) {
             pressedModKeys.Remove(Key.LeftShift);
@@ -45,7 +45,7 @@ public class TASStackedInputHandler : TextAreaStackedInputHandler {
             pressedModKeys.Add(e.Key);
 
         if (app.SettingsService.SendInputs) {
-            e.Handled = app.CelesteService.SendKeyEvent(pressedModKeys.Concat([e.Key]), released: false);
+            e.Handled = app.CelesteService.SendKeyEvent(pressedModKeys.Concat(new List<Key> { e.Key }.AsReadOnly()), released: false);
             if (e.Handled)
                 CancelNextTextInputEvent.Restart();
         }
@@ -54,7 +54,7 @@ public class TASStackedInputHandler : TextAreaStackedInputHandler {
     public override void OnPreviewKeyUp(KeyEventArgs e) {
         var app = (Application.Current as App)!;
         if (app.SettingsService.SendInputs) {
-            e.Handled = app.CelesteService.SendKeyEvent(pressedModKeys.Concat([e.Key]), released: true);
+            e.Handled = app.CelesteService.SendKeyEvent(pressedModKeys.Concat(new List<Key> { e.Key }.AsReadOnly()), released: true);
             if (e.Handled)
                 CancelNextTextInputEvent.Restart();
         }
